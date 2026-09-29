@@ -1,0 +1,14 @@
+{
+  "name": "serenity-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --import tsx --test \"tests/*.test.ts\""
+  },
+  "dependencies": { "hono": "^4.7.0", "@hono/node-server": "^1.13.0", "pg": "^8.13.0", "zod": "^3.24.0", "@hono/zod-validator": "^0.4.0" },
+  "devDependencies": { "tsx": "^4.19.0", "@types/node": "^22.0.0", "@types/pg": "^8.11.0", "typescript": "~5.7.0" }
+}
