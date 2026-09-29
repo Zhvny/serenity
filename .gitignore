@@ -27,3 +27,6 @@ dist-ssr
 
 # Secret (local env, never commit)
 .env
+# AI/project docs (never commit)
+*.md
+docs/
