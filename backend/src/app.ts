@@ -16,7 +16,7 @@ export function createApp(pool: Pool): Hono {
   app.route("/", menuRoutes(menuService(productRepo(pool))));
   app.route("/", cartRoutes(pool));
   app.route("/", orderRoutes(pool));
-  app.route("/", paymentRoutes());
+  app.route("/", paymentRoutes(pool));
   app.notFound((c) => c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404));
   app.onError((e, c) => {
     console.error(e);
