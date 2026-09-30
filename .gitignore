@@ -27,6 +27,9 @@ dist-ssr
 
 # Secret
 .env
+# Local assets (placeholder images — never commit real assets)
+frontend/public/images/*.jpg
+frontend/public/images/*.png
 
 # AI/project docs
 *.md
