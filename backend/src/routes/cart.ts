@@ -4,11 +4,12 @@ import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { addItem, getCart, removeItem, updateItem } from "../services/cart.js";
+import { deliveryError } from "../services/orders.js";
 import { productRepo } from "../repos/products.js";
 
 const addSchema = z.object({ product_id: z.string().min(1), quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
 const updateSchema = z.object({ quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
-const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish() });
+const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish() });
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
@@ -50,7 +51,12 @@ export function cartRoutes(pool: Pool): Hono {
     if (body.mode === "scheduled" && (body.scheduled_at == null || Date.parse(body.scheduled_at) <= Date.now())) {
       return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at harus ISO masa depan" }, 400);
     }
-    return c.json({ status: "success", data: { mode: body.mode, items: getCart(cartIdOf(c) ?? "") } });
+    const delivery_address = body.delivery_address ?? null;
+    const dErr = deliveryError(body.delivery_method, delivery_address);
+    if (dErr !== null) {
+      return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
+    }
+    return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, items: getCart(cartIdOf(c) ?? "") } });
   });
   return r;
 }

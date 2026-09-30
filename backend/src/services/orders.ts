@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { CartItem, Order, OrderMode, OrderStatus } from "../types.js";
+import type { CartItem, DeliveryMethod, Order, OrderMode, OrderStatus } from "../types.js";
 
 const orders = new Map<string, Order>();
 let dayKey = "";
@@ -16,9 +16,18 @@ export function nextOrderId(now: Date = new Date()): string {
 }
 
 // ponytail: in-memory store + counter; ganti sequence DB bila multi-instance.
-export function createOrder(items: Array<{ product_id: string; quantity: number }>, mode: OrderMode, scheduled_at: string | null, total: number): Order {
+export function deliveryError(method: DeliveryMethod, address: string | null | undefined): string | null {
+  if (method === "delivery") {
+    return address == null || address.length > 500 || address.trim().length < 10
+      ? "Alamat pengiriman minimal 10 karakter, maksimal 500"
+      : null;
+  }
+  return address != null ? "Alamat harus null untuk ambil sendiri" : null;
+}
+
+export function createOrder(items: Array<{ product_id: string; quantity: number }>, mode: OrderMode, scheduled_at: string | null, total: number, delivery_method: DeliveryMethod = "pickup", delivery_address: string | null = null): Order {
   const orderItems: CartItem[] = items.map((i) => ({ item_id: randomUUID(), product_id: i.product_id, quantity: i.quantity, note: null }));
-  const order: Order = { order_id: nextOrderId(), items: orderItems, mode, scheduled_at, total_amount: total, status: "pending_payment" };
+  const order: Order = { order_id: nextOrderId(), items: orderItems, mode, scheduled_at, total_amount: total, status: "pending_payment", delivery_method, delivery_address };
   orders.set(order.order_id, order);
   return order;
 }

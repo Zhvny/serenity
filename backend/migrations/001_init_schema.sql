@@ -1,4 +1,4 @@
--- 001_init_schema.sql — UP: skema awal Healthy Pre-Order (verbatim DATABASE.md)
+-- 001_init_schema.sql — UP: skema awal Serenity (Healthy Pre-Order) (verbatim DATABASE.md)
 -- Jalankan: psql $DATABASE_URL -f backend/migrations/001_init_schema.sql
 
 CREATE TABLE categories (
