@@ -5,4 +5,5 @@ export type Product = { id: string; name: string; category_id: string; price: nu
 export type CartItem = { item_id: string; product_id: string; quantity: number; note: string | null };
 export type OrderMode = "instant" | "scheduled";
 export type OrderStatus = "pending_payment" | "paid" | "failed" | "expired";
-export type Order = { order_id: string; items: CartItem[]; mode: OrderMode; scheduled_at: string | null; total_amount: number; status: OrderStatus };
+export type DeliveryMethod = "pickup" | "delivery";
+export type Order = { order_id: string; items: CartItem[]; mode: OrderMode; scheduled_at: string | null; total_amount: number; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null };

@@ -5,7 +5,7 @@ import { logger } from "hono/logger";
 const hits = new Map<string, { n: number; reset: number }>();
 
 export function corsMw(): MiddlewareHandler {
-  return cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173" });
+  return cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173", credentials: true });
 }
 
 export function loggerMw(): MiddlewareHandler {

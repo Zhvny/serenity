@@ -59,4 +59,21 @@ describe("cart", () => {
     const res = await createApp(pool).request("/api/v1/cart/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "instant", scheduled_at: new Date(Date.now() + 3600000).toISOString() }) });
     assert.equal(res.status, 400);
   });
+  it("POST /cart/checkout delivery tanpa address → 400 INVALID_ADDRESS", async () => {
+    const res = await createApp(pool).request("/api/v1/cart/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "instant", delivery_method: "delivery" }) });
+    assert.equal(res.status, 400);
+    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
+  });
+  it("POST /cart/checkout pickup + address → 400 INVALID_ADDRESS", async () => {
+    const res = await createApp(pool).request("/api/v1/cart/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "instant", delivery_method: "pickup", delivery_address: "Jl. Sehat No. 10" }) });
+    assert.equal(res.status, 400);
+    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
+  });
+  it("POST /cart/checkout delivery + address → 200 + echo", async () => {
+    const res = await createApp(pool).request("/api/v1/cart/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "instant", delivery_method: "delivery", delivery_address: "Jl. Sehat No. 10 Jakarta" }) });
+    assert.equal(res.status, 200);
+    const json = (await res.json()) as { data: { delivery_method: string; delivery_address: string } };
+    assert.equal(json.data.delivery_method, "delivery");
+    assert.equal(json.data.delivery_address, "Jl. Sehat No. 10 Jakarta");
+  });
 });

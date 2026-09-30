@@ -3,12 +3,14 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { productRepo } from "../repos/products.js";
-import { createOrder, getOrder, setStatus } from "../services/orders.js";
+import { createOrder, deliveryError, getOrder, setStatus } from "../services/orders.js";
 
 const createSchema = z.object({
   items: z.array(z.object({ product_id: z.string().min(1), quantity: z.number().int().min(1).max(10) })).min(1),
   mode: z.enum(["instant", "scheduled"]),
   scheduled_at: z.string().datetime({ offset: true }).nullish(),
+  delivery_method: z.enum(["pickup", "delivery"]).default("pickup"),
+  delivery_address: z.string().nullish(),
 });
 
 const statusSchema = z.object({ status: z.enum(["paid", "failed", "expired"]) });
@@ -26,6 +28,11 @@ export function orderRoutes(pool: Pool): Hono {
     if (body.mode === "scheduled" && (body.scheduled_at == null || Date.parse(body.scheduled_at) < Date.now() + 24 * 3600 * 1000)) {
       return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at minimal 24 jam ke depan" }, 400);
     }
+    const delivery_address = body.delivery_address ?? null;
+    const dErr = deliveryError(body.delivery_method, delivery_address);
+    if (dErr !== null) {
+      return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
+    }
     let total = 0;
     for (const item of body.items) {
       const p = await products.getById(item.product_id);
@@ -34,7 +41,7 @@ export function orderRoutes(pool: Pool): Hono {
       }
       total += p.price * item.quantity;
     }
-    const order = createOrder(body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total);
+    const order = createOrder(body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address);
     return c.json({ status: "success", data: order });
   });
   r.get("/orders/:order_id", async (c) => {
