@@ -72,6 +72,9 @@ small { font-size: 12px; }
   gap: 16px;
   padding: 16px;
 }
+@media (min-width: 480px) { .product-grid { gap: 24px; } }
+@media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); padding: 24px; } }
+@media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); padding: 32px; } }
 
 @media (min-width: 768px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
@@ -85,17 +88,17 @@ small { font-size: 12px; }
   display: block;
   color: var(--charcoal);
   text-decoration: none;
-  border: 1px solid var(--divider);
-  border-radius: 12px;
+  border: 2px solid var(--divider);
+  border-radius: 0;
   overflow: hidden;
-  background: var(--white);
+  background: var(--surface-default);
 }
 
 .product-photo {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 12px 12px 0 0;
+  border-radius: 0;
   display: block;
   background: var(--cream);
 }
@@ -127,45 +130,53 @@ small { font-size: 12px; }
 }
 
 .chip {
-  border: 1px solid var(--divider);
-  border-radius: 20px;
+  border: 2px solid var(--divider);
+  border-radius: 0;
   padding: 8px 16px;
   font-size: 14px;
-  background: var(--white);
+  background: var(--surface-default);
   color: var(--charcoal);
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .chip--active {
-  background: var(--cream);
-  border-color: var(--sage);
+  background: var(--primary-sand);
+  color: var(--white);
+  border-color: var(--primary-sand);
 }
 
 .btn-primary {
-  background: var(--sage);
+  background: var(--primary-sand);
   color: var(--white);
-  border: none;
-  border-radius: 12px;
-  padding: 12px 24px;
+  border: 3px solid var(--primary-sand);
+  border-radius: 0;
+  padding: 14px 28px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .btn-primary:hover,
 .btn-primary:focus {
-  background: var(--sage-deep);
+  background: var(--primary-sand-deep);
+  border-color: var(--primary-sand-deep);
 }
 
 .btn-secondary {
-  background: var(--white);
-  color: var(--sage-deep);
-  border: 1px solid var(--sage-deep);
-  border-radius: 12px;
-  padding: 12px 24px;
+  background: var(--surface-default);
+  color: var(--primary-sand-deep);
+  border: 2px solid var(--primary-sand-deep);
+  border-radius: 0;
+  padding: 14px 28px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .btn-secondary:hover,
@@ -192,8 +203,9 @@ small { font-size: 12px; }
 
 .skeleton {
   background: var(--divider);
-  border-radius: 12px;
+  border-radius: 0;
   min-height: 120px;
+  border: 2px solid var(--divider);
 }
 
 :focus-visible {
@@ -218,7 +230,7 @@ small { font-size: 12px; }
 }
 
 .detail-grid .product-photo {
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 @media (min-width: 900px) {
