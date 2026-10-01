@@ -6,14 +6,14 @@ import { menuService } from "./services/menu.js";
 import { menuRoutes } from "./routes/menu.js";
 import { cartRoutes } from "./routes/cart.js";
 import { orderRoutes } from "./routes/orders.js";
-import { corsMw, loggerMw, tieredRateLimit } from "./middleware/security.js";
+import { corsMw, loggerMw, tieredRateLimit, securityHeaders } from "./middleware/security.js";
 import { issueCsrf, csrfMw } from "./middleware/csrf.js";
 import { loginRoute, adminRoutes } from "./routes/admin.js";
 import { qrisRoutes } from "./routes/qris.js";
 
 export function createApp(pool: Pool): Hono {
   const app = new Hono().basePath("/api/v1");
-  app.use(corsMw(), loggerMw(), tieredRateLimit());
+  app.use(corsMw(), loggerMw(), securityHeaders(), tieredRateLimit());
   app.get("/health", (c) => c.json({ status: "success", data: { ok: true } } satisfies ApiSuccess<{ ok: boolean }>));
   app.get("/csrf", (c) => c.json({ status: "success", data: { csrfToken: issueCsrf(c) } }));
   app.route("/", menuRoutes(menuService(productRepo(pool))));

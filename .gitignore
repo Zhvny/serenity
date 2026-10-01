@@ -34,4 +34,24 @@ frontend/public/images/*.png
 # AI/project docs
 *.md
 !README.md
+# Docs inti yang DILACAK (source of truth)
+!DESIGN.md
+!SPEC.md
+!API.md
+!ARCHITECTURE.md
+!DATABASE.md
+!DEPLOYMENT.md
+!INSTALLATION.md
+!TESTING.md
+!PRD.md
+!ROADMAP.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!AGENTS.md
+!SOP_OPERASIONAL.md
+# docs/ : lacak env-reference + adr, tetap abaikan superpowers (plan/spec internal)
 docs/
+!docs/
+!docs/env-reference.md
+!docs/adr/
+!docs/adr/**/*.md
