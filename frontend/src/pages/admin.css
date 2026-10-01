@@ -1,60 +1,66 @@
 .admin-page {
-  background: var(--background);
-  color: var(--content-primary);
-  padding: var(--sp-4);
+  background: var(--canvas);
+  color: var(--ink);
+  padding: var(--sp-xl);
 }
 
 .admin-page h1 {
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: -0.4px;
 }
 
 .admin-form {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-md);
   max-width: 480px;
 }
 
 .admin-form input,
 .admin-form select {
-  min-height: 44px;
-  border: 3px solid var(--primary-sand);
-  border-radius: 0;
-  padding: var(--sp-2) var(--sp-3);
-  font-size: 15px;
+  min-height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  font-size: 16px;
   font-family: var(--font-body);
   width: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.admin-form input:focus,
+.admin-form select:focus {
+  border-color: var(--ink-mute);
 }
 
 .admin-btn {
-  min-height: 44px;
-  border: 3px solid var(--primary-sand);
-  border-radius: 0;
-  background: var(--primary-sand);
-  color: var(--surface-default);
-  padding: var(--sp-2) var(--sp-3);
-  font-size: 15px;
+  min-height: 36px;
+  border: 1px solid var(--primary);
+  border-radius: var(--r-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: var(--sp-sm) var(--sp-lg);
+  font-size: 14px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 2px;
   cursor: pointer;
 }
 
 .admin-btn:hover,
 .admin-btn:focus {
-  background: var(--primary-sand-deep);
-  border-color: var(--primary-sand-deep);
+  background: var(--primary-deep);
+  border-color: var(--primary-deep);
 }
 
 .admin-btn--ghost {
   background: transparent;
-  color: var(--primary-sand-deep);
+  color: var(--ink);
+  border-color: var(--hairline-strong);
 }
 
 .admin-btn--danger {
   border-color: var(--error);
   background: var(--error);
+  color: var(--on-dark);
 }
 
 .admin-btn:disabled {
@@ -64,19 +70,20 @@
 
 .admin-list {
   list-style: none;
-  margin: var(--sp-4) 0 0;
+  margin: var(--sp-xl) 0 0;
   padding: 0;
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-md);
 }
 
 .admin-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border: 2px solid var(--divider);
+  gap: var(--sp-lg);
+  padding: var(--sp-lg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
 }
 
 .admin-error {
