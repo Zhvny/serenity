@@ -79,5 +79,20 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { deactivated: ok } });
   });
 
+  // Mark-paid QRIS: idempoten (hanya transisi dari pending_payment) + audit.
+  r.post("/orders/:code/mark-paid", async (c) => {
+    const code = c.req.param("code");
+    const res = await pool.query(
+      "UPDATE orders SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'pending_payment'",
+      [code],
+    );
+    const changed = (res.rowCount ?? 0) > 0;
+    // Audit hanya saat transisi nyata terjadi (double-click -> satu catat).
+    if (changed) {
+      await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "mark_paid", JSON.stringify({ unique_code: code })]);
+    }
+    return c.json({ status: "success", data: { paid: true, changed } });
+  });
+
   return r;
 }
