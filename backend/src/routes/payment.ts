@@ -35,7 +35,7 @@ export function paymentRoutes(pool: Pool): Hono {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
-    const order = getOrder(body.order_id);
+    const order = await getOrder(pool, body.order_id);
     if (order === null) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
@@ -62,7 +62,7 @@ export function paymentRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "WEBHOOK_FORBIDDEN", message: "Signature tidak valid" }, 403);
     }
     const referenceId = String(raw["reference_id"] ?? raw["referenceId"]);
-    const order = getOrder(referenceId);
+    const order = await getOrder(pool, referenceId);
     if (order === null) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
@@ -78,7 +78,7 @@ export function paymentRoutes(pool: Pool): Hono {
       return c.json({ status: "success", data: order });
     }
     const from = order.status;
-    const updated = setStatus(order.order_id, to);
+    const updated = await setStatus(pool, order.order_id, to);
     paymentAudit.push({ order_id: order.order_id, from, to, at: new Date().toISOString() });
     return c.json({ status: "success", data: updated });
   });
