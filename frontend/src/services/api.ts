@@ -105,3 +105,55 @@ export type DeliveryMethod = "pickup" | "delivery";
 export function checkoutCart(input: { mode: "instant" | "scheduled"; scheduled_at?: string; delivery_method: DeliveryMethod; delivery_address?: string | null }): Promise<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }> {
   return apiPost<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }>("/cart/checkout", input);
 }
+
+// --- Admin ---
+
+async function parse<T>(res: Response): Promise<T> {
+  const body = (await res.json()) as { status: string; data?: T; code?: string; message?: string };
+  if (!res.ok || body.status !== "success") {
+    throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
+  }
+  return body.data as T;
+}
+
+// Ambil token CSRF (set cookie csrf_token + kembalikan token untuk header x-csrf-token).
+async function getCsrf(): Promise<string> {
+  const res = await fetch(`${BASE}/csrf`, { credentials: "include" });
+  return parse<{ csrfToken: string }>(res).then((d) => d.csrfToken);
+}
+
+async function adminMutate<T>(path: string, method: "POST", input?: unknown): Promise<T> {
+  const token = await getCsrf();
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: { "content-type": "application/json", "x-csrf-token": token },
+      body: input === undefined ? undefined : JSON.stringify(input),
+      credentials: "include",
+    });
+  } catch {
+    throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
+  }
+  return parse<T>(res);
+}
+
+export function adminLogin(username: string, password: string): Promise<null> {
+  return adminMutate<null>("/admin/login", "POST", { username, password });
+}
+
+export function adminLogout(): Promise<null> {
+  return adminMutate<null>("/admin/logout", "POST");
+}
+
+export function adminListProducts(): Promise<Product[]> {
+  return apiGet<Product[]>("/admin/products");
+}
+
+export function adminCreateProduct(product: { id: string; name: string; category_id: string; price: number; tags: string[]; image_url?: string | null }): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>("/admin/products", "POST", product);
+}
+
+export function adminDeactivateProduct(id: string): Promise<{ deactivated: boolean }> {
+  return adminMutate<{ deactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/deactivate`, "POST");
+}
