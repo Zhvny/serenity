@@ -1,8 +1,8 @@
-import { describe, it, after } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
-import { closeRedis } from "../src/db/redis.js";
+import { getRedis, closeRedis } from "../src/db/redis.js";
 
 // DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed prod_001.
 const pool = createPool();
@@ -21,6 +21,14 @@ after(async () => {
   }
   await pool.end();
   await closeRedis();
+});
+
+// Flush rate-limit rl:* sebelum file ini (counter Redis dibagi lintas file; serial run).
+before(async () => {
+  const r = getRedis();
+  if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
+  const keys = await r.keys("rl:*");
+  if (keys.length > 0) await r.del(...keys);
 });
 
 describe("orders", () => {

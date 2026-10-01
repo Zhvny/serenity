@@ -1,16 +1,37 @@
-import { describe, it } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createApp } from "../src/app.js";
+import { createPool } from "../src/db/pool.js";
+import { getRedis, closeRedis } from "../src/db/redis.js";
 import { paymentAudit } from "../src/routes/payment.js";
 import { buildIpaymuSignature, verifyIpaymuCallback } from "../src/services/payment.js";
-import type { Pool } from "pg";
 
 process.env.IPAYMU_VA = "test-va";
 process.env.IPAYMU_API_KEY = "test-key";
 process.env.INTERNAL_KEY = "test-internal";
-const productRow = { id: "prod_001", name: "P", category_id: "cat_food", price: 45000, tags: [], image_url: null, description: null, is_active: true, calories_kcal: 100, protein_g: 10, carbs_g: 10, fat_g: 5, fiber_g: 2, sugar_g: 1, allergens: [] };
-const pool = { query: async (text: string) => ({ rows: String(text).includes("FROM products") ? [productRow] : [] }) } as unknown as Pool;
+
+// DB-backed (serenity): order dipersistensi; test iPaymu memakai Postgres riil + seed prod_001.
+// ponytail: iPaymu dijadwalkan dicabut total (Plan5/8); test ini dihapus bersama rute iPaymu.
+const pool = createPool();
+const createdOrders: string[] = [];
+
+after(async () => {
+  for (const id of createdOrders) {
+    await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [id]);
+  }
+  await pool.end();
+  await closeRedis();
+});
+
+// Flush rate-limit rl:* sebelum file ini (counter Redis dibagi lintas file; serial run).
+before(async () => {
+  const r = getRedis();
+  if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
+  const keys = await r.keys("rl:*");
+  if (keys.length > 0) await r.del(...keys);
+});
 
 function signCallback(payload: Record<string, unknown>): string {
   const INT = new Set(["trx_id", "status_code", "transaction_status_code", "paid_off"]);
@@ -31,7 +52,9 @@ function signCallback(payload: Record<string, unknown>): string {
 async function mkOrder(app: ReturnType<typeof createApp>): Promise<{ order_id: string }> {
   const res = await app.request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: [{ product_id: "prod_001", quantity: 1 }], mode: "instant" }) });
   assert.equal(res.status, 200);
-  return ((await res.json()) as { data: { order_id: string } }).data;
+  const data = ((await res.json()) as { data: { order_id: string } }).data;
+  createdOrders.push(data.order_id);
+  return data;
 }
 
 async function postWebhook(app: ReturnType<typeof createApp>, payload: Record<string, unknown>, sig?: string): Promise<Response> {
