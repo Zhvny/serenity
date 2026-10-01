@@ -16,18 +16,18 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
   const [imgOk, setImgOk] = useState(true);
   if (product === undefined) {
     return (
-      <li>
+      <li className="cart-row">
         <p>Produk tidak tersedia</p>
         <button type="button" className="btn-secondary" aria-label={`Hapus item ${item.item_id}`} onClick={onRemove}>X</button>
       </li>
     );
   }
   return (
-    <li>
+    <li className="cart-row">
       {product.image_url === null || !imgOk ? (
-        <div className="product-photo product-photo--empty" style={{ width: 60, height: 60 }} aria-hidden="true" />
+        <div className="cart-thumb product-photo--empty" aria-hidden="true" />
       ) : (
-        <img src={product.image_url} alt={product.name} width={60} height={60} onError={() => setImgOk(false)} />
+        <img className="cart-thumb" src={product.image_url} alt={product.name} onError={() => setImgOk(false)} />
       )}
       <h3>{product.name}</h3>
       <div>
@@ -35,7 +35,7 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
         <span aria-label={`Jumlah ${product.name}`}>{item.quantity}</span>
         <button type="button" aria-label={`Tambah ${product.name}`} disabled={item.quantity >= 10} onClick={() => onQty(item.quantity + 1)}>+</button>
       </div>
-      {item.note !== null && item.note.trim() !== "" ? <p style={{ color: "#8C8478", fontStyle: "italic" }}>{item.note}</p> : null}
+      {item.note !== null && item.note.trim() !== "" ? <p className="cart-note">{item.note}</p> : null}
       <p>{rupiah(product.price * item.quantity)}</p>
       <button type="button" aria-label={`Hapus ${product.name}`} onClick={onRemove}>X</button>
     </li>
@@ -153,41 +153,41 @@ export function CartPage() {
         ) : (
           <>
             {errorMsg !== "" ? <p role="alert">{errorMsg}</p> : null}
-            <ul>
+            <ul className="cart-list">
               {items.map((i) => (
                 <CartRow key={i.item_id} item={i} product={byId.get(i.product_id)} onQty={(q) => void handleQty(i, q)} onRemove={() => void handleRemove(i)} />
               ))}
             </ul>
-            <div>
+            <div className="cart-summary">
               <p>Subtotal <span>{rupiah(total)}</span></p>
               <h2>Total <span>{rupiah(total)}</span></h2>
               <p>Estimasi dihitung saat checkout</p>
             </div>
-            <div role="group" aria-label="Mode order">
-              <button type="button" className="btn-secondary" aria-pressed={mode === "instant"} style={mode === "instant" ? { background: "#7A8F6E", color: "#FFFFFF" } : undefined} onClick={() => setMode("instant")}>Instant</button>
-              <button type="button" className="btn-secondary" aria-pressed={mode === "scheduled"} style={mode === "scheduled" ? { background: "#7A8F6E", color: "#FFFFFF" } : undefined} onClick={() => setMode("scheduled")}>Scheduled</button>
+            <div className="chip-group" role="group" aria-label="Mode order">
+              <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>Instant</button>
+              <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>Scheduled</button>
             </div>
             {mode === "scheduled" ? (
               <div>
                 <label htmlFor="sched-date">Tanggal</label>
                 <input id="sched-date" type="date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} />
-                <div role="group" aria-label="Slot waktu">
+                <div className="chip-group" role="group" aria-label="Slot waktu">
                   {SLOTS.map((s) => (
-                    <button key={s} type="button" className="btn-secondary" aria-pressed={slot === s} style={slot === s ? { background: "#7A8F6E", color: "#FFFFFF" } : undefined} onClick={() => setSlot(s)}>{s}</button>
+                    <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{s}</button>
                   ))}
                 </div>
               </div>
             ) : null}
             {formError !== "" ? <p role="alert">{formError}</p> : null}
-            <div role="group" aria-label="Metode pengambilan">
-              <button type="button" className="btn-secondary" aria-pressed={delivery === "pickup"} style={delivery === "pickup" ? { background: "#7A8F6E", color: "#FFFFFF" } : undefined} onClick={() => setDelivery("pickup")}>Ambil sendiri</button>
-              <button type="button" className="btn-secondary" aria-pressed={delivery === "delivery"} style={delivery === "delivery" ? { background: "#7A8F6E", color: "#FFFFFF" } : undefined} onClick={() => setDelivery("delivery")}>Diantar</button>
+            <div className="chip-group" role="group" aria-label="Metode pengambilan">
+              <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>Ambil sendiri</button>
+              <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>Diantar</button>
             </div>
             {delivery === "delivery" ? (
               <div>
                 <label htmlFor="delivery-address">Alamat pengiriman</label>
                 <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} />
-                <p><span style={{ color: "#D4A843" }}>⚠</span> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
+                <p><span className="warn-icon" aria-hidden="true">⚠</span> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
               </div>
             ) : null}
             <button type="button" className="btn-primary" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran</button>

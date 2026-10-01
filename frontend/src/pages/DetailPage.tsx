@@ -101,7 +101,7 @@ export function DetailPage() {
               <ul aria-label="Alergen">
                 {prod.allergens.map((a) => (
                   <li key={a}>
-                    <span style={{ color: "#D4A843" }} aria-hidden="true">⚠</span> {a}
+                    <span className="warn-icon" aria-hidden="true">⚠</span> {a}
                   </li>
                 ))}
               </ul>

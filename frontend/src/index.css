@@ -264,6 +264,75 @@ small { font-size: 12px; }
   border-radius: 0;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 769px) {
   .detail-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Cart — struktur responsif (mobile-first) */
+.cart-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cart-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-bottom: 2px solid var(--divider);
+}
+
+.cart-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 0;
+  background: var(--surface-sunken);
+  flex: none;
+}
+
+.cart-note {
+  color: var(--content-secondary);
+  font-style: italic;
+  flex-basis: 100%;
+}
+
+.cart-summary {
+  padding: var(--sp-3);
+}
+
+/* Chip toggle (mode order / slot / metode) — ganti pola inline sage lama */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.chip-toggle {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 2px solid var(--primary-sand-deep);
+  border-radius: 0;
+  background: var(--surface-default);
+  color: var(--primary-sand-deep);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.chip-toggle--active {
+  background: var(--primary-sand);
+  color: var(--surface-default);
+  border-color: var(--primary-sand);
+}
+
+/* Ikon peringatan inline (alergen, biaya kirim) */
+.warn-icon {
+  color: var(--warning);
 }
