@@ -41,4 +41,14 @@ describe("migrations", () => {
     assert.doesNotMatch(ddl, /CREATE TABLE orders/i, "007 tak boleh create ulang orders");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("008 koordinat pengiriman additif: ALTER orders + delivery_lat/lng numeric", () => {
+    const sql = readFileSync(new URL("../migrations/008_delivery_coords.sql", import.meta.url), "utf8");
+    assert.match(sql, /ALTER TABLE orders/i);
+    assert.match(sql, /delivery_lat/);
+    assert.match(sql, /delivery_lng/);
+    assert.match(sql, /numeric/i);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });

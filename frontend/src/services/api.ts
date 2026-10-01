@@ -102,7 +102,7 @@ export function removeCartItem(item_id: string): Promise<{ removed: boolean }> {
 
 export type DeliveryMethod = "pickup" | "delivery";
 
-export function checkoutCart(input: { mode: "instant" | "scheduled"; scheduled_at?: string; delivery_method: DeliveryMethod; delivery_address?: string | null }): Promise<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }> {
+export function checkoutCart(input: { mode: "instant" | "scheduled"; scheduled_at?: string; delivery_method: DeliveryMethod; delivery_address?: string | null; delivery_lat?: number | null; delivery_lng?: number | null }): Promise<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }> {
   return apiPost<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }>("/cart/checkout", input);
 }
 
