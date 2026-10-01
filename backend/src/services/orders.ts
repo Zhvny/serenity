@@ -37,14 +37,15 @@ export async function createOrder(
   total: number,
   delivery_method: DeliveryMethod = "pickup",
   delivery_address: string | null = null,
+  sessionId: string | null = null,
 ): Promise<Order> {
   const orderId = await nextOrderId(pool);
   const client: PoolClient = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query(
-      "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6)",
-      [orderId, mode, scheduled_at, total, delivery_method, delivery_address],
+      "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address, session_id) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7)",
+      [orderId, mode, scheduled_at, total, delivery_method, delivery_address, sessionId],
     );
     const orderItems: CartItem[] = [];
     for (const i of items) {
