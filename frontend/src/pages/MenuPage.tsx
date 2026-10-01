@@ -10,6 +10,14 @@ import { ProductCard } from "../components/ProductCard.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 
+const HERO_QUOTES = [
+  "Sweeten your day, the wholesome way.",
+  "Dessert can be kind to your body too.",
+  "Good things, lightly sweetened.",
+  "Treats that love you back.",
+  "Sip sweet, stay light.",
+];
+
 export function MenuPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() => {
@@ -22,6 +30,7 @@ export function MenuPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [shown, setShown] = useState(false);
+  const [quote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? HERO_QUOTES[0]);
 
   useEffect(() => {
     const t = setTimeout(() => setShown(true), 20);
@@ -85,9 +94,9 @@ export function MenuPage() {
       <main>
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
-            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order makanan sehat</span>
-            <h1>Makan sehat, tanpa ribet.</h1>
-            <p className="lead">Pilih menu bergizi, pesan untuk sekarang atau jadwalkan, bayar QRIS. Disiapkan segar, siap diambil atau diantar.</p>
+            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order dessert &amp; minuman sehat</span>
+            <h1>Manis yang menyayangi tubuhmu.</h1>
+            <p className="lead">Dessert &amp; minuman sehat rendah gula, dibuat segar. Pesan sekarang atau jadwalkan, bayar QRIS, ambil atau antar.</p>
             <div className="hero-actions">
               <a className="btn-primary" href="#menu">Lihat Menu <Icon name="arrow-right" /></a>
               <a className="btn-secondary" href="#menu">Jelajahi kategori</a>
@@ -111,9 +120,9 @@ export function MenuPage() {
                 </div>
               </article>
             ) : (
-              <div className="hero-card" aria-hidden="true">
+              <div className="hero-card hero-card--quote" aria-hidden="true">
                 <div className="product-photo product-photo--empty" />
-                <div className="hero-card-body"><h3>Menu segar menanti</h3><p className="price">&nbsp;</p></div>
+                <div className="hero-card-body"><h3 className="hero-quote">{quote}</h3></div>
               </div>
             )}
           </div>

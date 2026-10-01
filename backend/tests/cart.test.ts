@@ -1,5 +1,6 @@
 import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
 import { closeRedis } from "../src/db/redis.js";
@@ -7,6 +8,7 @@ import { closeRedis } from "../src/db/redis.js";
 // DB-backed (serenity): cart dipersistensi; test memakai Postgres riil.
 // Butuh seed prod_001. Bersihkan baris cart yang dibuat test di akhir.
 const pool = createPool();
+const XFF = `cart-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi
 const createdCarts: string[] = [];
 
 function cookieOf(res: Response): string {
@@ -27,7 +29,7 @@ after(async () => {
 
 describe("cart", () => {
   it("POST /cart/add qty 0 → 400", async () => {
-    const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 0 }) });
+    const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ product_id: "prod_001", quantity: 0 }) });
     assert.equal(res.status, 400);
   });
   it("POST /cart/add valid → 200 + Set-Cookie cart_id", async () => {
@@ -40,7 +42,7 @@ describe("cart", () => {
     const add = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 1 }) });
     const cookie = cookieOf(add);
     const { data } = (await add.json()) as { data: { item_id: string } };
-    const res = await app.request(`/api/v1/cart/items/${data.item_id}`, { method: "PUT", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ quantity: 0 }) });
+    const res = await app.request(`/api/v1/cart/items/${data.item_id}`, { method: "PUT", headers: { "content-type": "application/json", cookie, "x-forwarded-for": XFF }, body: JSON.stringify({ quantity: 0 }) });
     assert.equal(res.status, 400);
   });
   it("POST /cart/add qty 11 → 400", async () => {
@@ -71,6 +73,27 @@ describe("cart", () => {
     const updated = (await res.json()) as { data: { quantity: number; note: string | null } };
     assert.equal(updated.data.quantity, 2);
     assert.equal(updated.data.note, "tanpa es");
+  });
+  it("POST /cart/add produk sama 2x → 1 baris, qty dijumlah (bukan baris baru)", async () => {
+    const app = createApp(pool);
+    const a1 = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 2 }) });
+    const cookie = cookieOf(a1);
+    const first = (await a1.json()) as { data: { item_id: string } };
+    const a2 = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ product_id: "prod_001", quantity: 3 }) });
+    const second = (await a2.json()) as { data: { item_id: string; quantity: number } };
+    assert.equal(second.data.item_id, first.data.item_id, "harus item yang sama (merge), bukan item baru");
+    assert.equal(second.data.quantity, 5, "qty harus dijumlah 2+3");
+    const cart = await app.request("/api/v1/cart", { headers: { cookie, "x-forwarded-for": XFF } });
+    const items = ((await cart.json()) as { data: Array<{ product_id: string }> }).data.filter((i) => i.product_id === "prod_001");
+    assert.equal(items.length, 1, "hanya 1 baris untuk produk sama");
+  });
+  it("POST /cart/add produk sama melebihi 10 → qty di-clamp ke 10", async () => {
+    const app = createApp(pool);
+    const a1 = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 7 }) });
+    const cookie = cookieOf(a1);
+    const a2 = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ product_id: "prod_001", quantity: 8 }) });
+    const second = (await a2.json()) as { data: { quantity: number } };
+    assert.equal(second.data.quantity, 10, "7+8 di-clamp ke maksimum 10");
   });
   it("POST /cart/checkout instant+scheduled_at → 400", async () => {
     const res = await createApp(pool).request("/api/v1/cart/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "instant", scheduled_at: new Date(Date.now() + 3600000).toISOString() }) });

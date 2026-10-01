@@ -1,16 +1,18 @@
 import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
 import { closeRedis } from "../src/db/redis.js";
 
 // DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed prod_001.
 const pool = createPool();
+const XFF = `orders-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi dari file lain
 const future = new Date(Date.now() + 25 * 3600 * 1000).toISOString();
 const createdOrders: string[] = [];
 
 async function postOrder(body: unknown): Promise<Response> {
-  const res = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const res = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify(body) });
   return res;
 }
 
@@ -33,7 +35,7 @@ describe("orders", () => {
     assert.equal(res.status, 400);
   });
   it("PUT /orders/:id/status tanpa internal key → 403", async () => {
-    const res = await createApp(pool).request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "paid" }) });
+    const res = await createApp(pool).request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ status: "paid" }) });
     assert.equal(res.status, 403);
   });
   it("POST /orders qty 11 → 400 VALIDATION_ERROR", async () => {

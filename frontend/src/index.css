@@ -646,3 +646,65 @@ code { font-family: var(--font-mono); font-size: 14px; }
 .pay-meta strong { font-weight: 500; }
 .pay-card .status-badge { margin: var(--sp-md) 0 var(--sp-lg); }
 .pay-card .qris-img { margin: var(--sp-lg) auto; }
+
+
+/* Hero fallback quote */
+.hero-card--quote .product-photo--empty {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, #fff), var(--canvas-soft));
+}
+.hero-quote { font-size: 18px; font-weight: 500; font-style: italic; color: var(--ink); letter-spacing: -0.2px; margin: 0; }
+
+/* ---- Filter bar (DESIGN §13) : scrollable di mobile, chip aktif jelas ---- */
+.filter-bar {
+  display: flex;
+  gap: var(--sp-sm);
+  padding: var(--sp-md) var(--sp-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;            /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+.filter-bar::-webkit-scrollbar { display: none; }  /* WebKit */
+.filter-bar .chip { flex: 0 0 auto; white-space: nowrap; min-height: 36px; transition: background 150ms ease, border-color 150ms ease, color 150ms ease; }
+.filter-bar .chip:hover { border-color: var(--primary); color: var(--primary-deep); }
+.chip--active, .filter-bar .chip--active {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+  font-weight: 500;
+  box-shadow: 0 1px 0 var(--primary-deep);
+}
+.chip--active:hover { color: var(--on-primary); border-color: var(--primary-deep); }
+@media (min-width: 1025px) { .filter-bar { padding: var(--sp-md) var(--sp-xxl); flex-wrap: wrap; overflow-x: visible; } }
+
+/* ---- CartPage layout profesional (2 kolom desktop) ---- */
+.cart-page { max-width: 1040px; }
+.cart-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); align-items: start; }
+@media (min-width: 861px) { .cart-grid { grid-template-columns: 1.6fr 1fr; } }
+
+.cart-list {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.cart-list .cart-row:last-child { border-bottom: none; }
+
+/* Panel kanan: ringkasan + opsi (sticky di desktop) */
+.cart-aside { display: flex; flex-direction: column; gap: var(--sp-lg); }
+@media (min-width: 861px) { .cart-aside { position: sticky; top: 76px; } }
+.cart-panel {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: var(--sp-lg);
+  background: var(--canvas);
+}
+.cart-panel > h2.cart-panel-title { font-size: 15px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: 0 0 var(--sp-md); }
+.cart-summary { border: none; margin: 0; padding: 0; }
+.cart-summary h2 { font-size: 20px; }
+.cart-aside .chip-group { padding: var(--sp-sm) 0; }
+.cart-aside label { margin: var(--sp-md) 0 var(--sp-xs); }
+.cart-aside input[type="date"], .cart-aside textarea { width: 100%; margin: 0; }
+.cart-aside .cart-checkout { margin: var(--sp-lg) 0 0; width: 100%; justify-content: center; }
+.cart-opt-note { display: flex; align-items: flex-start; gap: var(--sp-xs); font-size: 13px; color: var(--ink-mute); margin-top: var(--sp-sm); }
+.cart-opt-note .icon { color: var(--warning); flex: none; margin-top: 2px; }
