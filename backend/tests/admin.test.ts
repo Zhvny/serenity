@@ -14,6 +14,7 @@ const csrfHeaders = { "content-type": "application/json", origin: "http://localh
 
 function loginUser(user: string): string { return `${user}-${Date.now()}`; }
 const createdUsers: string[] = [];
+const createdOrders: string[] = [];
 
 before(() => {
   process.env.ADMIN_USER = "admin";
@@ -21,6 +22,7 @@ before(() => {
 });
 after(async () => {
   for (const u of createdUsers) await pool.query("DELETE FROM login_attempts WHERE username = $1", [u]);
+  for (const id of createdOrders) await pool.query("DELETE FROM orders WHERE id = $1", [id]);
   await pool.query("DELETE FROM admin_sessions WHERE username = $1", ["admin"]);
   try {
     const r = getRedis();
@@ -84,5 +86,26 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const sid = sc.match(/admin_session=([^;]+)/)?.[1] ?? "";
     const list = await app.request("/api/v1/admin/products", { headers: { cookie: `admin_session=${sid}` } });
     assert.equal(list.status, 200);
+  });
+
+  it("mark-paid idempoten: changed true lalu false; status paid; satu audit", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-MP${Date.now()}`;
+    const orderId = `HP-MP-${Date.now()}`;
+    createdOrders.push(orderId);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'pending_payment','pickup','mp-sess',$2)", [orderId, code]);
+    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const first = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(first.status, 200);
+    assert.equal(((await first.json()) as { data: { changed: boolean } }).data.changed, true);
+    const second = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(((await second.json()) as { data: { changed: boolean } }).data.changed, false);
+    const st = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
+    assert.equal(st.rows[0]?.status, "paid");
+    const audit = await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action = 'mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
+    assert.equal(Number(audit.rows[0]?.n), 1);
+    await pool.query("DELETE FROM audit_logs WHERE action='mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
   });
 });
