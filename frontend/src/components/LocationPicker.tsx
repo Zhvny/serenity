@@ -26,6 +26,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<LeafletMarker | null>(null);
   const [status, setStatus] = useState<"idle" | "locating" | "geo-error">("idle");
+  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   // Init map sekali — Leaflet di-import DINAMIS (runtime browser) agar tidak dieval di jsdom (OOM).
   useEffect(() => {
@@ -64,14 +65,17 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
     setStatus("locating");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        mapRef.current?.setView([lat, lng], 16);
+        const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
+        // Zoom menyesuaikan akurasi: makin presisi, makin dekat (16-18); kasar -> lebih jauh.
+        const zoom = acc <= 50 ? 18 : acc <= 200 ? 16 : acc <= 1000 ? 14 : 12;
+        mapRef.current?.setView([lat, lng], zoom);
         markerRef.current?.setLatLng([lat, lng]);
+        setAccuracy(Math.round(acc));
         setStatus("idle");
         void reverseGeocode(lat, lng).then((addr) => onChange({ lat, lng }, addr));
       },
       () => setStatus("geo-error"),
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }
 
@@ -84,6 +88,13 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
         {value !== null ? <small className="map-coord">{value.lat.toFixed(5)}, {value.lng.toFixed(5)}</small> : <small className="map-coord">Ketuk peta atau geser pin</small>}
       </div>
       <div ref={mapEl} className="map-canvas" role="application" aria-label="Peta pilih lokasi pengiriman" />
+      <p className="map-hint">
+        {accuracy !== null
+          ? (accuracy > 300
+            ? `Perkiraan lokasi ±${accuracy} m (kurang akurat di perangkat tanpa GPS). Geser pin ke titik tepat — posisi pin yang dipakai.`
+            : `Akurasi ±${accuracy} m. Geser pin bila perlu menyesuaikan.`)
+          : "Pin yang Anda tandai/geser di peta adalah lokasi yang dipakai untuk pengiriman."}
+      </p>
       {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> Tak bisa akses lokasi. Ketuk peta untuk menandai alamat.</p> : null}
     </div>
   );

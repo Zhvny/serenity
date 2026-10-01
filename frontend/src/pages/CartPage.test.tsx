@@ -91,7 +91,18 @@ describe("CartPage", () => {
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Tambah Salad" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Gagal simpan");
-    expect(screen.getByLabelText("Jumlah Salad")).toHaveTextContent("2");
+    expect(screen.getByLabelText("Jumlah Salad")).toHaveValue(2);
+  });
+  it("ketik qty via keyboard + Enter → PUT terkirim dengan nilai diketik (clamp 10)", async () => {
+    const user = userEvent.setup();
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    const input = screen.getByLabelText("Jumlah Salad");
+    await user.clear(input);
+    await user.type(input, "4{Enter}");
+    const put = calls.find((c) => c.method === "PUT" && c.url.includes("/cart/items/i1"));
+    expect(put?.body).toContain("4");
   });
   it('note "" tak tampil', async () => {
     const noNote = [{ ...items[0], note: "" }];

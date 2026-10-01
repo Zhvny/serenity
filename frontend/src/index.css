@@ -719,3 +719,25 @@ code { font-family: var(--font-mono); font-size: 14px; }
 .map-canvas:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .map-pin-dot { display: block; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 .map-picker + textarea, .map-picker ~ textarea { margin-top: var(--sp-sm); }
+
+
+/* Qty input (keyboard-editable) */
+.qty-input {
+  width: 44px;
+  height: 32px;
+  text-align: center;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--canvas);
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+
+.map-hint { font-size: 12px; color: var(--ink-mute); margin: var(--sp-xs) 0 0; }
