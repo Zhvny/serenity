@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { getCart } from "../services/api.ts";
 import type { Category } from "../services/api.ts";
+import { Icon } from "./Icon.tsx";
 
 export function Header({ categories = [] }: { categories?: Pick<Category, "id" | "name">[] }) {
   const [count, setCount] = useState<number | null>(0);
@@ -26,14 +27,14 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
 
   return (
     <header className="site-header">
-      <Link to="/" className="logo">Serenity</Link>
+      <Link to="/" className="logo"><Icon name="leaf" /> Serenity</Link>
       <nav aria-label="Kategori">
         {categories.map((c) => (
           <Link key={c.id} to={`/?category=${c.id}`}>{c.name}</Link>
         ))}
       </nav>
-      <Link to="/cart" aria-label="Keranjang">
-        <span aria-hidden="true">🛒</span>
+      <Link to="/cart" className="header-cart" aria-label="Keranjang">
+        <Icon name="cart" />
         {count !== null ? <span className="cart-badge">{count}</span> : null}
       </Link>
     </header>
