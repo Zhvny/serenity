@@ -30,4 +30,15 @@ describe("migrations", () => {
     const ddl = raw.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /RENAME/i, "003 masih mengandung RENAME destruktif");
   });
+
+  it("007 orders QRIS additif: ALTER orders + unique_code + qr_url", () => {
+    const sql = readFileSync(new URL("../migrations/007_orders_qris.sql", import.meta.url), "utf8");
+    assert.match(sql, /ALTER TABLE orders/i);
+    assert.match(sql, /unique_code/);
+    assert.match(sql, /qr_url/);
+    // Additif: tak boleh CREATE TABLE orders / DROP destruktif.
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /CREATE TABLE orders/i, "007 tak boleh create ulang orders");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });
