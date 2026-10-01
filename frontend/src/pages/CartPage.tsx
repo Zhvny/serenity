@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { ApiError, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
 import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 
 const SLOTS = ["12:00", "15:00", "18:00", "21:00"];
@@ -19,7 +21,7 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
     return (
       <li className="cart-row">
         <p>Produk tidak tersedia</p>
-        <button type="button" className="btn-secondary" aria-label={`Hapus item ${item.item_id}`} onClick={onRemove}>X</button>
+        <button type="button" className="btn-secondary cart-remove" aria-label={`Hapus item ${item.item_id}`} onClick={onRemove}>Hapus</button>
       </li>
     );
   }
@@ -31,14 +33,14 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
         <img className="cart-thumb" src={product.image_url} alt={product.name} onError={() => setImgOk(false)} />
       )}
       <h3>{product.name}</h3>
-      <div>
-        <button type="button" aria-label={`Kurangi ${product.name}`} disabled={item.quantity <= 1} onClick={() => onQty(item.quantity - 1)}>-</button>
+      <div className="qty-ctrl">
+        <button type="button" aria-label={`Kurangi ${product.name}`} disabled={item.quantity <= 1} onClick={() => onQty(item.quantity - 1)}>−</button>
         <span aria-label={`Jumlah ${product.name}`}>{item.quantity}</span>
         <button type="button" aria-label={`Tambah ${product.name}`} disabled={item.quantity >= 10} onClick={() => onQty(item.quantity + 1)}>+</button>
       </div>
       {item.note !== null && item.note.trim() !== "" ? <p className="cart-note">{item.note}</p> : null}
-      <p>{rupiah(product.price * item.quantity)}</p>
-      <button type="button" aria-label={`Hapus ${product.name}`} onClick={onRemove}>X</button>
+      <p className="cart-price">{rupiah(product.price * item.quantity)}</p>
+      <button type="button" className="cart-remove" aria-label={`Hapus ${product.name}`} onClick={onRemove}>Hapus</button>
     </li>
   );
 }
@@ -137,7 +139,7 @@ export function CartPage() {
   return (
     <div>
       <Header />
-      <main>
+      <main className="cart-page">
         <h1>Keranjang</h1>
         {state === "loading" ? (
           <div className="skeleton" aria-label="Memuat keranjang" />
@@ -189,10 +191,10 @@ export function CartPage() {
               <div>
                 <label htmlFor="delivery-address">Alamat pengiriman</label>
                 <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} />
-                <p><span className="warn-icon" aria-hidden="true">⚠</span> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
+                <p><Icon name="warning" /> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
               </div>
             ) : null}
-            <button type="button" className="btn-primary" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran</button>
+            <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran <Icon name="arrow-right" /></button>
             {checkout === "fail" ? (
               <div role="alert">
                 <p>{checkoutMsg}</p>
@@ -202,6 +204,7 @@ export function CartPage() {
           </>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
