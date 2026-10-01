@@ -18,6 +18,19 @@ function tomorrowISO(): string {
 
 function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: Product | undefined; onQty: (q: number) => void; onRemove: () => void }) {
   const [imgOk, setImgOk] = useState(true);
+  const [draft, setDraft] = useState(String(item.quantity));
+  // Sinkronkan input bila qty berubah dari luar (mis. gagal update -> balik ke nilai lama).
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkron state eksternal (prop qty) ke draft lokal
+  useEffect(() => { setDraft(String(item.quantity)); }, [item.quantity]);
+
+  function commit(raw: string): void {
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n)) { setDraft(String(item.quantity)); return; }
+    const clamped = Math.min(10, Math.max(1, n));
+    if (clamped !== item.quantity) onQty(clamped);
+    setDraft(String(clamped));
+  }
+
   if (product === undefined) {
     return (
       <li className="cart-row">
@@ -36,7 +49,18 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
       <h3>{product.name}</h3>
       <div className="qty-ctrl">
         <button type="button" aria-label={`Kurangi ${product.name}`} disabled={item.quantity <= 1} onClick={() => onQty(item.quantity - 1)}>−</button>
-        <span aria-label={`Jumlah ${product.name}`}>{item.quantity}</span>
+        <input
+          type="number"
+          className="qty-input"
+          min={1}
+          max={10}
+          inputMode="numeric"
+          aria-label={`Jumlah ${product.name}`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { commit((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).blur(); } }}
+        />
         <button type="button" aria-label={`Tambah ${product.name}`} disabled={item.quantity >= 10} onClick={() => onQty(item.quantity + 1)}>+</button>
       </div>
       {item.note !== null && item.note.trim() !== "" ? <p className="cart-note">{item.note}</p> : null}
