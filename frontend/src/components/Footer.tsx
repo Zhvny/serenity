@@ -9,7 +9,7 @@ export function Footer({ categories = [] }: { categories?: Pick<Category, "id" |
       <div className="footer-grid">
         <div className="footer-brand">
           <span className="footer-logo"><Icon name="leaf" /> Serenity</span>
-          <p>Pre-order makanan sehat, disiapkan segar. Pesan, bayar QRIS, ambil atau antar.</p>
+          <p>Pre-order dessert &amp; minuman sehat rendah gula, dibuat segar. Pesan, bayar QRIS, ambil atau antar.</p>
         </div>
         <nav className="footer-col" aria-label="Tautan">
           <h3>Jelajah</h3>

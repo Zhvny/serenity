@@ -155,53 +155,63 @@ export function CartPage() {
             <p>Belum ada item di keranjang.</p>
           </div>
         ) : (
-          <>
-            {errorMsg !== "" ? <p role="alert">{errorMsg}</p> : null}
-            <ul className="cart-list">
-              {items.map((i) => (
-                <CartRow key={i.item_id} item={i} product={byId.get(i.product_id)} onQty={(q) => void handleQty(i, q)} onRemove={() => void handleRemove(i)} />
-              ))}
-            </ul>
-            <div className="cart-summary">
-              <p>Subtotal <span>{rupiah(total)}</span></p>
-              <h2>Total <span>{rupiah(total)}</span></h2>
-              <p>Estimasi dihitung saat checkout</p>
+          <div className="cart-grid">
+            <div className="cart-main">
+              {errorMsg !== "" ? <p role="alert">{errorMsg}</p> : null}
+              <ul className="cart-list">
+                {items.map((i) => (
+                  <CartRow key={i.item_id} item={i} product={byId.get(i.product_id)} onQty={(q) => void handleQty(i, q)} onRemove={() => void handleRemove(i)} />
+                ))}
+              </ul>
             </div>
-            <div className="chip-group" role="group" aria-label="Mode order">
-              <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>Instant</button>
-              <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>Scheduled</button>
-            </div>
-            {mode === "scheduled" ? (
-              <div>
-                <label htmlFor="sched-date">Tanggal</label>
-                <input id="sched-date" type="date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} />
-                <div className="chip-group" role="group" aria-label="Slot waktu">
-                  {SLOTS.map((s) => (
-                    <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{s}</button>
-                  ))}
+            <aside className="cart-aside">
+              <div className="cart-panel">
+                <h2 className="cart-panel-title">Ringkasan</h2>
+                <div className="cart-summary">
+                  <p>Subtotal <span>{rupiah(total)}</span></p>
+                  <h2>Total <span>{rupiah(total)}</span></h2>
+                  <p>Estimasi ongkir dihitung saat checkout</p>
                 </div>
               </div>
-            ) : null}
-            {formError !== "" ? <p role="alert">{formError}</p> : null}
-            <div className="chip-group" role="group" aria-label="Metode pengambilan">
-              <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>Ambil sendiri</button>
-              <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>Diantar</button>
-            </div>
-            {delivery === "delivery" ? (
-              <div>
-                <label htmlFor="delivery-address">Alamat pengiriman</label>
-                <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} />
-                <p><Icon name="warning" /> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
+              <div className="cart-panel">
+                <h2 className="cart-panel-title">Waktu &amp; pengambilan</h2>
+                <div className="chip-group" role="group" aria-label="Mode order">
+                  <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>Instant</button>
+                  <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>Scheduled</button>
+                </div>
+                {mode === "scheduled" ? (
+                  <div>
+                    <label htmlFor="sched-date">Tanggal</label>
+                    <input id="sched-date" type="date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} />
+                    <div className="chip-group" role="group" aria-label="Slot waktu">
+                      {SLOTS.map((s) => (
+                        <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="chip-group" role="group" aria-label="Metode pengambilan">
+                  <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>Ambil sendiri</button>
+                  <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>Diantar</button>
+                </div>
+                {delivery === "delivery" ? (
+                  <div>
+                    <label htmlFor="delivery-address">Alamat pengiriman</label>
+                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <p className="cart-opt-note"><Icon name="warning" /> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
+                  </div>
+                ) : null}
+                {formError !== "" ? <p role="alert">{formError}</p> : null}
+                <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran <Icon name="arrow-right" /></button>
+                {checkout === "fail" ? (
+                  <div role="alert">
+                    <p>{checkoutMsg}</p>
+                    <button type="button" className="btn-secondary" onClick={() => void handleCheckout()}>Coba lagi</button>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-            <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran <Icon name="arrow-right" /></button>
-            {checkout === "fail" ? (
-              <div role="alert">
-                <p>{checkoutMsg}</p>
-                <button type="button" className="btn-secondary" onClick={() => void handleCheckout()}>Coba lagi</button>
-              </div>
-            ) : null}
-          </>
+            </aside>
+          </div>
         )}
       </main>
       <Footer />
