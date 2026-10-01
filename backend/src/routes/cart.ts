@@ -9,7 +9,7 @@ import { productRepo } from "../repos/products.js";
 
 const addSchema = z.object({ product_id: z.string().min(1), quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
 const updateSchema = z.object({ quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
-const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish() });
+const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish(), delivery_lat: z.number().min(-90).max(90).nullish(), delivery_lng: z.number().min(-180).max(180).nullish() });
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
@@ -56,7 +56,7 @@ export function cartRoutes(pool: Pool): Hono {
     if (dErr !== null) {
       return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
     }
-    return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, items: await getCart(pool, cartIdOf(c) ?? "") } });
+    return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, delivery_lat: body.delivery_lat ?? null, delivery_lng: body.delivery_lng ?? null, items: await getCart(pool, cartIdOf(c) ?? "") } });
   });
   return r;
 }

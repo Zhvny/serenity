@@ -708,3 +708,14 @@ code { font-family: var(--font-mono); font-size: 14px; }
 .cart-aside .cart-checkout { margin: var(--sp-lg) 0 0; width: 100%; justify-content: center; }
 .cart-opt-note { display: flex; align-items: flex-start; gap: var(--sp-xs); font-size: 13px; color: var(--ink-mute); margin-top: var(--sp-sm); }
 .cart-opt-note .icon { color: var(--warning); flex: none; margin-top: 2px; }
+
+
+/* LocationPicker (Leaflet + OSM) */
+.map-picker { margin-top: var(--sp-xs); }
+.map-picker-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); flex-wrap: wrap; }
+.map-locate { display: inline-flex; align-items: center; gap: var(--sp-xs); min-height: 36px; }
+.map-coord { color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+.map-canvas { height: 240px; width: 100%; border: 1px solid var(--hairline-strong); border-radius: var(--r-md); overflow: hidden; }
+.map-canvas:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.map-pin-dot { display: block; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.map-picker + textarea, .map-picker ~ textarea { margin-top: var(--sp-sm); }

@@ -5,6 +5,7 @@ import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { LocationPicker, type LatLng } from "../components/LocationPicker.tsx";
 import { rupiah } from "../utils/format.ts";
 
 const SLOTS = ["12:00", "15:00", "18:00", "21:00"];
@@ -56,6 +57,7 @@ export function CartPage() {
   const [slot, setSlot] = useState("12:00");
   const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
+  const [coords, setCoords] = useState<LatLng | null>(null);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState("");
@@ -117,13 +119,13 @@ export function CartPage() {
       }
     }
     if (delivery === "delivery" && address.trim().length < 10) {
-      setFormError("Alamat pengiriman minimal 10 karakter");
+      setFormError("Tandai lokasi di peta atau pakai lokasi saat ini (alamat minimal 10 karakter)");
       return;
     }
     setFormError("");
     setCheckout("sending");
     try {
-      const base = { delivery_method: delivery, delivery_address: delivery === "delivery" ? address : null } as const;
+      const base = { delivery_method: delivery, delivery_address: delivery === "delivery" ? address : null, delivery_lat: delivery === "delivery" ? coords?.lat ?? null : null, delivery_lng: delivery === "delivery" ? coords?.lng ?? null : null } as const;
       const res = mode === "instant"
         ? await checkoutCart({ mode: "instant", ...base })
         : await checkoutCart({ mode: "scheduled", scheduled_at: new Date(`${date}T${slot}:00+07:00`).toISOString(), ...base });
@@ -197,7 +199,8 @@ export function CartPage() {
                 {delivery === "delivery" ? (
                   <div>
                     <label htmlFor="delivery-address">Alamat pengiriman</label>
-                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <LocationPicker value={coords} onChange={(v, addr) => { setCoords(v); if (addr !== null) setAddress(addr); }} />
+                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Alamat terisi otomatis dari peta; sunting bila perlu (patokan, nomor rumah)" />
                     <p className="cart-opt-note"><Icon name="warning" /> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
                   </div>
                 ) : null}
