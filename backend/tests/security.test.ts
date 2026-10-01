@@ -1,4 +1,4 @@
-import { describe, it, before, after } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
 import { getRedis, closeRedis } from "../src/db/redis.js";
@@ -8,14 +8,12 @@ const pool = { query: async () => ({ rows: [] }) } as unknown as Pool;
 
 describe("security", () => {
   const ip = `sec-test-${Date.now()}`;
-  before(async () => {
-    const r = getRedis();
-    if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
-  });
   after(async () => {
-    const r = getRedis();
-    const keys = await r.keys(`rl:*:${ip}`);
-    if (keys.length > 0) await r.del(...keys);
+    try {
+      const r = getRedis();
+      const keys = await r.keys(`rl:*:${ip}`);
+      if (keys.length > 0) await r.del(...keys);
+    } catch { /* abaikan */ }
     await closeRedis();
   });
 
@@ -29,7 +27,7 @@ describe("security", () => {
     const app = createApp(pool);
     let limited = false;
     for (let i = 0; i < 22; i++) {
-      const r = await app.request("/api/v1/payment/create", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: JSON.stringify({ order_id: "x" }) });
+      const r = await app.request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: JSON.stringify({ items: [], mode: "instant" }) });
       if (r.status === 429) { limited = true; break; }
     }
     assert.equal(limited, true);

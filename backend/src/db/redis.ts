@@ -9,8 +9,10 @@ export function getRedis(): Redis {
   const url = process.env.REDIS_URL ?? "redis://localhost:6379";
   client = new Redis(url, {
     lazyConnect: true,
-    maxRetriesPerRequest: 1,
-    enableOfflineQueue: false,
+    maxRetriesPerRequest: 2,
+    // Antre perintah selama koneksi lazy/reconnect singkat agar INCR rate-limit
+    // tak hilang (drop = undercount). Fail-open tetap via retryStrategy null + catch.
+    enableOfflineQueue: true,
     retryStrategy: (times: number) => (times > 3 ? null : Math.min(times * 200, 1000)),
   });
   // ponytail: swallow error event agar unhandled 'error' tak mematikan proses saat

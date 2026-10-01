@@ -1,8 +1,8 @@
-import { describe, it, before, after } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
-import { getRedis, closeRedis } from "../src/db/redis.js";
+import { closeRedis } from "../src/db/redis.js";
 
 // DB-backed (serenity): cart dipersistensi; test memakai Postgres riil.
 // Butuh seed prod_001. Bersihkan baris cart yang dibuat test di akhir.
@@ -23,15 +23,6 @@ after(async () => {
   }
   await pool.end();
   await closeRedis();
-});
-
-// Rate-limit counter rl:* dibagi lintas file (Redis sama). Jalankan test serial
-// (--test-concurrency=1) + flush sebelum file ini agar tak kena 429 sisa file lain.
-before(async () => {
-  const r = getRedis();
-  if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
-  const keys = await r.keys("rl:*");
-  if (keys.length > 0) await r.del(...keys);
 });
 
 describe("cart", () => {

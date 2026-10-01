@@ -1,4 +1,4 @@
-import { describe, it, before, after } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
 import { getRedis, closeRedis } from "../src/db/redis.js";
@@ -34,14 +34,12 @@ describe("error handler", () => {
 
 describe("tiered rate limit (Redis)", () => {
   const ip = `rl-test-${Date.now()}`;
-  before(async () => {
-    const r = getRedis();
-    if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
-  });
   after(async () => {
-    const r = getRedis();
-    const keys = await r.keys(`rl:*:${ip}`);
-    if (keys.length > 0) await r.del(...keys);
+    try {
+      const r = getRedis();
+      const keys = await r.keys(`rl:*:${ip}`);
+      if (keys.length > 0) await r.del(...keys);
+    } catch { /* abaikan */ }
     await closeRedis();
   });
   it("GET > 60/menit -> 429", async () => {
