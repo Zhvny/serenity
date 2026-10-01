@@ -35,4 +35,27 @@ describe("AdminPage", () => {
     await user.click(screen.getByRole("button", { name: /tambah produk/i }));
     expect(await screen.findByRole("button", { name: /login/i })).toBeInTheDocument();
   });
+
+  it("klik Edit -> form terisi + submit kirim PUT update", async () => {
+    const user = userEvent.setup();
+    const prod = { id: "prod_001", name: "Choco Lava", category_id: "cat_dessert", price: 30000, tags: ["low-sugar"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
+    const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method, body: init?.body as string | undefined });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/products/prod_001") && method === "PUT") return resp({ status: "success", data: { id: "prod_001" } });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [prod] });
+      return resp({ status: "success", data: [prod] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: /edit choco lava/i });
+    await user.click(screen.getByRole("button", { name: /edit choco lava/i }));
+    expect(screen.getByLabelText(/id produk/i)).toBeDisabled();
+    expect((screen.getByLabelText(/nama/i) as HTMLInputElement).value).toBe("Choco Lava");
+    await user.click(screen.getByRole("button", { name: /simpan perubahan/i }));
+    const put = calls.find((c) => c.method === "PUT" && c.url.includes("/admin/products/prod_001"));
+    expect(put).toBeDefined();
+    expect(put?.body).toContain("Choco Lava");
+  });
 });

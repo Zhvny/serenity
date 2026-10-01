@@ -113,3 +113,7 @@
 .admin-price { font-weight: 500; }
 .admin-row .admin-btn--danger { margin-left: auto; }
 .status-badge--ok { background: color-mix(in srgb, var(--primary) 16%, #fff); border-color: var(--primary); color: var(--primary-deep); }
+
+
+.admin-form-actions { display: flex; gap: var(--sp-sm); margin-top: var(--sp-xs); }
+.admin-row-actions { display: flex; gap: var(--sp-sm); margin-left: auto; flex-wrap: wrap; }

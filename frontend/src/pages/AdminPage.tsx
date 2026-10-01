@@ -5,7 +5,9 @@ import {
   adminLogout,
   adminListProducts,
   adminCreateProduct,
+  adminUpdateProduct,
   adminDeactivateProduct,
+  adminReactivateProduct,
   type Product,
 } from "../services/api.ts";
 import "./admin.css";
@@ -19,6 +21,7 @@ export function AdminPage() {
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [form, setForm] = useState<Form>(EMPTY);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   async function refresh(): Promise<void> {
     try {
@@ -50,21 +53,37 @@ export function AdminPage() {
     setLoggedIn(false);
   }
 
-  async function handleCreate(e: FormEvent): Promise<void> {
+  async function handleSubmit(e: FormEvent): Promise<void> {
     e.preventDefault();
     setError("");
     const tags = form.tagsInput.split(",").map((t) => t.trim()).filter((t) => t !== "");
     try {
-      await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags });
+      if (editingId !== null) {
+        await adminUpdateProduct(editingId, { name: form.name, category_id: form.category_id, price: form.price, tags });
+      } else {
+        await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags });
+      }
       setForm(EMPTY);
+      setEditingId(null);
       await refresh();
     } catch (e: unknown) {
       if (e instanceof ApiError && e.code === "UNAUTH") {
         setLoggedIn(false);
         return;
       }
-      setError(e instanceof Error ? e.message : "Gagal menambah produk");
+      setError(e instanceof Error ? e.message : editingId !== null ? "Gagal menyimpan perubahan" : "Gagal menambah produk");
     }
+  }
+
+  function startEdit(p: Product): void {
+    setEditingId(p.id);
+    setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", ") });
+    setError("");
+  }
+
+  function cancelEdit(): void {
+    setEditingId(null);
+    setForm(EMPTY);
   }
 
   async function handleDeactivate(id: string): Promise<void> {
@@ -78,6 +97,20 @@ export function AdminPage() {
         return;
       }
       setError(e instanceof Error ? e.message : "Gagal menonaktifkan");
+    }
+  }
+
+  async function handleReactivate(id: string): Promise<void> {
+    setError("");
+    try {
+      await adminReactivateProduct(id);
+      await refresh();
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.code === "UNAUTH") {
+        setLoggedIn(false);
+        return;
+      }
+      setError(e instanceof Error ? e.message : "Gagal mengaktifkan");
     }
   }
 
@@ -95,10 +128,10 @@ export function AdminPage() {
       {loadError !== "" ? <p className="admin-error" role="alert">{loadError}</p> : null}
 
       <section className="admin-section">
-        <h2 className="admin-subhead">Tambah produk</h2>
-        <form className="admin-form" onSubmit={(e) => void handleCreate(e)}>
+        <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>
+        <form className="admin-form" onSubmit={(e) => void handleSubmit(e)}>
           <label htmlFor="prod-id">ID Produk</label>
-          <input id="prod-id" type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required />
+          <input id="prod-id" type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required disabled={editingId !== null} />
           <label htmlFor="prod-name">Nama</label>
           <input id="prod-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <label htmlFor="prod-cat">Kategori</label>
@@ -111,7 +144,10 @@ export function AdminPage() {
           <input id="prod-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: Number.parseInt(e.target.value, 10) || 0 })} required />
           <label htmlFor="prod-tags">Tags (pisah koma)</label>
           <input id="prod-tags" type="text" value={form.tagsInput} onChange={(e) => setForm({ ...form, tagsInput: e.target.value })} />
-          <button type="submit" className="admin-btn">Tambah Produk</button>
+          <div className="admin-form-actions">
+            <button type="submit" className="admin-btn">{editingId !== null ? "Simpan Perubahan" : "Tambah Produk"}</button>
+            {editingId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={cancelEdit}>Batal</button> : null}
+          </div>
         </form>
       </section>
 
@@ -124,9 +160,14 @@ export function AdminPage() {
               <span className="admin-id">{p.id}</span>
               <span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span>
               <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
-              {p.is_active ? (
-                <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
-              ) : null}
+              <div className="admin-row-actions">
+                <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}>Edit</button>
+                {p.is_active ? (
+                  <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
+                ) : (
+                  <button type="button" className="admin-btn" onClick={() => void handleReactivate(p.id)}>Aktifkan</button>
+                )}
+              </div>
             </li>
           ))}
         </ul>

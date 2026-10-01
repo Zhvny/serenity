@@ -15,6 +15,14 @@ const createSchema = z.object({
   image_url: z.string().nullish(),
   description: z.string().nullish(),
 });
+const updateSchema = z.object({
+  name: z.string().min(1),
+  category_id: z.string().min(1),
+  price: z.number().int().min(1).max(10_000_000),
+  tags: z.array(z.string()).optional(),
+  image_url: z.string().nullish(),
+  description: z.string().nullish(),
+});
 
 export function loginRoute(pool: Pool): Hono {
   const r = new Hono();
@@ -77,6 +85,24 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     const ok = await repo.deactivate(id);
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "deactivate_product", JSON.stringify({ id })]);
     return c.json({ status: "success", data: { deactivated: ok } });
+  });
+
+  r.post("/products/:id/reactivate", async (c) => {
+    const id = c.req.param("id");
+    const ok = await repo.reactivate(id);
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "reactivate_product", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { reactivated: ok } });
+  });
+
+  r.put("/products/:id", zValidator("json", updateSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+  }), async (c) => {
+    const id = c.req.param("id");
+    const body = c.req.valid("json");
+    const ok = await repo.update(id, { name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null });
+    if (!ok) return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "update_product", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { id } });
   });
 
   // Mark-paid QRIS: idempoten (hanya transisi dari pending_payment) + audit.

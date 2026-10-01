@@ -122,7 +122,7 @@ async function getCsrf(): Promise<string> {
   return parse<{ csrfToken: string }>(res).then((d) => d.csrfToken);
 }
 
-async function adminMutate<T>(path: string, method: "POST", input?: unknown): Promise<T> {
+async function adminMutate<T>(path: string, method: "POST" | "PUT", input?: unknown): Promise<T> {
   const token = await getCsrf();
   let res: Response;
   try {
@@ -156,6 +156,14 @@ export function adminCreateProduct(product: { id: string; name: string; category
 
 export function adminDeactivateProduct(id: string): Promise<{ deactivated: boolean }> {
   return adminMutate<{ deactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/deactivate`, "POST");
+}
+
+export function adminReactivateProduct(id: string): Promise<{ reactivated: boolean }> {
+  return adminMutate<{ reactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/reactivate`, "POST");
+}
+
+export function adminUpdateProduct(id: string, product: { name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; description?: string | null }): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
 export function adminMarkPaid(code: string): Promise<{ paid: boolean; changed: boolean }> {
