@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router";
 import { ApiError, getThanks, type ThanksData } from "../services/api.ts";
+import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 
 const POLL_MS = 5000;
@@ -46,25 +49,42 @@ export function ThanksPage() {
   }, [ref]);
 
   if (state === "loading") {
-    return <main className="state"><div className="skeleton" aria-label="Memuat" /></main>;
+    return (
+      <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label="Memuat" /></div></main></div>
+    );
   }
   if (state === "notfound" || data === null) {
     return (
-      <main className="state" role="alert">
-        <h1>Pesanan tidak ditemukan</h1>
-        <p>Tautan tidak berlaku untuk sesi ini.</p>
-        <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
-      </main>
+      <div>
+        <Header />
+        <main className="pay-wrap">
+          <div className="pay-card" role="alert">
+            <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
+            <h1>Pesanan tidak ditemukan</h1>
+            <p>Tautan tidak berlaku untuk sesi ini.</p>
+            <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
+  const paid = data.status === "paid";
   return (
-    <main className="state">
-      <h1>Pembayaran QRIS</h1>
-      <p>Kode: <strong>{data.unique_code}</strong></p>
-      <p>Nominal: <strong>{rupiah(data.nominal)}</strong></p>
-      {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt="QRIS pembayaran" /> : null}
-      <p>Status: {data.status === "paid" ? "Lunas" : "Menunggu pembayaran"}</p>
-      <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
-    </main>
+    <div>
+      <Header />
+      <main className="pay-wrap">
+        <div className="pay-card">
+          <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
+          <h1>Pembayaran QRIS</h1>
+          <p className="pay-meta">Kode: <strong>{data.unique_code}</strong></p>
+          <p className="pay-meta">Nominal: <strong>{rupiah(data.nominal)}</strong></p>
+          {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt="QRIS pembayaran" /> : null}
+          <p className="status-badge">{paid ? "Lunas" : "Menunggu pembayaran"}</p>
+          <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }

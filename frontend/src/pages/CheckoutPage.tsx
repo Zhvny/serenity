@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ApiError, generateCode } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -23,14 +25,18 @@ export function CheckoutPage() {
   return (
     <div>
       <Header />
-      <main className="state">
-        <h1>Pembayaran</h1>
-        <p>Buat kode QRIS untuk menyelesaikan pesanan dari keranjang Anda.</p>
-        <button type="button" className="btn-primary" disabled={state === "sending"} onClick={() => void handlePay()}>
-          Bayar via QRIS
-        </button>
-        {state === "error" ? <p className="admin-error" role="alert">{msg}</p> : null}
+      <main className="pay-wrap">
+        <div className="pay-card">
+          <span className="pay-icon"><Icon name="spark" /></span>
+          <h1>Pembayaran</h1>
+          <p>Buat kode QRIS untuk menyelesaikan pesanan dari keranjang Anda.</p>
+          <button type="button" className="btn-primary btn-lg pay-cta" disabled={state === "sending"} onClick={() => void handlePay()}>
+            {state === "sending" ? "Memproses…" : "Bayar via QRIS"}
+          </button>
+          {state === "error" ? <p className="detail-msg detail-msg--err" role="alert">{msg}</p> : null}
+        </div>
       </main>
+      <Footer />
     </div>
   );
 }

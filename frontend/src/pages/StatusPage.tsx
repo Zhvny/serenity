@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { ApiError, getThanks } from "../services/api.ts";
+import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
@@ -43,23 +46,39 @@ export function StatusPage() {
   }, [ref]);
 
   if (state === "loading") {
-    return <main className="state"><div className="skeleton" aria-label="Memuat status" /></main>;
+    return <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label="Memuat status" /></div></main></div>;
   }
   if (state === "notfound") {
     return (
-      <main className="state" role="alert">
-        <h1>Pesanan tidak ditemukan</h1>
-        <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
-      </main>
+      <div>
+        <Header />
+        <main className="pay-wrap">
+          <div className="pay-card" role="alert">
+            <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
+            <h1>Pesanan tidak ditemukan</h1>
+            <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
     );
   }
-  const label = status === "paid" ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : "Menunggu pembayaran";
+  const paid = status === "paid";
+  const label = paid ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : "Menunggu pembayaran";
+  const icon = paid ? "check" : status === "cancelled" ? "warning" : "clock";
   return (
-    <main className="state" role="status">
-      <h1>Status Pesanan</h1>
-      <p>Kode: <strong>{ref}</strong></p>
-      <p className="status-badge">{label}</p>
-      <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
-    </main>
+    <div>
+      <Header />
+      <main className="pay-wrap">
+        <div className="pay-card" role="status">
+          <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={icon} /></span>
+          <h1>Status Pesanan</h1>
+          <p className="pay-meta">Kode: <strong>{ref}</strong></p>
+          <p className="status-badge">{label}</p>
+          <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
