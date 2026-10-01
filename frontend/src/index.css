@@ -1,12 +1,34 @@
 :root {
-  --white: #FFFFFF;
-  --cream: #F5F3EC;
-  --sage: #7A8F6E;
-  --sage-deep: #5A6F4E;
-  --charcoal: #2D2D2D;
-  --stone: #8C8478;
-  --warning: #D4A843;
+  /* Palet resmi (DESIGN.md §2) */
+  --primary-sand: #D4A373;
+  --primary-sand-deep: #9C6B2E;
+  --secondary-ocean: #0891B2;
+  --tertiary-forest: #166534;
+  --background: #FFFDF7;
+  --surface-default: #FFFFFF;
+  --surface-sunken: #F5F3EC;
+  --content-primary: #2D2D2D;
+  --content-secondary: #8C8478;
+  --content-tertiary: #CCC8B0;
   --divider: #E8E6DF;
+  --warning: #CA8A04;
+  --success: #166534;
+  --error: #DC2626;
+  --info: #0891B2;
+
+  /* Spacing (DESIGN.md §3b, base 8px) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 32px;
+  --sp-6: 48px;
+  --sp-7: 80px;
+  --sp-8: 120px;
+
+  /* Font (DESIGN.md §3) */
+  --font-display: 'Waldenburg', 'Times New Roman', serif;
+  --font-body: Inter, -apple-system, "SF Pro Text", system-ui, sans-serif;
 }
 
 * {
@@ -15,18 +37,21 @@
 
 body {
   margin: 0;
-  font-family: Inter, -apple-system, "SF Pro Text", system-ui, sans-serif;
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: 16px;
   line-height: 1.5;
-  color: var(--charcoal);
-  background: var(--white);
+  color: var(--content-primary);
+  background: var(--surface-default);
   padding-top: 60px;
 }
 
-h1 { font-size: 24px; line-height: 1.2; margin: 0 0 12px; }
-h2 { font-size: 20px; line-height: 1.3; margin: 0 0 8px; }
-h3 { font-size: 16px; line-height: 1.4; margin: 8px 0 4px; color: var(--charcoal); }
-p { font-size: 14px; margin: 0 0 8px; }
+/* Gambar flexible: tak overflow di 320px (DESIGN.md §10) */
+img { max-width: 100%; height: auto; }
+
+h1 { font-family: var(--font-display); font-weight: 300; font-size: 32px; line-height: 1.13; letter-spacing: -0.32px; margin: 0 0 12px; }
+h2 { font-family: var(--font-display); font-weight: 300; font-size: 24px; line-height: 1.2; margin: 0 0 8px; }
+h3 { font-size: 16px; line-height: 1.4; margin: 8px 0 4px; color: var(--content-primary); }
+p { font-size: 16px; margin: 0 0 8px; }
 small { font-size: 12px; }
 
 .site-header {
@@ -39,13 +64,13 @@ small { font-size: 12px; }
   align-items: center;
   gap: 16px;
   padding: 0 16px;
-  background: var(--white);
+  background: var(--surface-default);
   border-bottom: 1px solid var(--divider);
   z-index: 10;
 }
 
 .site-header .logo {
-  color: var(--sage);
+  color: var(--primary-sand);
   font-weight: 700;
   font-size: 20px;
   text-decoration: none;
@@ -57,36 +82,31 @@ small { font-size: 12px; }
 }
 
 .site-header nav a {
-  color: var(--charcoal);
+  color: var(--content-primary);
   text-decoration: none;
   font-size: 14px;
 }
 
 .site-header nav a:hover {
-  color: var(--sage-deep);
+  color: var(--primary-sand-deep);
 }
 
-.product-grid {
+.grid-menu {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
 }
-@media (min-width: 480px) { .product-grid { gap: 24px; } }
-@media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); padding: 24px; } }
-@media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); padding: 32px; } }
-
-@media (min-width: 768px) {
-  .product-grid { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 641px) {
+  .grid-menu { grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); padding: var(--sp-4); }
 }
-
-@media (min-width: 1024px) {
-  .product-grid { grid-template-columns: repeat(4, 1fr); }
+@media (min-width: 1025px) {
+  .grid-menu { grid-template-columns: repeat(3, 1fr); padding: var(--sp-5); }
 }
 
 .product-card {
   display: block;
-  color: var(--charcoal);
+  color: var(--content-primary);
   text-decoration: none;
   border: 2px solid var(--divider);
   border-radius: 0;
@@ -100,11 +120,11 @@ small { font-size: 12px; }
   object-fit: cover;
   border-radius: 0;
   display: block;
-  background: var(--cream);
+  background: var(--surface-sunken);
 }
 
 .product-photo--empty {
-  background: var(--cream);
+  background: var(--surface-sunken);
 }
 
 .product-card .price {
@@ -119,7 +139,7 @@ small { font-size: 12px; }
 
 .tag {
   font-size: 12px;
-  color: var(--sage-deep);
+  color: var(--primary-sand-deep);
 }
 
 .filter-bar {
@@ -135,7 +155,7 @@ small { font-size: 12px; }
   padding: 8px 16px;
   font-size: 14px;
   background: var(--surface-default);
-  color: var(--charcoal);
+  color: var(--content-primary);
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -143,18 +163,31 @@ small { font-size: 12px; }
 
 .chip--active {
   background: var(--primary-sand);
-  color: var(--white);
+  color: var(--surface-default);
   border-color: var(--primary-sand);
 }
 
+/* Tombol: base + ukuran (DESIGN.md §6). min-height 44px tap target. */
+.btn, .btn-primary, .btn-secondary {
+  min-height: 44px;
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.btn-sm { min-height: 44px; padding: var(--sp-2) var(--sp-3); border-width: 3px; }
+.btn-md { min-height: 48px; padding: 12px var(--sp-4); border-width: 3px; }
+.btn-lg { min-height: 52px; padding: var(--sp-3) 28px; border-width: 5px; }
+
 .btn-primary {
   background: var(--primary-sand);
-  color: var(--white);
+  color: var(--surface-default);
   border: 3px solid var(--primary-sand);
   border-radius: 0;
   padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -172,8 +205,6 @@ small { font-size: 12px; }
   border: 2px solid var(--primary-sand-deep);
   border-radius: 0;
   padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -181,13 +212,13 @@ small { font-size: 12px; }
 
 .btn-secondary:hover,
 .btn-secondary:focus {
-  background: var(--cream);
+  background: var(--surface-sunken);
 }
 
 .state {
   padding: 32px 24px;
   text-align: center;
-  color: var(--charcoal);
+  color: var(--content-primary);
 }
 
 .state h2 {
@@ -209,7 +240,7 @@ small { font-size: 12px; }
 }
 
 :focus-visible {
-  outline: 2px solid var(--sage-deep);
+  outline: 2px solid var(--primary-sand-deep);
   outline-offset: 2px;
 }
 

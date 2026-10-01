@@ -75,7 +75,7 @@ export function MenuPage() {
       <main>
         <FilterBar categories={cats} value={filter} onChange={handleChange} />
         {state === "loading" ? (
-          <div className="product-grid" aria-label="Memuat menu">
+          <div className="grid-menu" aria-label="Memuat menu">
             {Array.from({ length: 6 }, (_, i) => (
               <div key={i} className="skeleton" aria-hidden="true" />
             ))}
@@ -97,7 +97,7 @@ export function MenuPage() {
             </button>
           </div>
         ) : (
-          <div className="product-grid">
+          <div className="grid-menu">
             {prods.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
