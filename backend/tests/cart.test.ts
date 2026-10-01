@@ -1,10 +1,29 @@
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
-import type { Pool } from "pg";
+import { createPool } from "../src/db/pool.js";
+import { closeRedis } from "../src/db/redis.js";
 
-const row = { id: "prod_001", name: "Test", category_id: "cat_1", price: 10000, tags: [], image_url: null, description: null, is_active: true, calories_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, allergens: [] };
-const pool = { query: async (_text: string, params?: unknown[]) => ({ rows: params?.includes("prod_001") === true ? [row] : [] }) } as unknown as Pool;
+// DB-backed (serenity): cart dipersistensi; test memakai Postgres riil.
+// Butuh seed prod_001. Bersihkan baris cart yang dibuat test di akhir.
+const pool = createPool();
+const createdCarts: string[] = [];
+
+function cookieOf(res: Response): string {
+  const sc = res.headers.get("set-cookie") ?? "";
+  const id = sc.match(/cart_id=([^;]+)/)?.[1];
+  if (id !== undefined) createdCarts.push(id);
+  return sc;
+}
+
+after(async () => {
+  for (const id of createdCarts) {
+    await pool.query("DELETE FROM cart_items WHERE cart_id = $1", [id]);
+    await pool.query("DELETE FROM carts WHERE id = $1", [id]);
+  }
+  await pool.end();
+  await closeRedis();
+});
 
 describe("cart", () => {
   it("POST /cart/add qty 0 → 400", async () => {
@@ -14,12 +33,12 @@ describe("cart", () => {
   it("POST /cart/add valid → 200 + Set-Cookie cart_id", async () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 2 }) });
     assert.equal(res.status, 200);
-    assert.match(res.headers.get("set-cookie") ?? "", /cart_id=/);
+    assert.match(cookieOf(res), /cart_id=/);
   });
   it("PUT /cart/items/:id qty 0 → 400", async () => {
     const app = createApp(pool);
     const add = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 1 }) });
-    const cookie = add.headers.get("set-cookie") ?? "";
+    const cookie = cookieOf(add);
     const { data } = (await add.json()) as { data: { item_id: string } };
     const res = await app.request(`/api/v1/cart/items/${data.item_id}`, { method: "PUT", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ quantity: 0 }) });
     assert.equal(res.status, 400);
@@ -35,19 +54,17 @@ describe("cart", () => {
   it("POST /cart/add tanpa product_id → 400 VALIDATION_ERROR", async () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ quantity: 1 }) });
     assert.equal(res.status, 400);
-    const json = (await res.json()) as { code: string };
-    assert.equal(json.code, "VALIDATION_ERROR");
+    assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
   });
   it("POST /cart/add produk unknown → 404 PRODUCT_NOT_FOUND", async () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_nope", quantity: 1 }) });
     assert.equal(res.status, 404);
-    const json = (await res.json()) as { code: string };
-    assert.equal(json.code, "PRODUCT_NOT_FOUND");
+    assert.equal(((await res.json()) as { code: string }).code, "PRODUCT_NOT_FOUND");
   });
   it("PUT /cart/items/:id update note → 200", async () => {
     const app = createApp(pool);
     const add = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "prod_001", quantity: 1 }) });
-    const cookie = add.headers.get("set-cookie") ?? "";
+    const cookie = cookieOf(add);
     const { data } = (await add.json()) as { data: { item_id: string } };
     const res = await app.request(`/api/v1/cart/items/${data.item_id}`, { method: "PUT", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ quantity: 2, note: "tanpa es" }) });
     assert.equal(res.status, 200);

@@ -28,19 +28,19 @@ export function cartRoutes(pool: Pool): Hono {
       cartId = randomUUID();
       c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=Lax; Path=/`);
     }
-    const item = addItem(cartId, body.product_id, body.quantity, body.note ?? null);
+    const item = await addItem(pool, cartId, body.product_id, body.quantity, body.note ?? null);
     return c.json({ status: "success", data: item });
   });
   r.get("/cart", async (c) => {
-    return c.json({ status: "success", data: getCart(cartIdOf(c) ?? "") });
+    return c.json({ status: "success", data: await getCart(pool, cartIdOf(c) ?? "") });
   });
   r.put("/cart/items/:item_id", zValidator("json", updateSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
     const body = c.req.valid("json");
-    const item = updateItem(cartIdOf(c) ?? "", c.req.param("item_id"), body.quantity, body.note);
+    const item = await updateItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"), body.quantity, body.note);
     return item === null ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: item });
   });
   r.delete("/cart/items/:item_id", async (c) => {
-    const ok = removeItem(cartIdOf(c) ?? "", c.req.param("item_id"));
+    const ok = await removeItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"));
     return !ok ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: { removed: true } });
   });
   r.post("/cart/checkout", zValidator("json", checkoutSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
@@ -56,7 +56,7 @@ export function cartRoutes(pool: Pool): Hono {
     if (dErr !== null) {
       return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
     }
-    return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, items: getCart(cartIdOf(c) ?? "") } });
+    return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, items: await getCart(pool, cartIdOf(c) ?? "") } });
   });
   return r;
 }

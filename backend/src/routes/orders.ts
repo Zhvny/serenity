@@ -41,11 +41,11 @@ export function orderRoutes(pool: Pool): Hono {
       }
       total += p.price * item.quantity;
     }
-    const order = createOrder(body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address);
+    const order = await createOrder(pool, body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address);
     return c.json({ status: "success", data: order });
   });
   r.get("/orders/:order_id", async (c) => {
-    const order = getOrder(c.req.param("order_id"));
+    const order = await getOrder(pool, c.req.param("order_id"));
     return order === null
       ? c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404)
       : c.json({ status: "success", data: order });
@@ -57,7 +57,7 @@ export function orderRoutes(pool: Pool): Hono {
     if (key === undefined || c.req.header("x-internal-key") !== key) {
       return c.json({ status: "error", code: "INTERNAL_ONLY", message: "Khusus internal" }, 403);
     }
-    const order = setStatus(c.req.param("order_id"), c.req.valid("json").status);
+    const order = await setStatus(pool, c.req.param("order_id"), c.req.valid("json").status);
     return order === null
       ? c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404)
       : c.json({ status: "success", data: order });
