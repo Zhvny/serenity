@@ -6,7 +6,6 @@ import { menuService } from "./services/menu.js";
 import { menuRoutes } from "./routes/menu.js";
 import { cartRoutes } from "./routes/cart.js";
 import { orderRoutes } from "./routes/orders.js";
-import { paymentRoutes } from "./routes/payment.js";
 import { corsMw, loggerMw, tieredRateLimit } from "./middleware/security.js";
 import { issueCsrf, csrfMw } from "./middleware/csrf.js";
 import { loginRoute, adminRoutes } from "./routes/admin.js";
@@ -19,7 +18,6 @@ export function createApp(pool: Pool): Hono {
   app.route("/", menuRoutes(menuService(productRepo(pool))));
   app.route("/", cartRoutes(pool));
   app.route("/", orderRoutes(pool));
-  app.route("/", paymentRoutes(pool));
   // Admin: CSRF (double-submit + Origin) di semua mutasi admin, lalu login + rute terproteksi.
   app.use("/admin/*", csrfMw());
   app.route("/admin", loginRoute(pool));

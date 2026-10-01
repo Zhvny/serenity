@@ -22,9 +22,12 @@ before(() => {
 after(async () => {
   for (const u of createdUsers) await pool.query("DELETE FROM login_attempts WHERE username = $1", [u]);
   await pool.query("DELETE FROM admin_sessions WHERE username = $1", ["admin"]);
-  const r = getRedis();
-  const keys = await r.keys("rl:*");
-  if (keys.length > 0) await r.del(...keys);
+  try {
+    const r = getRedis();
+    if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
+    const keys = await r.keys("rl:*");
+    if (keys.length > 0) await r.del(...keys);
+  } catch { /* redis sudah tertutup */ }
   await pool.end();
   await closeRedis();
 });

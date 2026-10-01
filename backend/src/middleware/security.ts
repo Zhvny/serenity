@@ -34,7 +34,8 @@ export function tieredRateLimit(): MiddlewareHandler {
     let count: number;
     try {
       const r = getRedis();
-      if (r.status === "wait" || r.status === "close" || r.status === "end") await r.connect();
+      // lazyConnect + enableOfflineQueue: perintah pertama memicu connect & di-antre;
+      // tak perlu r.connect() manual (menghindari balapan "already connecting").
       const res = await r.multi().incr(key).expire(key, WINDOW_SEC, "NX").exec();
       const incr = res?.[0]?.[1];
       count = typeof incr === "number" ? incr : Number(incr);
