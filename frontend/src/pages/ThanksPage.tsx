@@ -1,23 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router";
 import { ApiError, getThanks, type ThanksData } from "../services/api.ts";
 import { rupiah } from "../utils/format.ts";
+
+const POLL_MS = 5000;
+const MAX_POLLS = 60;
 
 export function ThanksPage() {
   const [params] = useSearchParams();
   const ref = params.get("ref") ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [data, setData] = useState<ThanksData | null>(null);
+  const polls = useRef(0);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronisasi state eksternal (query ref) + async fetch
-    if (ref === "") { setState("notfound"); return; }
+    if (ref === "") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronisasi query ref kosong
+      setState("notfound");
+      return;
+    }
     let alive = true;
-    getThanks(ref)
-      .then((d) => { if (alive) { setData(d); setState("done"); } })
-      // Sesi lain / ref tak ada -> 404 seragam dari server.
-      .catch((e: unknown) => { if (alive) setState(e instanceof ApiError ? "notfound" : "notfound"); });
-    return () => { alive = false; };
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    async function tick(): Promise<void> {
+      try {
+        const d = await getThanks(ref);
+        if (!alive) return;
+        setData(d);
+        setState("done");
+        // Hentikan polling pada status final / batas maksimum (hindari spam BE).
+        if (d.status === "paid" || d.status === "cancelled" || polls.current >= MAX_POLLS) {
+          if (timer !== null) clearInterval(timer);
+        }
+      } catch (e: unknown) {
+        if (!alive) return;
+        setState("notfound");
+        if (timer !== null) clearInterval(timer);
+        void (e as ApiError);
+      }
+    }
+
+    void tick();
+    timer = setInterval(() => { polls.current += 1; void tick(); }, POLL_MS);
+    return () => { alive = false; if (timer !== null) clearInterval(timer); };
   }, [ref]);
 
   if (state === "loading") {
