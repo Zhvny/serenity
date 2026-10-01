@@ -1,11 +1,14 @@
-import { describe, it } from "node:test";
+import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
+import { closeRedis } from "../src/db/redis.js";
 import type { Pool } from "pg";
 
 const rows = [{ id: "prod_001", name: "Salad Quinoa Ayam Grilled", category_id: "cat_food", price: 45000, tags: ["high-protein"], image_url: null, description: null, is_active: true, calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4, allergens: ["kacang"] }];
 const catRows = [{ id: "cat_food", name: "Food", description: null }];
 const pool = { query: async (text: string) => ({ rows: String(text).includes("FROM categories") ? catRows : rows }) } as unknown as Pool;
+
+after(async () => { await closeRedis(); });
 
 describe("menu", () => {
   it("GET /products 200 + bentuk Product", async () => {
