@@ -157,3 +157,19 @@ export function adminCreateProduct(product: { id: string; name: string; category
 export function adminDeactivateProduct(id: string): Promise<{ deactivated: boolean }> {
   return adminMutate<{ deactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/deactivate`, "POST");
 }
+
+export function adminMarkPaid(code: string): Promise<{ paid: boolean; changed: boolean }> {
+  return adminMutate<{ paid: boolean; changed: boolean }>(`/admin/orders/${encodeURIComponent(code)}/mark-paid`, "POST");
+}
+
+// --- QRIS (public cart flow) ---
+
+export type ThanksData = { unique_code: string; nominal: number; qr_url: string | null; status: string };
+
+export function generateCode(): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
+  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>("/orders/generate-code", {});
+}
+
+export function getThanks(ref: string): Promise<ThanksData> {
+  return apiGet<ThanksData>(`/thanks?ref=${encodeURIComponent(ref)}`);
+}

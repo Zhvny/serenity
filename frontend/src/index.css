@@ -336,3 +336,12 @@ small { font-size: 12px; }
 .warn-icon {
   color: var(--warning);
 }
+
+.qris-img {
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  border: 3px solid var(--primary-sand);
+  margin: var(--sp-3) auto;
+  display: block;
+}
