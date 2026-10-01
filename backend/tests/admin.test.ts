@@ -15,6 +15,7 @@ const csrfHeaders = { "content-type": "application/json", origin: "http://localh
 function loginUser(user: string): string { return `${user}-${Date.now()}`; }
 const createdUsers: string[] = [];
 const createdOrders: string[] = [];
+const createdProducts: string[] = [];
 
 before(() => {
   process.env.ADMIN_USER = "admin";
@@ -23,6 +24,7 @@ before(() => {
 after(async () => {
   for (const u of createdUsers) await pool.query("DELETE FROM login_attempts WHERE username = $1", [u]);
   for (const id of createdOrders) await pool.query("DELETE FROM orders WHERE id = $1", [id]);
+  for (const id of createdProducts) await pool.query("DELETE FROM products WHERE id = $1", [id]);
   await pool.query("DELETE FROM admin_sessions WHERE username = $1", ["admin"]);
   try {
     const r = getRedis();
@@ -107,5 +109,30 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const audit = await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action = 'mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
     assert.equal(Number(audit.rows[0]?.n), 1);
     await pool.query("DELETE FROM audit_logs WHERE action='mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
+  });
+
+  it("PUT /admin/products/:id tanpa session -> 401 UNAUTH", async () => {
+    const res = await createApp(pool).request("/api/v1/admin/products/prod_001", { method: "PUT", headers: csrfHeaders, body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
+    assert.equal(res.status, 401);
+    assert.equal(((await res.json()) as { code: string }).code, "UNAUTH");
+  });
+
+  it("PUT /admin/products/:id -> 200 + field berubah di DB + audit update_product", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const pid = `prod-edit-${Date.now()}`;
+    createdProducts.push(pid);
+    await pool.query("INSERT INTO products (id, name, category_id, price, tags) VALUES ($1,'Lama','cat_food',10000,'{}')", [pid]);
+    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request(`/api/v1/admin/products/${pid}`, { method: "PUT", headers: h, body: JSON.stringify({ name: "Baru Enak", category_id: "cat_dessert", price: 55000, tags: ["low-sugar"] }) });
+    assert.equal(res.status, 200);
+    const row = await pool.query<{ name: string; price: number; category_id: string }>("SELECT name, price, category_id FROM products WHERE id = $1", [pid]);
+    assert.equal(row.rows[0]?.name, "Baru Enak");
+    assert.equal(Number(row.rows[0]?.price), 55000);
+    assert.equal(row.rows[0]?.category_id, "cat_dessert");
+    const audit = await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action='update_product' AND detail::text LIKE $1", [`%${pid}%`]);
+    assert.equal(Number(audit.rows[0]?.n), 1);
+    await pool.query("DELETE FROM audit_logs WHERE action='update_product' AND detail::text LIKE $1", [`%${pid}%`]);
   });
 });

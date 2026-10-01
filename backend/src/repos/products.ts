@@ -40,6 +40,21 @@ export function productRepo(pool: Pool) {
       );
       return rows.length > 0;
     },
+    async reactivate(id: string): Promise<boolean> {
+      const { rows } = await pool.query(
+        `UPDATE products SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND is_active = FALSE RETURNING id`,
+        [id],
+      );
+      return rows.length > 0;
+    },
+    async update(id: string, input: { name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null }): Promise<boolean> {
+      // Update field inti (ID immutable; nutrisi/alergen di luar scope form admin).
+      const { rows } = await pool.query(
+        `UPDATE products SET name = $2, category_id = $3, price = $4, tags = $5, image_url = $6, description = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id`,
+        [id, input.name, input.category_id, input.price, input.tags, input.image_url, input.description],
+      );
+      return rows.length > 0;
+    },
     async listAll(): Promise<Product[]> {
       const { rows } = await pool.query(`SELECT p.*, n.calories_kcal, n.protein_g, n.carbs_g, n.fat_g, n.fiber_g, n.sugar_g, COALESCE(array_agg(a.name) FILTER (WHERE a.name IS NOT NULL), '{}') AS allergens FROM products p LEFT JOIN nutrition_info n ON n.product_id = p.id LEFT JOIN product_allergens pa ON pa.product_id = p.id LEFT JOIN allergens a ON a.id = pa.allergen_id GROUP BY p.id, n.calories_kcal, n.protein_g, n.carbs_g, n.fat_g, n.fiber_g, n.sugar_g ORDER BY p.name`, []);
       return (rows as Row[]).map(toProduct);
