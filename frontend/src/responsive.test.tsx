@@ -14,7 +14,7 @@ describe("responsive tokens", () => {
   it("menu grid memakai class token .grid-menu (bukan .product-grid)", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? cats : prods }))));
     const { container } = render(<MemoryRouter><MenuPage /></MemoryRouter>);
-    await screen.findByText("Salad");
+    await screen.findByRole("link", { name: "Salad" });
     expect(container.querySelector(".grid-menu")).not.toBeNull();
     expect(container.querySelector(".product-grid")).toBeNull();
   });

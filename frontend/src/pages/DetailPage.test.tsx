@@ -55,7 +55,7 @@ describe("MenuPage sinkron URL", () => {
       return new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? cats : prods }));
     }));
     render(<MemoryRouter initialEntries={["/?category=cat_food"]}><MenuPage /></MemoryRouter>);
-    await screen.findByText("Salad");
+    await screen.findByRole("link", { name: "Salad" });
     await waitFor(() => expect(urls.some((u) => u.includes("category=cat_food"))).toBe(true));
     expect(screen.getByRole("button", { name: "Makanan Sehat" })).toHaveAttribute("aria-pressed", "true");
   });
@@ -65,7 +65,7 @@ describe("MenuPage sinkron URL", () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? cats : prods }))));
     const user = userEvent.setup();
     render(<MemoryRouter initialEntries={["/"]}><MenuPage /><LocationProbe /></MemoryRouter>);
-    await screen.findByText("Salad");
+    await screen.findByRole("link", { name: "Salad" });
     await user.click(screen.getByRole("button", { name: "Makanan Sehat" }));
     expect(await screen.findByTestId("loc")).toHaveTextContent("/?category=cat_food");
   });

@@ -25,22 +25,22 @@ describe("MenuPage", () => {
     await screen.findByRole("button", { name: "Coba lagi" });
     mockOk();
     await user.click(screen.getByRole("button", { name: "Coba lagi" }));
-    expect(await screen.findByText("Salad")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Salad" })).toBeInTheDocument();
   });
   it("kategori kosong → chip Semua tetap ada", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? [] : prods }))));
     render(<MemoryRouter><MenuPage /></MemoryRouter>);
     expect(await screen.findByRole("button", { name: "Semua" })).toBeInTheDocument();
-    expect(await screen.findByText("Salad")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Salad" })).toBeInTheDocument();
   });
   it("filter cepat beruntun → hasil terakhir menang", async () => {
     mockOk();
     const user = userEvent.setup();
     render(<MemoryRouter><MenuPage /></MemoryRouter>);
-    await screen.findByText("Salad");
+    await screen.findByRole("link", { name: "Salad" });
     await user.click(screen.getByRole("button", { name: "Makanan Sehat" }));
     await user.click(screen.getByRole("button", { name: "Semua" }));
-    await waitFor(() => expect(screen.getByText("Salad")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("link", { name: "Salad" })).toBeInTheDocument());
   });
   it("produk kosong → Belum ada menu + reset tampilkan list", async () => {
     const user = userEvent.setup();
@@ -49,7 +49,7 @@ describe("MenuPage", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Belum ada menu");
     mockOk();
     await user.click(screen.getByRole("button", { name: "Tampilkan semua" }));
-    expect(await screen.findByText("Salad")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Salad" })).toBeInTheDocument();
   });
   it("loading → 6 skeleton", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
@@ -64,7 +64,7 @@ describe("MenuPage", () => {
     }));
     const user = userEvent.setup();
     render(<MemoryRouter><MenuPage /></MemoryRouter>);
-    await screen.findByText("Salad");
+    await screen.findByRole("link", { name: "Salad" });
     await user.click(screen.getByRole("button", { name: "Makanan Sehat" }));
     await waitFor(() => expect(urls.some((u) => u.includes("category=cat_food"))).toBe(true));
   });

@@ -395,3 +395,188 @@ code { font-family: var(--font-mono); font-size: 14px; }
   color: var(--ink);
   border: 1px solid var(--hairline);
 }
+
+
+/* ============================================================
+   Redesign profesional (DESIGN.md §13) — class baru, token sama
+   ============================================================ */
+
+/* Ikon SVG inline */
+.icon {
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex: none;
+}
+
+.site-header .logo { display: inline-flex; align-items: center; gap: var(--sp-xs); }
+.site-header .logo .icon { color: var(--primary-deep); font-size: 20px; }
+
+.header-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xxs);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 20px;
+  margin-left: auto;
+}
+.header-cart:hover { color: var(--primary-deep); }
+.header-cart .cart-badge { font-size: 12px; }
+
+/* Hero split (MenuPage signature) */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-xl);
+  align-items: center;
+  padding: var(--sp-xxl) var(--sp-lg) var(--sp-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--primary-deep);
+  background: var(--canvas-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-full);
+  padding: var(--sp-xxs) var(--sp-md);
+  margin-bottom: var(--sp-lg);
+}
+.hero-copy h1 {
+  font-size: 40px;
+  line-height: 1.08;
+  letter-spacing: -1px;
+  margin: 0 0 var(--sp-md);
+}
+.hero-copy .lead {
+  font-size: 18px;
+  color: var(--ink-mute);
+  margin: 0 0 var(--sp-xl);
+  max-width: 46ch;
+}
+.hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-md); }
+.hero-actions .btn-primary,
+.hero-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  min-height: 44px;
+  padding: var(--sp-md) var(--sp-xl);
+}
+
+.hero-visual { display: flex; justify-content: center; }
+.hero-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+.hero-card .product-photo { aspect-ratio: 4 / 3; }
+.hero-card-body { padding: var(--sp-md) var(--sp-lg) var(--sp-lg); }
+.hero-card-body h3 { padding: 0; margin: 0 0 var(--sp-xxs); }
+.hero-card-body .price { padding: 0; font-weight: 500; color: var(--primary-deep); }
+.hero-card-stats { display: flex; gap: var(--sp-lg); margin-top: var(--sp-md); }
+.hero-card-stats span { font-size: 13px; color: var(--ink-mute); }
+.hero-card-stats b { display: block; font-weight: 500; color: var(--ink); font-size: 15px; }
+
+@media (min-width: 861px) {
+  .hero { grid-template-columns: 1.1fr 0.9fr; gap: var(--sp-huge); padding: var(--sp-huge) var(--sp-xxl); }
+  .hero-copy h1 { font-size: 52px; }
+}
+
+/* Section + head */
+.section { padding: var(--sp-xl) 0 var(--sp-huge); }
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xxs);
+  padding: 0 var(--sp-lg) var(--sp-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-head .eyebrow { font-size: 13px; font-weight: 500; color: var(--primary-deep); letter-spacing: 0.02em; }
+.section-head h2 { margin: 0; }
+@media (min-width: 1025px) { .section-head { padding: 0 var(--sp-xxl) var(--sp-lg); } }
+
+/* Stat-grid (nutrisi) */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-sm);
+}
+@media (min-width: 541px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+.stat {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: var(--sp-md);
+  background: var(--canvas-soft);
+}
+.stat-num { font-weight: 500; font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat-num .unit { font-size: 13px; color: var(--ink-mute); font-weight: 400; margin-left: 2px; }
+.stat-label { font-size: 13px; color: var(--ink-mute); margin-top: var(--sp-xxs); }
+
+/* Daftar alergen dengan ikon */
+.allergen-list { list-style: none; margin: var(--sp-md) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-sm); }
+.allergen-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--canvas-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-full);
+  padding: var(--sp-xxs) var(--sp-md);
+}
+.allergen-list .icon { color: var(--warning); }
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--hairline);
+  background: var(--canvas-soft);
+  margin-top: var(--sp-huge);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-xl);
+  padding: var(--sp-xxl) var(--sp-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+@media (min-width: 641px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr; } }
+.footer-logo { display: inline-flex; align-items: center; gap: var(--sp-xs); font-weight: 500; font-size: 18px; }
+.footer-logo .icon { color: var(--primary-deep); }
+.footer-brand p { color: var(--ink-mute); max-width: 42ch; margin-top: var(--sp-sm); }
+.footer-col { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.footer-col h3 { font-size: 13px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
+.footer-col a { color: var(--ink); text-decoration: none; font-size: 14px; }
+.footer-col a:hover { color: var(--primary-deep); }
+.footer-base {
+  border-top: 1px solid var(--hairline);
+  padding: var(--sp-lg);
+  text-align: center;
+}
+
+/* Motion: reveal on-mount (dinonaktifkan oleh prefers-reduced-motion di atas) */
+.reveal { opacity: 0; transform: translateY(8px); transition: opacity 240ms ease, transform 240ms ease; }
+.reveal.is-in { opacity: 1; transform: none; }
+
+
+/* DetailPage komposisi */
+.detail-body { display: flex; flex-direction: column; }
+.detail-body .tags { padding: 0 0 var(--sp-sm); }
+.detail-price { font-size: 24px; font-weight: 500; color: var(--primary-deep); margin: 0 0 var(--sp-md); }
+.detail-desc { color: var(--ink-mute); margin: 0 0 var(--sp-lg); max-width: 56ch; }
+.detail-subhead { font-size: 15px; font-weight: 500; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.04em; margin: var(--sp-lg) 0 var(--sp-sm); }
+.detail-cta { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--sp-xs); margin-top: var(--sp-xl); }
+.detail-msg { display: inline-flex; align-items: center; gap: var(--sp-xs); margin-top: var(--sp-sm); color: var(--primary-deep); font-weight: 500; }
+.detail-msg--err { color: var(--error); }

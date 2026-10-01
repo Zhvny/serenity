@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router";
 import { ApiError, addToCart, getProduct } from "../services/api.ts";
 import type { Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 
 export function DetailPage() {
@@ -74,46 +76,55 @@ export function DetailPage() {
             </button>
           </div>
         ) : prod !== null ? (
-          <div className="detail-grid">
-            {prod.image_url === null || !imgOk ? (
-              <div className="product-photo product-photo--empty" aria-hidden="true" />
-            ) : (
-              <img className="product-photo" src={prod.image_url} alt={prod.name} onError={() => setImgOk(false)} />
-            )}
-            <h1>{prod.name}</h1>
-            <h2>{rupiah(prod.price)}</h2>
-            <div className="tags">
-              {prod.tags.map((t) => (
-                <span key={t} className="tag">{t}</span>
-              ))}
+          <article className="detail-grid">
+            <div className="detail-media">
+              {prod.image_url === null || !imgOk ? (
+                <div className="product-photo product-photo--empty" aria-hidden="true" />
+              ) : (
+                <img className="product-photo" src={prod.image_url} alt={prod.name} onError={() => setImgOk(false)} />
+              )}
             </div>
-            <table aria-label="Informasi nutrisi">
-              <tbody>
-                <tr><th scope="row">Kalori</th><td>{prod.nutrition.calories_kcal} kkal</td></tr>
-                <tr><th scope="row">Protein</th><td>{prod.nutrition.protein_g} g</td></tr>
-                <tr><th scope="row">Karbohidrat</th><td>{prod.nutrition.carbs_g} g</td></tr>
-                <tr><th scope="row">Lemak</th><td>{prod.nutrition.fat_g} g</td></tr>
-                <tr><th scope="row">Serat</th><td>{prod.nutrition.fiber_g} g</td></tr>
-                <tr><th scope="row">Gula</th><td>{prod.nutrition.sugar_g} g</td></tr>
-              </tbody>
-            </table>
-            {prod.allergens.length > 0 ? (
-              <ul aria-label="Alergen">
-                {prod.allergens.map((a) => (
-                  <li key={a}>
-                    <span className="warn-icon" aria-hidden="true">⚠</span> {a}
-                  </li>
+            <div className="detail-body">
+              <div className="tags">
+                {prod.tags.map((t) => (
+                  <span key={t} className="tag">{t}</span>
                 ))}
-              </ul>
-            ) : null}
-            <button type="button" className="btn-primary" disabled={cart === "adding"} onClick={() => void handleAdd()}>
-              <span aria-hidden="true">+ </span>Tambahkan ke Keranjang
-            </button>
-            {cart === "added" ? <p role="status">Ditambahkan</p> : null}
-            {cart === "carterror" ? <p role="alert">{cartMsg}</p> : null}
-          </div>
+              </div>
+              <h1>{prod.name}</h1>
+              <p className="detail-price">{rupiah(prod.price)}</p>
+              {prod.description !== null ? <p className="detail-desc">{prod.description}</p> : null}
+
+              <h2 className="detail-subhead">Informasi nutrisi</h2>
+              <dl className="stat-grid" aria-label="Informasi nutrisi">
+                <div className="stat"><dd className="stat-num">{prod.nutrition.calories_kcal}<span className="unit">kkal</span></dd><dt className="stat-label">Kalori</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.protein_g}<span className="unit">g</span></dd><dt className="stat-label">Protein</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.carbs_g}<span className="unit">g</span></dd><dt className="stat-label">Karbohidrat</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.fat_g}<span className="unit">g</span></dd><dt className="stat-label">Lemak</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.fiber_g}<span className="unit">g</span></dd><dt className="stat-label">Serat</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.sugar_g}<span className="unit">g</span></dd><dt className="stat-label">Gula</dt></div>
+              </dl>
+
+              {prod.allergens.length > 0 ? (
+                <>
+                  <h2 className="detail-subhead">Alergen</h2>
+                  <ul className="allergen-list" aria-label="Alergen">
+                    {prod.allergens.map((a) => (
+                      <li key={a}><Icon name="warning" /> {a}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
+              <button type="button" className="btn-primary btn-lg detail-cta" disabled={cart === "adding"} onClick={() => void handleAdd()}>
+                <Icon name="cart" /> Tambahkan ke Keranjang
+              </button>
+              {cart === "added" ? <p className="detail-msg" role="status"><Icon name="check" /> Ditambahkan</p> : null}
+              {cart === "carterror" ? <p className="detail-msg detail-msg--err" role="alert">{cartMsg}</p> : null}
+            </div>
+          </article>
         ) : null}
       </main>
+      <Footer />
     </div>
   );
 }
