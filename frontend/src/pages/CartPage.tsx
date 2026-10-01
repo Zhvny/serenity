@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { ApiError, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
 import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
@@ -53,10 +54,10 @@ export function CartPage() {
   const [slot, setSlot] = useState("12:00");
   const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
-  const [checkout, setCheckout] = useState<"idle" | "sending" | "success" | "fail">("idle");
+  const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
-  const [checkoutMode, setCheckoutMode] = useState("");
   const [formError, setFormError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     let alive = true;
@@ -124,8 +125,9 @@ export function CartPage() {
       const res = mode === "instant"
         ? await checkoutCart({ mode: "instant", ...base })
         : await checkoutCart({ mode: "scheduled", scheduled_at: new Date(`${date}T${slot}:00+07:00`).toISOString(), ...base });
-      setCheckoutMode(res.mode);
-      setCheckout("success");
+      void res;
+      // Validasi server lolos -> lanjut ke halaman pembayaran QRIS.
+      navigate("/checkout");
     } catch (e: unknown) {
       setCheckoutMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
       setCheckout("fail");
@@ -191,7 +193,6 @@ export function CartPage() {
               </div>
             ) : null}
             <button type="button" className="btn-primary" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran</button>
-            {checkout === "success" ? <p role="status">{`Pesanan disiapkan — lanjutkan pembayaran (${checkoutMode})`}</p> : null}
             {checkout === "fail" ? (
               <div role="alert">
                 <p>{checkoutMsg}</p>

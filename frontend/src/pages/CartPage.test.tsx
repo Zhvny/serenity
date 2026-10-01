@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Routes, Route } from "react-router";
 import { CartPage } from "./CartPage.tsx";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -59,13 +59,20 @@ describe("CartPage", () => {
     await user.click(screen.getByRole("button", { name: "Hapus Salad" }));
     expect(screen.queryByText("Salad")).not.toBeInTheDocument();
   });
-  it("checkout instant → POST /cart/checkout {mode:instant} + success", async () => {
+  it("checkout instant valid → POST /cart/checkout + navigate /checkout", async () => {
     const user = userEvent.setup();
     const calls = stubCart();
-    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    render(
+      <MemoryRouter initialEntries={["/cart"]}>
+        <Routes>
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<div>Halaman Pembayaran</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
-    expect(await screen.findByText(/Pesanan disiapkan — lanjutkan pembayaran/)).toBeInTheDocument();
+    expect(await screen.findByText("Halaman Pembayaran")).toBeInTheDocument();
     const post = calls.find((c) => c.url.includes("/cart/checkout"));
     expect(post?.body).toContain('"instant"');
   });
@@ -128,12 +135,19 @@ describe("CartPage", () => {
   it("submit Diantar kirim delivery_method + address", async () => {
     const user = userEvent.setup();
     const calls = stubCart();
-    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    render(
+      <MemoryRouter initialEntries={["/cart"]}>
+        <Routes>
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<div>Halaman Pembayaran</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Diantar" }));
     await user.type(screen.getByLabelText("Alamat pengiriman"), "Jl. Sehat No. 10 Jakarta");
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
-    expect(await screen.findByText(/Pesanan disiapkan — lanjutkan pembayaran/)).toBeInTheDocument();
+    expect(await screen.findByText("Halaman Pembayaran")).toBeInTheDocument();
     const post = calls.find((c) => c.url.includes("/cart/checkout"));
     expect(post?.body).toContain('"delivery"');
     expect(post?.body).toContain("Jl. Sehat No. 10 Jakarta");
@@ -141,10 +155,17 @@ describe("CartPage", () => {
   it("submit Ambil sendiri kirim address null", async () => {
     const user = userEvent.setup();
     const calls = stubCart();
-    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    render(
+      <MemoryRouter initialEntries={["/cart"]}>
+        <Routes>
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<div>Halaman Pembayaran</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
-    expect(await screen.findByText(/Pesanan disiapkan — lanjutkan pembayaran/)).toBeInTheDocument();
+    expect(await screen.findByText("Halaman Pembayaran")).toBeInTheDocument();
     const post = calls.find((c) => c.url.includes("/cart/checkout"));
     expect(post?.body).toContain("null");
   });
