@@ -76,11 +76,26 @@ export function ThanksPage() {
       <main className="pay-wrap">
         <div className="pay-card">
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
-          <h1>Pembayaran QRIS</h1>
-          <p className="pay-meta">Kode: <strong>{data.unique_code}</strong></p>
-          <p className="pay-meta">Nominal: <strong>{rupiah(data.nominal)}</strong></p>
-          {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt="QRIS pembayaran" /> : null}
-          <p className="status-badge">{paid ? "Lunas" : "Menunggu pembayaran"}</p>
+          <h1>{paid ? "Pembayaran diterima" : "Pembayaran QRIS"}</h1>
+          <p className="pay-meta">Kode pesanan: <strong>{data.unique_code}</strong></p>
+          <p className="pay-nominal">Bayar tepat <strong>{rupiah(data.nominal)}</strong></p>
+          {paid ? (
+            <>
+              <p className="status-badge status-badge--ok">Lunas</p>
+              <p className="pay-note">Terima kasih! Pesanan Anda sedang kami proses.</p>
+            </>
+          ) : (
+            <>
+              {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt="QRIS pembayaran Serenity" /> : null}
+              <ol className="pay-steps">
+                <li>Scan QRIS di atas dengan aplikasi e-wallet / m-banking (GoPay, OVO, DANA, bank, dll).</li>
+                <li>Masukkan nominal <strong>persis {rupiah(data.nominal)}</strong>. Nominal yang berbeda membuat pesanan sulit dikonfirmasi.</li>
+                <li>Selesaikan pembayaran, lalu tunggu — status berubah jadi <strong>Lunas</strong> setelah admin memverifikasi (biasanya beberapa menit).</li>
+              </ol>
+              <p className="status-badge">Menunggu pembayaran</p>
+              <p className="pay-note">Simpan halaman ini atau catat kode pesanan untuk konfirmasi.</p>
+            </>
+          )}
           <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
         </div>
       </main>
