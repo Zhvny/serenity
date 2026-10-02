@@ -120,9 +120,9 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     assert.notEqual(sid, "");
 
-    // 7) admin mark-paid -> changed true
+    // 7) admin mark-paid (nominal penuh dari mutasi) -> changed true
     const markHeaders = { ...csrf, cookie: `admin_session=${sid}; csrf_token=e2e` };
-    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: "{}" });
+    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: JSON.stringify({ paid_amount: 90000 }) });
     assert.equal(mp.status, 200);
     assert.equal(((await mp.json()) as { data: { changed: boolean } }).data.changed, true);
 
