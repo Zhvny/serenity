@@ -100,16 +100,54 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     createdOrders.push(orderId);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'pending_payment','pickup','mp-sess',$2)", [orderId, code]);
     const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
-    const first = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: "{}" });
+    const first = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 1000 }) });
     assert.equal(first.status, 200);
     assert.equal(((await first.json()) as { data: { changed: boolean } }).data.changed, true);
-    const second = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: "{}" });
+    const second = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 1000 }) });
     assert.equal(((await second.json()) as { data: { changed: boolean } }).data.changed, false);
     const st = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
     assert.equal(st.rows[0]?.status, "paid");
     const audit = await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action = 'mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
     assert.equal(Number(audit.rows[0]?.n), 1);
     await pool.query("DELETE FROM audit_logs WHERE action='mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
+  });
+
+  it("mark-paid paid_amount=0 -> 400 VALIDATION_ERROR", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/orders/ORD-X/mark-paid", { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 0 }) });
+    assert.equal(res.status, 400);
+  });
+
+  it("mark-paid kurang -> underpaid; settle-parent butuh anak lunas", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const code = `ORD-SP${Date.now()}`;
+    const orderId = `HP-SP-${Date.now()}`;
+    const childId = `HP-SPC-${Date.now()}`;
+    const childCode = `ORD-SPC${Date.now()}`;
+    createdOrders.push(orderId, childId);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',50000,'pending_payment','pickup','sp-sess',$2)", [orderId, code]);
+    const mp = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 30000 }) });
+    assert.equal(mp.status, 200);
+    assert.equal(((await mp.json()) as { data: { status: string } }).data.status, "underpaid");
+    // Anak belum lunas -> settle ditolak.
+    await pool.query("INSERT INTO orders (id, mode, total_amount, paid_amount, status, delivery_method, session_id, unique_code, parent_code) VALUES ($1,'instant',20000,NULL,'pending_payment','pickup','sp-sess',$2,$3)", [childId, childCode, code]);
+    const early = await app.request(`/api/v1/admin/orders/${code}/settle-parent`, { method: "POST", headers: h });
+    assert.equal(early.status, 409);
+    // Lunaskan anak -> settle lolos.
+    await pool.query("UPDATE orders SET status='paid', paid_amount=20000 WHERE unique_code=$1", [childCode]);
+    const done = await app.request(`/api/v1/admin/orders/${code}/settle-parent`, { method: "POST", headers: h });
+    assert.equal(done.status, 200);
+    const st = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
+    assert.equal(st.rows[0]?.status, "paid");
+    await pool.query("DELETE FROM audit_logs WHERE detail::text LIKE $1", [`%${code}%`]);
+    await pool.query("DELETE FROM audit_logs WHERE detail::text LIKE $1", [`%${childCode}%`]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [childId]);
   });
 
   it("PUT /admin/products/:id tanpa session -> 401 UNAUTH", async () => {

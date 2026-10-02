@@ -78,6 +78,89 @@ describe("orders delivery", () => {
   });
 });
 
+describe("orders mine + topup (sesi)", () => {
+  const sess = `sess-mine-${randomUUID()}`;
+  const jar = `cart_id=${sess}`;
+  async function seedMine(total: number, paid: number | null, status: string, parent: string | null = null): Promise<{ id: string; code: string }> {
+    const id = `M-${randomUUID().slice(0, 8)}`;
+    const code = `ORD-${randomUUID().replace(/-/g, "").toUpperCase().slice(0, 16)}`;
+    await pool.query(
+      "INSERT INTO orders (id, mode, total_amount, paid_amount, status, delivery_method, session_id, unique_code, parent_code) VALUES ($1, 'instant', $2, $3, $4, 'pickup', $5, $6, $7)",
+      [id, total, paid, status, sess, code, parent],
+    );
+    createdOrders.push(id);
+    return { id, code };
+  }
+  function req(path: string, method: string, cookie?: string, body?: unknown): Promise<Response> {
+    return createApp(pool).request(`/api/v1${path}`, {
+      method, headers: { "content-type": "application/json", "x-forwarded-for": XFF, ...(cookie === undefined ? {} : { cookie }) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  }
+
+  it("GET /orders/mine tanpa cookie -> 404 seragam", async () => {
+    const res = await req("/orders/mine", "GET");
+    assert.equal(res.status, 404);
+  });
+  it("GET /orders/mine sesi lain -> 200 kosong (tak bocor)", async () => {
+    await seedMine(10000, null, "pending_payment");
+    const res = await req("/orders/mine", "GET", "cart_id=sess-asing");
+    assert.equal(res.status, 200);
+    assert.equal(((await res.json()) as { data: unknown[] }).data.length, 0);
+  });
+  it("GET /orders/mine -> hanya milik sesi", async () => {
+    await seedMine(10000, null, "pending_payment");
+    const res = await req("/orders/mine", "GET", jar);
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { data: Array<{ unique_code: string } & Record<string, unknown>> };
+    assert.ok(body.data.length >= 1);
+    assert.ok(body.data.every((o) => o["delivery_address"] === undefined));
+  });
+  it("POST /:code/topup underpaid -> anak nominal sisa", async () => {
+    const { code } = await seedMine(50000, 30000, "underpaid");
+    const res = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { data: { unique_code: string; nominal: number } };
+    assert.equal(body.data.nominal, 20000);
+    assert.notEqual(body.data.unique_code, code);
+    const row = await pool.query<{ parent_code: string | null }>("SELECT parent_code FROM orders WHERE unique_code = $1", [body.data.unique_code]);
+    assert.equal(row.rows[0]?.parent_code, code);
+    const childId = (await pool.query<{ id: string }>("SELECT id FROM orders WHERE unique_code = $1", [body.data.unique_code])).rows[0]?.id ?? "x";
+    await pool.query("DELETE FROM orders WHERE id = $1", [childId]);
+  });
+  it("POST /:code/topup pada anak (level-2) -> 409", async () => {
+    const { code } = await seedMine(50000, 30000, "underpaid");
+    const first = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(first.status, 200);
+    const child = ((await first.json()) as { data: { unique_code: string } }).data.unique_code;
+    const childRow = await pool.query<{ id: string }>("SELECT id FROM orders WHERE unique_code = $1", [child]);
+    const second = await req(`/orders/${child}/topup`, "POST", jar, {});
+    assert.equal(second.status, 409);
+    assert.equal(((await second.json()) as { code: string }).code, "INVALID_TOPUP");
+    await pool.query("DELETE FROM orders WHERE id = $1", [childRow.rows[0]?.id]);
+  });
+  it("POST /:code/topup pada paid -> 409", async () => {
+    const { code } = await seedMine(50000, 50000, "paid");
+    const res = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(res.status, 409);
+  });
+  it("POST /internal/expire tanpa kunci -> 403; dengan kunci -> 200", async () => {
+    const deny = await req("/internal/expire", "POST", undefined, {});
+    assert.equal(deny.status, 403);
+    const saved = process.env.INTERNAL_KEY;
+    process.env.INTERNAL_KEY = "kunci-test-expire";
+    try {
+      const ok = await createApp(pool).request("/api/v1/internal/expire", {
+        method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF, "x-internal-key": "kunci-test-expire" }, body: "{}",
+      });
+      assert.equal(ok.status, 200);
+      assert.ok(typeof ((await ok.json()) as { data: { expired: number } }).data.expired === "number");
+    } finally {
+      if (saved === undefined) delete process.env.INTERNAL_KEY;
+      else process.env.INTERNAL_KEY = saved;
+    }
+  });
+});
 describe("orders underpaid service", () => {
   const sess = `sess-${randomUUID()}`;
   async function seedOrder(total: number, status = "pending_payment"): Promise<{ id: string; code: string }> {

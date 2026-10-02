@@ -4,6 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { productRepo } from "../repos/products.js";
 import { createSession, destroySession, isLocked, recordLogin, sessionUser, verifyPassword } from "../services/adminAuth.js";
+import { markPaid } from "../services/orders.js";
 
 const loginSchema = z.object({ username: z.string().min(1), password: z.string().min(1) });
 const createSchema = z.object({
@@ -164,19 +165,48 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { ...order, items: items.rows } });
   });
 
-  // Mark-paid QRIS: idempoten (hanya transisi dari pending_payment) + audit.
-  r.post("/orders/:code/mark-paid", async (c) => {
+  // Mark-paid QRIS: catat nominal aktual; kurang -> underpaid, cukup/lebih -> paid.
+  // Idempoten (hanya transisi dari pending_payment) + audit.
+  const markPaidSchema = z.object({ paid_amount: z.number().int().min(1) });
+  r.post("/orders/:code/mark-paid", zValidator("json", markPaidSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+  }), async (c) => {
     const code = c.req.param("code");
-    const res = await pool.query(
-      "UPDATE orders SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'pending_payment'",
-      [code],
-    );
-    const changed = (res.rowCount ?? 0) > 0;
+    const paidAmount = c.req.valid("json").paid_amount;
+    const order = await markPaid(pool, code, paidAmount);
+    const changed = order !== null;
     // Audit hanya saat transisi nyata terjadi (double-click -> satu catat).
     if (changed) {
-      await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "mark_paid", JSON.stringify({ unique_code: code })]);
+      await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "mark_paid", JSON.stringify({ unique_code: code, paid_amount: paidAmount })]);
     }
-    return c.json({ status: "success", data: { paid: true, changed } });
+    return c.json({ status: "success", data: { paid: order?.status === "paid", changed, status: order?.status ?? null } });
+  });
+
+  // Lunaskan parent underpaid secara manual: syarat anak lunas menutup sisa.
+  r.post("/orders/:code/settle-parent", async (c) => {
+    const code = c.req.param("code");
+    const cur = await pool.query<{ total_amount: number; paid_amount: number | null; status: string }>(
+      "SELECT total_amount, paid_amount, status FROM orders WHERE unique_code = $1", [code]);
+    const p = cur.rows[0];
+    if (p === undefined) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    if (p.status !== "underpaid" || p.paid_amount === null) {
+      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Hanya order underpaid yang bisa dilunaskan" }, 409);
+    }
+    const sisa = p.total_amount - p.paid_amount;
+    const sum = await pool.query<{ s: string }>(
+      "SELECT COALESCE(SUM(paid_amount), 0) AS s FROM orders WHERE parent_code = $1 AND status = 'paid'", [code]);
+    if (Number(sum.rows[0]?.s ?? 0) < sisa) {
+      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Anak lunas belum menutup sisa" }, 409);
+    }
+    const upd = await pool.query(
+      "UPDATE orders SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'underpaid'", [code]);
+    if ((upd.rowCount ?? 0) === 0) {
+      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Status berubah, muat ulang" }, 409);
+    }
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "settle_parent", JSON.stringify({ unique_code: code })]);
+    return c.json({ status: "success", data: { status: "paid" } });
   });
 
   return r;
