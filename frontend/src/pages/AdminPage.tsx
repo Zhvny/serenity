@@ -271,7 +271,7 @@ export function AdminPage() {
               <label htmlFor="prod-tags">Tags (pisah koma)</label>
               <input id="prod-tags" type="text" value={form.tagsInput} onChange={(e) => setForm({ ...form, tagsInput: e.target.value })} />
               {knownTags.length > 0 ? (
-                <div className="admin-form-actions" role="group" aria-label="Tag yang sudah ada">
+                <div className="admin-tags" role="group" aria-label="Tag yang sudah ada">
                   <span className="admin-id">Tag yang sudah ada:</span>
                   {knownTags.map((t) => (
                     <button key={t} type="button" className="chip" onClick={() => addTag(t)}>{t}</button>
