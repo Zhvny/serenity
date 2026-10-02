@@ -90,7 +90,7 @@ export function ThanksPage() {
               <ol className="pay-steps">
                 <li>Scan QRIS di atas dengan aplikasi e-wallet / m-banking (GoPay, OVO, DANA, bank, dll).</li>
                 <li>Masukkan nominal <strong>persis {rupiah(data.nominal)}</strong>. Nominal yang berbeda membuat pesanan sulit dikonfirmasi.</li>
-                <li>Selesaikan pembayaran, lalu tunggu — status berubah jadi <strong>Lunas</strong> setelah admin memverifikasi (biasanya beberapa menit).</li>
+                <li>Selesaikan pembayaran, lalu tunggu — status berubah jadi <strong>Lunas</strong> setelah transaksi terverifikasi (max. 5-30 menit).</li>
               </ol>
               <p className="status-badge">Menunggu pembayaran</p>
               <p className="pay-note">Simpan halaman ini atau catat kode pesanan untuk konfirmasi.</p>

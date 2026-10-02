@@ -60,4 +60,16 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("010 histori+topup: paid_amount + parent_code + donation_consent + underpaid", () => {
+    const sql = readFileSync(new URL("../migrations/010_history_topup.sql", import.meta.url), "utf8");
+    assert.match(sql, /ALTER TABLE orders/i);
+    assert.match(sql, /paid_amount/);
+    assert.match(sql, /parent_code/);
+    assert.match(sql, /donation_consent/);
+    assert.match(sql, /underpaid/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+    assert.doesNotMatch(ddl, /CREATE TABLE orders/i);
+  });
 });
