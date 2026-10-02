@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams, Link } from "react-router";
-import { ApiError, getThanks, type ThanksData } from "../services/api.ts";
+import { useSearchParams, Link, useNavigate } from "react-router";
+import { ApiError, getThanks, topupOrder, type ThanksData } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
@@ -11,9 +11,12 @@ const MAX_POLLS = 60;
 
 export function ThanksPage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const ref = params.get("ref") ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [data, setData] = useState<ThanksData | null>(null);
+  const [topupMsg, setTopupMsg] = useState("");
+  const [topupBusy, setTopupBusy] = useState(false);
   const polls = useRef(0);
 
   useEffect(() => {
@@ -70,6 +73,21 @@ export function ThanksPage() {
     );
   }
   const paid = data.status === "paid";
+  const underpaid = data.status === "underpaid";
+  const sisa = data.paid_amount === null || data.paid_amount === undefined ? null : data.nominal - data.paid_amount;
+
+  async function handleTopup(): Promise<void> {
+    setTopupBusy(true);
+    setTopupMsg("");
+    try {
+      const child = await topupOrder(ref);
+      navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
+    } catch (e: unknown) {
+      setTopupMsg(e instanceof ApiError && e.code === "INVALID_TOPUP" ? "Kode top-up sudah ada. Hubungi admin." : "Gagal membuat kode top-up.");
+    } finally {
+      setTopupBusy(false);
+    }
+  }
   return (
     <div>
       <Header />
@@ -83,6 +101,14 @@ export function ThanksPage() {
             <>
               <p className="status-badge status-badge--ok">Lunas</p>
               <p className="pay-note">Terima kasih! Pesanan Anda sedang kami proses.</p>
+            </>
+          ) : underpaid && sisa !== null && sisa > 0 ? (
+            <>
+              <p className="status-badge">Kurang bayar</p>
+              <p className="pay-meta">Masuk {rupiah(data.paid_amount ?? 0)} dari {rupiah(data.nominal)} — Kurang {rupiah(sisa)}</p>
+              <button type="button" className="btn-primary" disabled={topupBusy} onClick={() => void handleTopup()}>Buat kode top-up</button>
+              {topupMsg !== "" ? <p className="detail-msg detail-msg--err" role="alert">{topupMsg}</p> : null}
+              <p className="pay-note">Atau hubungi admin untuk bantuan.</p>
             </>
           ) : (
             <>

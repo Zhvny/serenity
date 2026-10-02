@@ -197,10 +197,10 @@ export function adminSettleParent(code: string): Promise<{ status: string }> {
 
 // --- QRIS (public cart flow) ---
 
-export type ThanksData = { unique_code: string; nominal: number; qr_url: string | null; status: string };
+export type ThanksData = { unique_code: string; nominal: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string };
 
-export function generateCode(): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
-  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>("/orders/generate-code", {});
+export function generateCode(donationConsent = false): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
+  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>("/orders/generate-code", { donation_consent: donationConsent });
 }
 
 export function getThanks(ref: string): Promise<ThanksData> {

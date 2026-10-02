@@ -64,7 +64,7 @@ export function StatusPage() {
     );
   }
   const paid = status === "paid";
-  const label = paid ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : "Menunggu pembayaran";
+  const label = paid ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : status === "underpaid" ? "Kurang bayar" : "Menunggu pembayaran";
   const icon = paid ? "check" : status === "cancelled" ? "warning" : "clock";
   return (
     <div>

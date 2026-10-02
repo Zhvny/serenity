@@ -23,4 +23,18 @@ describe("ThanksPage", () => {
     expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("img", { name: /qris|qr/i })).toBeInTheDocument();
   });
+
+  it("underpaid -> Kurang + Buat kode top-up -> ref anak", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/topup")) return resp({ status: "success", data: { order_id: "HP-C", unique_code: "ORD-CHILD", qr_url: "q", nominal: 20000 } });
+      if (u.includes("ref=ORD-CHILD")) return resp({ status: "success", data: { unique_code: "ORD-CHILD", nominal: 20000, paid_amount: null, qr_url: "q", status: "pending_payment" } });
+      return resp({ status: "success", data: { unique_code: "ORD-U", nominal: 90000, paid_amount: 70000, qr_url: "q", status: "underpaid" } });
+    }));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-U"]}><ThanksPage /></MemoryRouter>);
+    expect(await screen.findByText(/Kurang/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /top-up/i }));
+    expect(await screen.findByText(/ORD-CHILD/)).toBeInTheDocument();
+  });
 });
