@@ -35,7 +35,7 @@ export function CheckoutPage() {
             <input id="donation-consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
             Saya menyetujui bahwa selisih lebih menjadi donasi
           </label>
-          <button type="button" className="btn-primary btn-lg pay-cta" disabled={state === "sending" || !consent} onClick={() => void handlePay()}>
+          <button type="button" className="btn-primary btn-lg pay-cta" disabled={state === "sending"} onClick={() => void handlePay()}>
             {state === "sending" ? "Memproses…" : "Bayar via QRIS"}
           </button>
           {state === "error" ? <p className="detail-msg detail-msg--err" role="alert">{msg}</p> : null}

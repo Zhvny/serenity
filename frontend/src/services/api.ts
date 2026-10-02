@@ -210,6 +210,7 @@ export function getThanks(ref: string): Promise<ThanksData> {
 export type HistoryOrder = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null;
   status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
+  items: Array<{ product_id: string; name: string; quantity: number }>;
 };
 
 export function getMyOrders(status?: string): Promise<HistoryOrder[]> {

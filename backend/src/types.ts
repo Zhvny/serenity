@@ -4,6 +4,6 @@ export type Nutrition = { calories_kcal: number; protein_g: number; carbs_g: num
 export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; is_active: boolean; nutrition: Nutrition; allergens: string[] };
 export type CartItem = { item_id: string; product_id: string; quantity: number; note: string | null };
 export type OrderMode = "instant" | "scheduled";
-export type OrderStatus = "pending_payment" | "paid" | "failed" | "expired" | "cancelled" | "preparing" | "ready" | "done" | "underpaid";
+export type OrderStatus = "pending_payment" | "processing" | "delivered" | "completed" | "paid" | "failed" | "expired" | "cancelled" | "preparing" | "ready" | "done" | "underpaid";
 export type DeliveryMethod = "pickup" | "delivery";
 export type Order = { order_id: string; items: CartItem[]; mode: OrderMode; scheduled_at: string | null; total_amount: number; paid_amount: number | null; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null; parent_code: string | null; donation_consent: boolean };

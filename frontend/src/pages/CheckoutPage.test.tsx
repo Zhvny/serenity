@@ -11,17 +11,21 @@ function resp(body: unknown, status = 200): Response {
 }
 
 describe("CheckoutPage", () => {
-  it("tombol Bayar disabled sampai consent dicentang", async () => {
+  it("tombol Bayar aktif tanpa consent; consent hanya mengisi flag", async () => {
     const user = userEvent.setup();
-    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
+    const bodies: Array<string | undefined> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      bodies.push(init?.body as string | undefined);
+      return resp({ status: "success", data: { order_id: "HP-1", unique_code: "ORD-1", qr_url: "https://qr?ref=ORD-1", nominal: 90000 } });
+    }));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
     const btn = await screen.findByRole("button", { name: /bayar/i });
-    expect(btn).toBeDisabled();
-    await user.click(screen.getByRole("checkbox"));
-    expect(btn).not.toBeDisabled();
+    expect(btn).toBeEnabled();
+    await user.click(btn);
+    expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":false'))).toBe(true);
   });
 
-  it("klik Bayar -> panggil generate-code dgn donation_consent", async () => {
+  it("centang consent -> generate-code dgn donation_consent true", async () => {
     const user = userEvent.setup();
     const bodies: Array<string | undefined> = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {

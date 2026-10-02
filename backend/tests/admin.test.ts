@@ -112,6 +112,15 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     await pool.query("DELETE FROM audit_logs WHERE action='mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
   });
 
+  it("mark-paid kode tak dikenal -> 404", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/orders/ORD-TIDAKADA/mark-paid", { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 1000 }) });
+    assert.equal(res.status, 404);
+  });
+
   it("mark-paid paid_amount=0 -> 400 VALIDATION_ERROR", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });

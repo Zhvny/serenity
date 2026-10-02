@@ -6,8 +6,8 @@ import { HistoryPage } from "./HistoryPage.tsx";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-const paid = { id: "HP-1", unique_code: "ORD-1", total_amount: 50000, paid_amount: 50000, status: "paid", parent_code: null, donation_consent: true, created_at: "2026-10-02T10:00:00Z" };
-const under = { id: "HP-2", unique_code: "ORD-2", total_amount: 50000, paid_amount: 30000, status: "underpaid", parent_code: null, donation_consent: false, created_at: "2026-10-02T11:00:00Z" };
+const paid = { id: "HP-1", unique_code: "ORD-1", total_amount: 50000, paid_amount: 50000, status: "paid", parent_code: null, donation_consent: true, created_at: "2026-10-02T10:00:00Z", items: [{ product_id: "p1", name: "Salad", quantity: 2 }] };
+const under = { id: "HP-2", unique_code: "ORD-2", total_amount: 50000, paid_amount: 30000, status: "underpaid", parent_code: null, donation_consent: false, created_at: "2026-10-02T11:00:00Z", items: [] };
 
 function mockList(data: unknown) {
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data }))));
@@ -42,10 +42,11 @@ describe("HistoryPage", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Belum ada pesanan");
     expect(screen.getByRole("link", { name: "Lihat menu" })).toHaveAttribute("href", "/");
   });
-  it("isi → kartu nominal + badge donasi", async () => {
+  it("isi → kartu nominal + item + badge donasi", async () => {
     mockList([paid]);
     renderRiwayat();
     expect(await screen.findByText("ORD-1")).toBeInTheDocument();
+    expect(screen.getByText(/2× Salad/)).toBeInTheDocument();
     expect(screen.getByText("Donasi disetujui")).toBeInTheDocument();
   });
   it("underpaid → Kurang Rp + Bayar sisa → topup → /thanks?ref=", async () => {

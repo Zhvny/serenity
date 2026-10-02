@@ -101,25 +101,39 @@ export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
 // Hanya dari pending_payment (idempotent-safe); refresh updated_at agar jam expire reset.
 export async function markPaid(pool: Pool, code: string, paidAmount: number): Promise<Order | null> {
   const cur = await pool.query<{ id: string; total_amount: number }>(
-    "SELECT id, total_amount FROM orders WHERE unique_code = $1 AND status = 'pending_payment'", [code]);
+    "SELECT id, total_amount FROM orders WHERE unique_code = $1", [code]);
   const row = cur.rows[0];
   if (row === undefined) return null;
   const next = paidAmount >= row.total_amount ? "paid" : "underpaid";
-  await pool.query(
-    "UPDATE orders SET status = $2, paid_amount = $3, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1",
+  // Guard atomik: dua mark-paid konkuren -> tepat satu menang (pola sama dgn advance).
+  const upd = await pool.query<{ id: string }>(
+    "UPDATE orders SET status = $2, paid_amount = $3, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'pending_payment' RETURNING id",
     [code, next, paidAmount]);
-  return getOrder(pool, row.id);
+  const won = upd.rows[0];
+  if (won === undefined) return null;
+  return getOrder(pool, won.id);
 }
 
-// Histori milik sesi (tanpa PII alamat, tanpa items — ringkas untuk list).
-export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address">>> {
+// Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
+export type MineItem = { product_id: string; name: string; quantity: number };
+export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address" | "items"> & { items: MineItem[] }>> {
   const cols = "id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, parent_code, donation_consent, created_at";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
+  const ids = res.rows.map((o) => o.id);
+  const itemRows = ids.length === 0 ? [] : (await pool.query<{ order_id: string; product_id: string; name: string; quantity: number }>(
+    `SELECT oi.order_id, oi.product_id, p.name, oi.quantity FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ANY($1)`,
+    [ids])).rows;
+  const byOrder = new Map<string, MineItem[]>();
+  for (const it of itemRows) {
+    const list = byOrder.get(it.order_id) ?? [];
+    list.push({ product_id: it.product_id, name: it.name, quantity: it.quantity });
+    byOrder.set(it.order_id, list);
+  }
   // delivery_address disengaja HILANG dari objek (konvensi PII tulis-saja, lih. admin list).
   return res.rows.map((o) => ({
-    order_id: o.id, items: [], mode: o.mode,
+    order_id: o.id, items: byOrder.get(o.id) ?? [], mode: o.mode,
     scheduled_at: o.scheduled_at === null ? null : o.scheduled_at.toISOString(),
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
     delivery_method: o.delivery_method,
