@@ -47,6 +47,11 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.match(data.unique_code, /^ORD-[0-9A-F]{12,}$/);
     assert.equal(data.qr_url.includes("qr.example"), true);
     assert.equal(data.nominal, 90000); // prod_001 45000 x 2
+    // Detail pesanan: cart item tersalin ke order_items.
+    const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.n;
+    assert.equal(Number(n), 1);
+    const qty = (await pool.query<{ quantity: number }>("SELECT quantity FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.quantity;
+    assert.equal(qty, 2);
   });
 
   it("thanks: pemilik sesi -> 200 (kode+nominal+qr), sesi lain -> 404 seragam", async () => {
