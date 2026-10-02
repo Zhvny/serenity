@@ -16,10 +16,9 @@ export function CheckoutPage() {
   const [waitLeft, setWaitLeft] = useState(CONSENT_DELAY_S);
 
   useEffect(() => {
-    if (waitLeft <= 0) return;
-    const t = setTimeout(() => setWaitLeft((s) => s - 1), 1000);
+    const t = setTimeout(() => setWaitLeft(0), CONSENT_DELAY_S * 1000);
     return () => clearTimeout(t);
-  }, [waitLeft]);
+  }, []);
 
   async function handlePay(): Promise<void> {
     setState("sending");
@@ -45,7 +44,7 @@ export function CheckoutPage() {
           <label className="pay-consent" htmlFor="donation-consent">
             <input id="donation-consent" type="checkbox" checked={consent} disabled={waitLeft > 0} onChange={(e) => setConsent(e.target.checked)} />
             Saya menyetujui bahwa selisih lebih dari nominal pesanan ini menjadi <strong>donasi</strong> (tidak dikembalikan). Jika keberatan, pastikan nominal transfer <strong>persis</strong> seperti tertera.
-            {waitLeft > 0 ? ` (baca dulu… ${waitLeft})` : ""}
+            {waitLeft > 0 ? " (mohon baca dulu…)" : ""}
           </label>
           <button type="button" className="btn-primary btn-lg pay-cta" disabled={state === "sending" || !consent} onClick={() => void handlePay()}>
             {state === "sending" ? "Memproses…" : "Bayar via QRIS"}

@@ -139,7 +139,7 @@ describe("AdminPage", () => {
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
     await user.click(await screen.findByRole("button", { name: /detail ORD-U2/i }));
-    expect(await screen.findByText(/Dibayar/)).toBeInTheDocument();
+    expect(await screen.findByText(/dari/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /lunaskan/i }));
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U2/settle-parent"))).toBe(true);
   });
