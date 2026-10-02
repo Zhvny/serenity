@@ -110,7 +110,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // delivery_address/koordinat TIDAK dikembalikan di list.
   r.get("/orders", async (c) => {
     const status = c.req.query("status") ?? "pending_payment";
-    const allowed = new Set(["pending_payment", "paid", "expired", "failed", "cancelled"]);
+    const allowed = new Set(["pending_payment", "paid", "underpaid", "expired", "failed", "cancelled", "preparing", "ready", "done"]);
     if (!allowed.has(status)) {
       return c.json({ status: "error", code: "INVALID_STATUS", message: "Status tidak valid" }, 400);
     }
