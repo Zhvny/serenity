@@ -1,63 +1,97 @@
 name: deploy
+
 on:
   push:
     branches: [master, main]
   workflow_dispatch: {}
 
-# OIDC ke Azure (tanpa secret password): butuh federated credential + secrets:
-# AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, ACR_LOGIN_SERVER,
-# ACR_NAME, RG (resource group), CA_BACKEND (Container App), SWA_TOKEN,
-# DB_MIGRATE_URL (role migrasi), SMOKE_URL.
+# Hindari dua deploy balapan: batalkan run lama pada ref yang sama.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+# OIDC ke Azure (tanpa password). Secrets yang dibutuhkan:
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#   ACR_NAME            (mis. acrserenity1234)              -- registry
+#   RG                  (mis. rg-serenity-prod)
+#   CA_BACKEND          (nama Container App backend)
+#   MIGRATE_JOB         (nama Container Apps Job migrasi; dibuat di infra/azure.sh)
+#   SWA_TOKEN           (deployment token Static Web Apps)
+#   SMOKE_URL           (base URL backend publik, tanpa trailing slash)
 permissions:
   id-token: write
   contents: read
 
-env:
-  IMAGE_BE: ${{ secrets.ACR_LOGIN_SERVER }}/serenity-be
-
 jobs:
-  # 1) Gate kualitas: test + tsc + lint + audit. Wajib hijau sebelum build/deploy.
+  # 1) Gate kualitas — WAJIB hijau sebelum build/deploy apa pun.
   verify:
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15-alpine
-        env: { POSTGRES_DB: serenity, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres }
+        env:
+          POSTGRES_DB: serenity
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 10
+          --health-cmd "pg_isready -U postgres -d serenity"
+          --health-interval 5s --health-timeout 3s --health-retries 10
       redis:
         image: redis:7-alpine
         ports: ["6379:6379"]
-        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/serenity?sslmode=disable
       REDIS_URL: redis://localhost:6379
       FRONTEND_ORIGIN: http://localhost:5173
       QUASI_STATIC_QR_URL: https://qr.test/static
       ADMIN_USER: admin
-      ADMIN_PASS_HASH: testsalt12345678:placeholder
+      # Hash scrypt nyata (password 'benar123', salt 'testsalt12345678') agar assertAdminConfig lulus.
+      ADMIN_PASS_HASH: testsalt12345678:cd0a979273bc96d883b17c1b922fd047b59a2377f8b864876cbb29804a4004e72eb4423da1d3b24ec2bf0762df1ce54341a515ed580251da94b4845827c2f78f
       INTERNAL_KEY: ci-internal-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "22", cache: "npm", cache-dependency-path: "**/package-lock.json" }
-      # Backend
-      - run: npm --prefix backend ci
-      - run: npm --prefix backend run migrate
-      - run: npx tsc --noEmit
+        with:
+          node-version: "22"
+      # --- Backend ---
+      - name: Backend install
         working-directory: backend
-      - run: npm --prefix backend test
-      - run: npm --prefix backend audit --audit-level=high
-      # Frontend
-      - run: npm --prefix frontend ci
-      - run: npm --prefix frontend run build
-      - run: npm --prefix frontend run lint
-      - run: npm --prefix frontend test
-      - run: npm --prefix frontend audit --audit-level=high
+        run: npm ci
+      - name: Backend migrate (skema CI)
+        working-directory: backend
+        run: npm run migrate
+      - name: Backend typecheck
+        working-directory: backend
+        run: npx tsc --noEmit
+      - name: Backend tests
+        working-directory: backend
+        run: npm test
+      - name: Backend audit (gate high)
+        working-directory: backend
+        run: npm audit --audit-level=high
+      # --- Frontend ---
+      - name: Frontend install
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend typecheck + build
+        working-directory: frontend
+        run: npm run build
+      - name: Frontend lint
+        working-directory: frontend
+        run: npm run lint
+      - name: Frontend tests
+        working-directory: frontend
+        run: npm test
+      - name: Frontend audit (gate high)
+        working-directory: frontend
+        run: npm audit --audit-level=high
 
-  # 2) Build + push image :sha + :latest ke ACR (hanya setelah verify hijau).
-  build-push:
+  # 2) Build image backend DI ACR (az acr build) — tanpa docker login/push manual.
+  build-backend:
     needs: verify
     runs-on: ubuntu-latest
     steps:
@@ -67,51 +101,61 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - run: az acr login --name ${{ secrets.ACR_NAME }}
-      - run: docker build -t $IMAGE_BE:${{ github.sha }} -t $IMAGE_BE:latest ./backend
-      - run: docker push $IMAGE_BE:${{ github.sha }} && docker push $IMAGE_BE:latest
+      - name: ACR build (:sha + :latest)
+        run: |
+          az acr build --registry "${{ secrets.ACR_NAME }}" \
+            --image "serenity-be:${{ github.sha }}" \
+            --image "serenity-be:latest" \
+            ./backend
 
-  # 3) Migrasi DB via one-off (role migrasi), lalu rollout Container App ke :sha.
+  # 3) Migrasi (job terdaftar di azure.sh, role migrasi) -> rollout :sha -> smoke.
   deploy-backend:
-    needs: build-push
+    needs: build-backend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # Migrasi: jalankan image yang sama sebagai job sekali-jalan dengan URL role migrasi.
-      - run: |
-          az containerapp job create --name serenity-migrate --resource-group ${{ secrets.RG }} \
-            --image $IMAGE_BE:${{ github.sha }} --trigger-type Manual --replica-timeout 600 \
-            --secrets db-url="${{ secrets.DB_MIGRATE_URL }}" --env-vars DATABASE_URL=secretref:db-url ENV=production \
-            --command "node" "scripts/migrate.js" 2>/dev/null || true
-          az containerapp job start --name serenity-migrate --resource-group ${{ secrets.RG }}
-      # Rollout backend ke revisi image :sha (bukan :latest -> rollback jelas).
-      - run: |
-          az containerapp update --name ${{ secrets.CA_BACKEND }} --resource-group ${{ secrets.RG }} \
-            --image $IMAGE_BE:${{ github.sha }} --min-replicas 0 --max-replicas 3
-      # Smoke: health harus 200.
-      - run: |
-          for i in $(seq 1 10); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SMOKE_URL }}/api/v1/health") && [ "$code" = "200" ] && echo OK && exit 0
-            sleep 6
+      - name: Jalankan migrasi (job sekali-jalan)
+        run: |
+          az containerapp job start \
+            --name "${{ secrets.MIGRATE_JOB }}" --resource-group "${{ secrets.RG }}"
+      - name: Rollout backend ke revisi :sha
+        run: |
+          az containerapp update \
+            --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
+            --image "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:${{ github.sha }}" \
+            --min-replicas 0 --max-replicas 3
+      - name: Smoke /api/v1/health (200)
+        run: |
+          for i in $(seq 1 15); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SMOKE_URL }}/api/v1/health" || true)
+            if [ "$code" = "200" ]; then echo "health OK"; exit 0; fi
+            echo "attempt $i -> $code"; sleep 6
           done
-          echo "smoke gagal" && exit 1
+          echo "smoke gagal (health != 200)"; exit 1
 
-  # 4) Deploy frontend ke Static Web Apps (VITE_API_URL = /api/v1, satu domain).
+  # 4) Frontend: build di runner (VITE_API_URL=/api/v1) lalu upload ke SWA (skip Oryx build).
   deploy-frontend:
-    needs: build-push
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Azure/static-web-apps-deploy@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build frontend (API satu domain)
+        working-directory: frontend
+        env:
+          VITE_API_URL: /api/v1
+        run: npm ci && npm run build
+      - name: Deploy ke Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.SWA_TOKEN }}
           action: upload
-          app_location: "frontend"
-          output_location: "dist"
-        env:
-          VITE_API_URL: /api/v1
+          app_location: "frontend/dist"
+          skip_app_build: true
+          output_location: ""

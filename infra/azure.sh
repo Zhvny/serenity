@@ -11,6 +11,7 @@ PG_ADMIN=serenity_admin
 KV=kv-serenity$RANDOM            # harus unik global
 CAENV=cae-serenity               # Container Apps environment
 CA=serenity-be                   # Container App backend
+MIGRATE_JOB=serenity-migrate      # Container Apps Job migrasi (dipakai CI: secret MIGRATE_JOB)
 : "${PG_ADMIN_PASSWORD:?set PG_ADMIN_PASSWORD}"   # dari shell, jangan hardcode
 
 az group create -n "$RG" -l "$LOC"
@@ -39,6 +40,17 @@ az containerapp create -g "$RG" -n "$CA" --environment "$CAENV" \
   --system-assigned
 # TODO: beri CA akses Key Vault (az keyvault set-policy / RBAC) + ACR pull (az role assignment AcrPull).
 
+# Job migrasi (sekali-jalan) — CI cukup `az containerapp job start --name $MIGRATE_JOB`.
+# Pakai DB_MIGRATE_URL (role migrasi, DDL) dari Key Vault; image di-set CI saat start/update.
+# az containerapp job create -g "$RG" -n "$MIGRATE_JOB" --environment "$CAENV" \
+#   --trigger-type Manual --replica-timeout 600 --replica-retry-limit 1 \
+#   --image "$ACR.azurecr.io/serenity-be:latest" \
+#   --secrets db-url="<DB_MIGRATE_URL dari Key Vault>" \
+#   --env-vars DATABASE_URL=secretref:db-url ENV=production \
+#   --command node scripts/migrate.js
+
+# PII TTL (opsional): job harian jalankan infra/pii-ttl.sql (psql) atau script node terjadwal.
+
 # Static Web Apps Free (frontend) — dibuat via portal/CLI, token dipakai di CI (SWA_TOKEN).
 # az staticwebapp create -g "$RG" -n swa-serenity -l eastasia --sku Free
 
@@ -48,4 +60,5 @@ az containerapp create -g "$RG" -n "$CA" --environment "$CAENV" \
 #   "subject":"repo:<org>/<repo>:ref:refs/heads/master","audiences":["api://AzureADTokenExchange"]}'
 
 echo "Provisioning dasar selesai. Lanjut: migrasi awal -> db-roles.sql -> isi Key Vault -> set CI secrets."
-echo "ACR=$ACR  KV=$KV  (catat utk CI secrets ACR_NAME/ACR_LOGIN_SERVER)."
+echo "CI secrets: ACR_NAME=$ACR  RG=$RG  CA_BACKEND=$CA  MIGRATE_JOB=$MIGRATE_JOB  KV=$KV"
+echo "Juga set: AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID (OIDC), SWA_TOKEN, SMOKE_URL (URL backend publik)."
