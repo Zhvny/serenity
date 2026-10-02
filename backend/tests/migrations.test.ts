@@ -51,4 +51,13 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("009 status pemenuhan: CHECK memuat preparing + done", () => {
+    const sql = readFileSync(new URL("../migrations/009_order_fulfilment_status.sql", import.meta.url), "utf8");
+    assert.match(sql, /ALTER TABLE orders/i);
+    assert.match(sql, /preparing/);
+    assert.match(sql, /done/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });

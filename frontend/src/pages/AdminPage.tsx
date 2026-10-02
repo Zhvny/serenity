@@ -9,14 +9,29 @@ import {
   adminDeactivateProduct,
   adminReactivateProduct,
   adminListOrders,
+  adminOrderDetail,
+  adminAdvanceOrder,
   adminMarkPaid,
   type Product,
   type PendingOrder,
+  type OrderDetail,
 } from "../services/api.ts";
+import { rupiah } from "../utils/format.ts";
 import "./admin.css";
 
 type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string };
 const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "" };
+type Tab = "orders" | "products";
+
+const ORDER_FILTERS: Array<{ key: string; label: string }> = [
+  { key: "pending_payment", label: "Menunggu bayar" },
+  { key: "paid", label: "Lunas" },
+  { key: "preparing", label: "Disiapkan" },
+  { key: "ready", label: "Siap" },
+  { key: "done", label: "Selesai" },
+];
+const STATUS_LABEL: Record<string, string> = { pending_payment: "Menunggu pembayaran", paid: "Lunas", preparing: "Disiapkan", ready: "Siap diambil/antar", done: "Selesai" };
+const ADVANCE_LABEL: Record<string, string> = { paid: "Mulai Siapkan", preparing: "Tandai Siap", ready: "Tandai Selesai" };
 
 export function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -25,34 +40,54 @@ export function AdminPage() {
   const [loadError, setLoadError] = useState("");
   const [form, setForm] = useState<Form>(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingOrder[]>([]);
+  const [tab, setTab] = useState<Tab>("orders");
+  const [orderFilter, setOrderFilter] = useState("pending_payment");
+  const [orders, setOrders] = useState<PendingOrder[]>([]);
+  const [detail, setDetail] = useState<OrderDetail | null>(null);
+
+  async function refreshProducts(): Promise<void> {
+    const list = await adminListProducts();
+    setProducts(list);
+    setLoggedIn(true);
+    setLoadError("");
+  }
+
+  async function refreshOrders(status: string): Promise<void> {
+    const list = await adminListOrders(status);
+    setOrders(list);
+    setLoggedIn(true);
+  }
+
+  function onError(e: unknown, fallback: string): void {
+    if (e instanceof ApiError && e.code === "UNAUTH") { setLoggedIn(false); return; }
+    setError(e instanceof Error ? e.message : fallback);
+  }
 
   async function refresh(): Promise<void> {
     try {
-      const [list, orders] = await Promise.all([adminListProducts(), adminListOrders("pending_payment")]);
-      setProducts(list);
-      setPending(orders);
-      setLoggedIn(true);
-      setLoadError("");
+      await Promise.all([refreshProducts(), refreshOrders(orderFilter)]);
     } catch (e: unknown) {
-      if (e instanceof ApiError && e.code === "UNAUTH") {
-        setLoggedIn(false);
-      } else {
-        setLoadError(e instanceof Error ? e.message : "Gagal memuat");
-      }
+      if (e instanceof ApiError && e.code === "UNAUTH") setLoggedIn(false);
+      else setLoadError(e instanceof Error ? e.message : "Gagal memuat");
     }
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- state di-set async setelah await (bukan sinkron)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- state di-set async setelah await
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- muat ulang daftar saat filter berubah
+    refreshOrders(orderFilter).catch((e: unknown) => onError(e, "Gagal memuat pesanan"));
+    setDetail(null);
+  }, [orderFilter, loggedIn]);
 
   async function handleLogin(username: string, password: string): Promise<void> {
     await adminLogin(username, password);
     await refresh();
   }
-
   async function handleLogout(): Promise<void> {
     await adminLogout();
     setLoggedIn(false);
@@ -70,13 +105,9 @@ export function AdminPage() {
       }
       setForm(EMPTY);
       setEditingId(null);
-      await refresh();
+      await refreshProducts();
     } catch (e: unknown) {
-      if (e instanceof ApiError && e.code === "UNAUTH") {
-        setLoggedIn(false);
-        return;
-      }
-      setError(e instanceof Error ? e.message : editingId !== null ? "Gagal menyimpan perubahan" : "Gagal menambah produk");
+      onError(e, editingId !== null ? "Gagal menyimpan perubahan" : "Gagal menambah produk");
     }
   }
 
@@ -84,134 +115,157 @@ export function AdminPage() {
     setEditingId(p.id);
     setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", ") });
     setError("");
+    setTab("products");
   }
+  function cancelEdit(): void { setEditingId(null); setForm(EMPTY); }
 
-  function cancelEdit(): void {
-    setEditingId(null);
-    setForm(EMPTY);
-  }
-
-  async function handleDeactivate(id: string): Promise<void> {
+  async function act(fn: () => Promise<unknown>, fallback: string): Promise<void> {
     setError("");
-    try {
-      await adminDeactivateProduct(id);
-      await refresh();
-    } catch (e: unknown) {
-      if (e instanceof ApiError && e.code === "UNAUTH") {
-        setLoggedIn(false);
-        return;
-      }
-      setError(e instanceof Error ? e.message : "Gagal menonaktifkan");
-    }
+    try { await fn(); await refresh(); } catch (e: unknown) { onError(e, fallback); }
   }
 
-  async function handleReactivate(id: string): Promise<void> {
+  async function openDetail(code: string): Promise<void> {
     setError("");
-    try {
-      await adminReactivateProduct(id);
-      await refresh();
-    } catch (e: unknown) {
-      if (e instanceof ApiError && e.code === "UNAUTH") {
-        setLoggedIn(false);
-        return;
-      }
-      setError(e instanceof Error ? e.message : "Gagal mengaktifkan");
-    }
+    try { setDetail(await adminOrderDetail(code)); } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
   }
 
   async function handleMarkPaid(code: string): Promise<void> {
-    setError("");
-    try {
-      await adminMarkPaid(code);
-      await refresh();
-    } catch (e: unknown) {
-      if (e instanceof ApiError && e.code === "UNAUTH") {
-        setLoggedIn(false);
-        return;
-      }
-      setError(e instanceof Error ? e.message : "Gagal menandai lunas");
-    }
+    await act(() => adminMarkPaid(code), "Gagal menandai lunas");
+    if (detail?.unique_code === code) await openDetail(code);
   }
+  async function handleAdvance(code: string): Promise<void> {
+    await act(() => adminAdvanceOrder(code), "Gagal memajukan status");
+    if (detail?.unique_code === code) await openDetail(code);
+  }
+  async function handleDeactivate(id: string): Promise<void> { await act(() => adminDeactivateProduct(id), "Gagal menonaktifkan"); }
+  async function handleReactivate(id: string): Promise<void> { await act(() => adminReactivateProduct(id), "Gagal mengaktifkan"); }
 
-  if (!loggedIn) {
-    return <LoginForm onLogin={handleLogin} />;
-  }
+  if (!loggedIn) return <LoginForm onLogin={handleLogin} />;
 
   return (
     <main className="admin-page">
       <div className="admin-head">
-        <h1>Kelola Item</h1>
+        <span className="admin-brand">Serenity · Admin</span>
         <button type="button" className="admin-btn admin-btn--ghost" onClick={() => void handleLogout()}>Logout</button>
       </div>
+
+      <nav className="admin-tabs" aria-label="Bagian admin">
+        <button type="button" className={tab === "orders" ? "admin-tab admin-tab--active" : "admin-tab"} aria-pressed={tab === "orders"} onClick={() => setTab("orders")}>Pesanan</button>
+        <button type="button" className={tab === "products" ? "admin-tab admin-tab--active" : "admin-tab"} aria-pressed={tab === "products"} onClick={() => setTab("products")}>Produk</button>
+      </nav>
+
       {error !== "" ? <p className="admin-error" role="alert">{error}</p> : null}
       {loadError !== "" ? <p className="admin-error" role="alert">{loadError}</p> : null}
 
-      <section className="admin-section">
-        <h2 className="admin-subhead">Pembayaran menunggu konfirmasi ({pending.length})</h2>
-        {pending.length === 0 ? (
-          <p className="admin-empty">Tidak ada pembayaran yang menunggu konfirmasi.</p>
-        ) : (
-          <ul className="admin-list">
-            {pending.map((o) => (
-              <li key={o.id} className="admin-row">
-                <h3>{o.id}</h3>
-                <span className="admin-id">{o.unique_code}</span>
-                <span className="admin-price">Rp {o.total_amount.toLocaleString("id-ID")}</span>
-                <span className="status-badge">{o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</span>
-                <div className="admin-row-actions">
-                  <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code)}>Tandai Lunas</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {tab === "orders" ? (
+        <div className="admin-orders">
+          <section className="admin-section">
+            <div className="admin-filters" role="group" aria-label="Filter status pesanan">
+              {ORDER_FILTERS.map((f) => (
+                <button key={f.key} type="button" className={orderFilter === f.key ? "chip chip--active" : "chip"} aria-pressed={orderFilter === f.key} onClick={() => setOrderFilter(f.key)}>{f.label}</button>
+              ))}
+            </div>
+            {orders.length === 0 ? (
+              <p className="admin-empty">Tidak ada pesanan pada status ini.</p>
+            ) : (
+              <table className="admin-table">
+                <thead><tr><th scope="col">Order</th><th scope="col">Nominal</th><th scope="col">Metode</th><th scope="col">Aksi</th></tr></thead>
+                <tbody>
+                  {orders.map((o) => (
+                    <tr key={o.id} className={detail?.unique_code === o.unique_code ? "is-selected" : ""}>
+                      <td><button type="button" className="admin-link" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>{o.id}</button><br /><small className="admin-id">{o.unique_code}</small></td>
+                      <td className="admin-price">{rupiah(o.total_amount)}</td>
+                      <td>{o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</td>
+                      <td>
+                        {o.status === "pending_payment" ? (
+                          <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code)}>Tandai Lunas</button>
+                        ) : ADVANCE_LABEL[o.status] !== undefined ? (
+                          <button type="button" className="admin-btn" aria-label={`Majukan ${o.unique_code}`} onClick={() => void handleAdvance(o.unique_code)}>{ADVANCE_LABEL[o.status]}</button>
+                        ) : <span className="status-badge status-badge--ok">Selesai</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
 
-      <section className="admin-section">
-        <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>
-        <form className="admin-form" onSubmit={(e) => void handleSubmit(e)}>
-          <label htmlFor="prod-id">ID Produk</label>
-          <input id="prod-id" type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required disabled={editingId !== null} />
-          <label htmlFor="prod-name">Nama</label>
-          <input id="prod-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <label htmlFor="prod-cat">Kategori</label>
-          <select id="prod-cat" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
-            <option value="cat_food">Food</option>
-            <option value="cat_drink">Drink</option>
-            <option value="cat_dessert">Dessert</option>
-          </select>
-          <label htmlFor="prod-price">Harga (min 1)</label>
-          <input id="prod-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: Number.parseInt(e.target.value, 10) || 0 })} required />
-          <label htmlFor="prod-tags">Tags (pisah koma)</label>
-          <input id="prod-tags" type="text" value={form.tagsInput} onChange={(e) => setForm({ ...form, tagsInput: e.target.value })} />
-          <div className="admin-form-actions">
-            <button type="submit" className="admin-btn">{editingId !== null ? "Simpan Perubahan" : "Tambah Produk"}</button>
-            {editingId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={cancelEdit}>Batal</button> : null}
-          </div>
-        </form>
-      </section>
-
-      <section className="admin-section">
-        <h2 className="admin-subhead">Daftar produk</h2>
-        <ul className="admin-list">
-          {products.map((p) => (
-            <li key={p.id} className="admin-row">
-              <h3>{p.name}</h3>
-              <span className="admin-id">{p.id}</span>
-              <span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span>
-              <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
-              <div className="admin-row-actions">
-                <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}>Edit</button>
-                {p.is_active ? (
-                  <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
-                ) : (
-                  <button type="button" className="admin-btn" onClick={() => void handleReactivate(p.id)}>Aktifkan</button>
-                )}
+          {detail !== null ? (
+            <aside className="admin-section admin-detail" aria-label="Detail pesanan">
+              <h2 className="admin-subhead">Detail {detail.id}</h2>
+              <p className="admin-detail-row"><span>Kode</span><strong>{detail.unique_code}</strong></p>
+              <p className="admin-detail-row"><span>Status</span><strong>{STATUS_LABEL[detail.status] ?? detail.status}</strong></p>
+              <p className="admin-detail-row"><span>Total</span><strong>{rupiah(detail.total_amount)}</strong></p>
+              <p className="admin-detail-row"><span>Metode</span><strong>{detail.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</strong></p>
+              {detail.delivery_method === "delivery" && detail.delivery_address !== null ? (
+                <p className="admin-detail-row"><span>Alamat</span><strong>{detail.delivery_address}</strong></p>
+              ) : null}
+              <h3 className="admin-detail-sub">Item</h3>
+              <ul className="admin-detail-items">
+                {detail.items.map((it, i) => (
+                  <li key={`${it.product_id}-${i}`}>{it.quantity}× {it.name}{it.note !== null && it.note !== "" ? ` — ${it.note}` : ""} <span className="admin-price">{rupiah(it.price_at_order * it.quantity)}</span></li>
+                ))}
+              </ul>
+              <div className="admin-detail-actions">
+                {detail.status === "pending_payment" ? (
+                  <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code)}>Tandai Lunas</button>
+                ) : ADVANCE_LABEL[detail.status] !== undefined ? (
+                  <button type="button" className="admin-btn" onClick={() => void handleAdvance(detail.unique_code)}>{ADVANCE_LABEL[detail.status]}</button>
+                ) : <span className="status-badge status-badge--ok">Pesanan selesai</span>}
+                <button type="button" className="admin-btn admin-btn--ghost" onClick={() => setDetail(null)}>Tutup</button>
               </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+            </aside>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <section className="admin-section">
+            <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>
+            <form className="admin-form" onSubmit={(e) => void handleSubmit(e)}>
+              <label htmlFor="prod-id">ID Produk</label>
+              <input id="prod-id" type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required disabled={editingId !== null} />
+              <label htmlFor="prod-name">Nama</label>
+              <input id="prod-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <label htmlFor="prod-cat">Kategori</label>
+              <select id="prod-cat" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                <option value="cat_food">Food</option>
+                <option value="cat_drink">Drink</option>
+                <option value="cat_dessert">Dessert</option>
+              </select>
+              <label htmlFor="prod-price">Harga (min 1)</label>
+              <input id="prod-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: Number.parseInt(e.target.value, 10) || 0 })} required />
+              <label htmlFor="prod-tags">Tags (pisah koma)</label>
+              <input id="prod-tags" type="text" value={form.tagsInput} onChange={(e) => setForm({ ...form, tagsInput: e.target.value })} />
+              <div className="admin-form-actions">
+                <button type="submit" className="admin-btn">{editingId !== null ? "Simpan Perubahan" : "Tambah Produk"}</button>
+                {editingId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={cancelEdit}>Batal</button> : null}
+              </div>
+            </form>
+          </section>
+
+          <section className="admin-section">
+            <h2 className="admin-subhead">Daftar produk</h2>
+            <ul className="admin-list">
+              {products.map((p) => (
+                <li key={p.id} className="admin-row">
+                  <h3>{p.name}</h3>
+                  <span className="admin-id">{p.id}</span>
+                  <span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span>
+                  <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
+                  <div className="admin-row-actions">
+                    <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}>Edit</button>
+                    {p.is_active ? (
+                      <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
+                    ) : (
+                      <button type="button" className="admin-btn" onClick={() => void handleReactivate(p.id)}>Aktifkan</button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
     </main>
   );
 }

@@ -172,6 +172,21 @@ export function adminListOrders(status = "pending_payment"): Promise<PendingOrde
   return apiGet<PendingOrder[]>(`/admin/orders?status=${encodeURIComponent(status)}`);
 }
 
+export type OrderItemDetail = { product_id: string; name: string; quantity: number; note: string | null; price_at_order: number };
+export type OrderDetail = {
+  id: string; unique_code: string; total_amount: number; status: string; mode: string;
+  scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
+  delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
+};
+
+export function adminOrderDetail(code: string): Promise<OrderDetail> {
+  return apiGet<OrderDetail>(`/admin/orders/${encodeURIComponent(code)}`);
+}
+
+export function adminAdvanceOrder(code: string): Promise<{ status: string }> {
+  return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/advance`, "POST");
+}
+
 export function adminMarkPaid(code: string): Promise<{ paid: boolean; changed: boolean }> {
   return adminMutate<{ paid: boolean; changed: boolean }>(`/admin/orders/${encodeURIComponent(code)}/mark-paid`, "POST");
 }

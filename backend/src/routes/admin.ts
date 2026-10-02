@@ -121,6 +121,49 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: rows });
   });
 
+  // Transisi pemenuhan maju-ketat: paid -> preparing -> ready -> done. Tolak lompat/mundur.
+  const NEXT: Record<string, string> = { paid: "preparing", preparing: "ready", ready: "done" };
+  r.post("/orders/:code/advance", async (c) => {
+    const code = c.req.param("code");
+    const cur = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
+    const status = cur.rows[0]?.status;
+    if (status === undefined) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    const next = NEXT[status];
+    if (next === undefined) {
+      return c.json({ status: "error", code: "INVALID_TRANSITION", message: `Tidak bisa memajukan dari status '${status}'` }, 409);
+    }
+    // Transisi atomik + aman balapan: hanya update bila status masih sama.
+    const upd = await pool.query<{ status: string }>(
+      "UPDATE orders SET status = $2, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = $3 RETURNING status",
+      [code, next, status],
+    );
+    if (upd.rowCount === 0) {
+      return c.json({ status: "error", code: "INVALID_TRANSITION", message: "Status berubah, muat ulang" }, 409);
+    }
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "advance_order", JSON.stringify({ unique_code: code, from: status, to: next })]);
+    return c.json({ status: "success", data: { status: next } });
+  });
+
+  // Detail satu order (untuk konfirmasi admin): item + alamat bila delivery (PII, hanya di detail).
+  r.get("/orders/:code", async (c) => {
+    const code = c.req.param("code");
+    const o = await pool.query<{ id: string; unique_code: string; total_amount: number; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date }>(
+      `SELECT id, unique_code, total_amount, status, mode, scheduled_at, delivery_method, delivery_address, delivery_lat, delivery_lng, created_at FROM orders WHERE unique_code = $1`,
+      [code],
+    );
+    const order = o.rows[0];
+    if (order === undefined) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    const items = await pool.query<{ product_id: string; name: string; quantity: number; note: string | null; price_at_order: number }>(
+      `SELECT oi.product_id, p.name, oi.quantity, oi.note, oi.price_at_order FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = $1`,
+      [order.id],
+    );
+    return c.json({ status: "success", data: { ...order, items: items.rows } });
+  });
+
   // Mark-paid QRIS: idempoten (hanya transisi dari pending_payment) + audit.
   r.post("/orders/:code/mark-paid", async (c) => {
     const code = c.req.param("code");
