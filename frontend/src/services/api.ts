@@ -202,3 +202,16 @@ export function generateCode(): Promise<{ order_id: string; unique_code: string;
 export function getThanks(ref: string): Promise<ThanksData> {
   return apiGet<ThanksData>(`/thanks?ref=${encodeURIComponent(ref)}`);
 }
+
+export type HistoryOrder = {
+  id: string; unique_code: string; total_amount: number; paid_amount: number | null;
+  status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
+};
+
+export function getMyOrders(status?: string): Promise<HistoryOrder[]> {
+  return apiGet<HistoryOrder[]>(status === undefined ? "/orders/mine" : `/orders/mine?status=${encodeURIComponent(status)}`);
+}
+
+export function topupOrder(code: string): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
+  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>(`/orders/${encodeURIComponent(code)}/topup`, {});
+}

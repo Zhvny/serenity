@@ -33,6 +33,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
           <Link key={c.id} to={`/?category=${c.id}`}>{c.name}</Link>
         ))}
       </nav>
+      <Link to="/riwayat">Riwayat</Link>
       <Link to="/cart" className="header-cart" aria-label="Keranjang">
         <Icon name="cart" />
         {count !== null ? <span className="cart-badge">{count}</span> : null}
