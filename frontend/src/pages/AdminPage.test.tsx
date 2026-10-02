@@ -11,6 +11,13 @@ function resp(body: unknown, status = 200): Response {
 }
 
 describe("AdminPage", () => {
+  it("boot -> skeleton, bukan form login", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    const { container } = render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    expect(container.querySelector(".skeleton")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /login/i })).toBeNull();
+  });
+
   it("belum login (401 UNAUTH) -> tampil form Login", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "UNAUTH", message: "Login dulu" }, 401)));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);

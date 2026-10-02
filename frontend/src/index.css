@@ -46,6 +46,21 @@
   --font-mono: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
+/* Dark theme (DESIGN.md §16): override token; komponen ikut via var. */
+[data-theme="dark"] {
+  --ink: #ededed;
+  --ink-mute: #a1a1a1;
+  --ink-mute-2: #7a7a7a;
+  --ink-faint: #555555;
+  --canvas: #1c1c1c;
+  --canvas-soft: #242424;
+  --hairline: #333333;
+  --hairline-strong: #4a4a4a;
+  --hairline-cool: #2a2a2a;
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -77,11 +92,20 @@ code { font-family: var(--font-mono); font-size: 14px; }
   height: 60px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-lg);
   padding: 0 var(--sp-xl);
   background: var(--canvas);
   border-bottom: 1px solid var(--hairline);
   z-index: 10;
+}
+
+.site-header .header-actions {
+  position: absolute;
+  right: var(--sp-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
 }
 
 .site-header .logo {
@@ -98,14 +122,50 @@ code { font-family: var(--font-mono); font-size: 14px; }
 }
 
 .site-header nav a {
+  position: relative;
   color: var(--ink-mute);
   text-decoration: none;
   font-size: 14px;
+  padding-bottom: 2px;
+  transition: color 150ms ease;
 }
 
 .site-header nav a:hover {
   color: var(--ink);
 }
+
+.site-header nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: right 150ms ease;
+}
+
+.site-header nav a[aria-current="page"] { color: var(--ink); }
+.site-header nav a[aria-current="page"]::after { right: 0; }
+
+.theme-toggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: 18px;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.theme-toggle:hover { color: var(--primary-deep); background: var(--canvas-soft); }
 
 .cart-badge {
   background: var(--primary);
@@ -418,7 +478,9 @@ code { font-family: var(--font-mono); font-size: 14px; }
   color: var(--ink);
   text-decoration: none;
   font-size: 20px;
-  margin-left: auto;
+}
+@media (max-width: 640px) {
+  .site-header { justify-content: flex-start; }
 }
 .header-cart:hover { color: var(--primary-deep); }
 .header-cart .cart-badge { font-size: 12px; }
