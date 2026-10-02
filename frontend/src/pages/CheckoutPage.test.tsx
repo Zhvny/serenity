@@ -35,7 +35,10 @@ describe("CheckoutPage", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     const btn = screen.getByRole("button", { name: /bayar/i });
     expect(btn).toBeEnabled();
+    let changed = 0;
+    window.addEventListener("cart:changed", () => { changed += 1; }, { once: true });
     await user.click(btn);
+    expect(changed).toBe(1);
     expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":true'))).toBe(true);
   });
 });
