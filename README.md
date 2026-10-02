@@ -82,4 +82,4 @@ Target aktual = **Azure**. Ikuti `DEPLOY-AZURE.md` (bash) atau `DEPLOY-AZURE.ps1
 
 ## License
 
-MIT `LICENSE` (Copyright © 2026 Serenity).
+`MIT LICENSE` (Copyright © 2026 Serenity).
