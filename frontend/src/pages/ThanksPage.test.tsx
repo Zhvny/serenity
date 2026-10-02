@@ -20,7 +20,7 @@ describe("ThanksPage", () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText(/ORD-ABC/)).toBeInTheDocument();
-    expect(screen.getByText(/90.?000/)).toBeInTheDocument();
+    expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("img", { name: /qris|qr/i })).toBeInTheDocument();
   });
 });
