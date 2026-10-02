@@ -150,6 +150,16 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     await pool.query("DELETE FROM orders WHERE id = $1", [childId]);
   });
 
+  it("GET /admin/orders?status=underpaid|preparing|ready|done -> 200 (bukan 400)", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    for (const s of ["underpaid", "preparing", "ready", "done"]) {
+      const res = await app.request(`/api/v1/admin/orders?status=${s}`, { headers: { cookie: `admin_session=${sid}` } });
+      assert.equal(res.status, 200, `status=${s} harus 200`);
+    }
+  });
+
   it("PUT /admin/products/:id tanpa session -> 401 UNAUTH", async () => {
     const res = await createApp(pool).request("/api/v1/admin/products/prod_001", { method: "PUT", headers: csrfHeaders, body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
     assert.equal(res.status, 401);
