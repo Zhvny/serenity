@@ -119,17 +119,22 @@ describe("AdminPage", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U2/settle-parent"))).toBe(true);
   });
 
-  it("detail pending -> input nominal (default total) -> kirim angka ubahan", async () => {
+  it("detail pending -> nominal kurang -> Catat Kurang Bayar + pindah filter", async () => {
     const user = userEvent.setup();
     const order = { id: "HP-3", unique_code: "ORD-U3", total_amount: 50000, status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
     const det = { ...order, paid_amount: null, parent_code: null, mode: "instant", scheduled_at: null, delivery_address: null, delivery_lat: null, delivery_lng: null, items: [] };
+    const detUnder = { ...det, paid_amount: 30000, status: "underpaid" };
     const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
+    let marked = false;
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url); const method = init?.method ?? "GET";
       calls.push({ url: u, method, body: init?.body as string | undefined });
       if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
-      if (u.includes("/admin/orders/ORD-U3/mark-paid")) return resp({ status: "success", data: { paid: false, changed: true, status: "underpaid" } });
-      if (u.includes("/admin/orders/ORD-U3") && method === "GET") return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders/ORD-U3/mark-paid")) {
+        marked = true;
+        return resp({ status: "success", data: { paid: false, changed: true, status: "underpaid" } });
+      }
+      if (u.includes("/admin/orders/ORD-U3") && method === "GET") return resp({ status: "success", data: marked ? detUnder : det });
       if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
       if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
       return resp({ status: "success", data: [] });
@@ -138,11 +143,13 @@ describe("AdminPage", () => {
     await user.click(screen.getByRole("button", { name: /detail ORD-U3/i }));
     const input = await screen.findByLabelText(/nominal masuk/i) as HTMLInputElement;
     expect(input.value).toBe("50000");
+    expect(screen.getByRole("button", { name: /^tandai lunas$/i })).toBeInTheDocument();
     await user.clear(input);
     await user.type(input, "30000");
-    await user.click(screen.getByRole("button", { name: /^tandai lunas$/i }));
+    await user.click(screen.getByRole("button", { name: /catat kurang bayar/i }));
     const mp = calls.find((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U3/mark-paid"));
     expect(mp?.body).toContain('"paid_amount":30000');
+    await vi.waitFor(() => expect(calls.some((c) => c.url.includes("status=underpaid"))).toBe(true));
   });
 
   it("klik order -> detail (item+alamat) + Majukan -> POST advance", async () => {
