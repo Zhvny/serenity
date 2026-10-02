@@ -7,6 +7,7 @@ import { AdminPage } from "./pages/AdminPage.tsx";
 import { ThanksPage } from "./pages/ThanksPage.tsx";
 import { CheckoutPage } from "./pages/CheckoutPage.tsx";
 import { StatusPage } from "./pages/StatusPage.tsx";
+import { HistoryPage } from "./pages/HistoryPage.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/thanks" element={<ThanksPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/status/:code" element={<StatusPage />} />
+        <Route path="/riwayat" element={<HistoryPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ErrorBoundary>
