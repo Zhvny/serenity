@@ -1,6 +1,11 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type { CartItem, DeliveryMethod, Order, OrderMode, OrderStatus } from "../types.js";
+
+export function newCode(): string {
+  // 128-bit crypto-random, hex uppercase (dipindah dari routes/qris.ts agar dipakai topup).
+  return `ORD-${randomBytes(16).toString("hex").toUpperCase()}`;
+}
 
 function dayKey(now: Date): string {
   return `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
@@ -107,16 +112,17 @@ export async function markPaid(pool: Pool, code: string, paidAmount: number): Pr
 }
 
 // Histori milik sesi (tanpa PII alamat, tanpa items — ringkas untuk list).
-export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Order[]> {
+export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address">>> {
   const cols = "id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, parent_code, donation_consent, created_at";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
+  // delivery_address disengaja HILANG dari objek (konvensi PII tulis-saja, lih. admin list).
   return res.rows.map((o) => ({
     order_id: o.id, items: [], mode: o.mode,
     scheduled_at: o.scheduled_at === null ? null : o.scheduled_at.toISOString(),
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
-    delivery_method: o.delivery_method, delivery_address: null,
+    delivery_method: o.delivery_method,
     parent_code: o.parent_code, donation_consent: o.donation_consent,
   }));
 }

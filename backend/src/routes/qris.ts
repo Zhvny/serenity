@@ -1,17 +1,11 @@
 import { Hono } from "hono";
-import { randomBytes } from "node:crypto";
 import type { Pool } from "pg";
 import { getCart } from "../services/cart.js";
-import { nextOrderId } from "../services/orders.js";
+import { nextOrderId, newCode } from "../services/orders.js";
 import { productRepo } from "../repos/products.js";
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
-}
-
-function newCode(): string {
-  // 128-bit crypto-random, hex uppercase.
-  return `ORD-${randomBytes(16).toString("hex").toUpperCase()}`;
 }
 
 export function qrisRoutes(pool: Pool): Hono {
