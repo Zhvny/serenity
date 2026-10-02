@@ -157,4 +157,15 @@
 .admin-detail-sub { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: var(--sp-lg) 0 var(--sp-sm); }
 .admin-detail-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-xs); }
 .admin-detail-items li { display: flex; justify-content: space-between; gap: var(--sp-md); font-size: 14px; padding: var(--sp-xs) 0; border-bottom: 1px solid var(--hairline-cool); }
-.admin-detail-actions { display: flex; gap: var(--sp-sm); margin-top: var(--sp-lg); flex-wrap: wrap; }
+.admin-detail-actions { display: flex; flex-direction: column; gap: var(--sp-sm); margin-top: var(--sp-lg); }
+.admin-detail-actions label { font-size: 13px; color: var(--ink-mute); margin-bottom: calc(-1 * var(--sp-xs)); }
+.admin-detail-actions input {
+  min-height: 36px; border: 1px solid var(--hairline); border-radius: var(--r-sm);
+  padding: var(--sp-sm) var(--sp-md); font-size: 16px; font-family: var(--font-body); width: 100%;
+  background: var(--canvas); color: var(--ink);
+}
+.admin-detail-actions .admin-btn { width: 100%; }
+
+/* Chip tag yang sudah ada di form produk */
+.admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-xs); align-items: center; margin-top: var(--sp-xs); }
+.admin-tags .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
