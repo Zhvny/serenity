@@ -94,9 +94,9 @@ export function MenuPage() {
       <main>
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
-            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order dessert &amp; minuman sehat</span>
-            <h1>Manis yang menyayangi tubuhmu.</h1>
-            <p className="lead">Dessert &amp; minuman sehat rendah gula, dibuat segar. Pesan sekarang atau jadwalkan, bayar QRIS, ambil atau antar.</p>
+            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order healty desserts &amp; drinks</span>
+            <h1>Sweet that loves your body.</h1>
+            <p className="lead">Low-sugar dessert &amp; healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.</p>
             <div className="hero-actions">
               <a className="btn-primary" href="#menu">Lihat Menu <Icon name="arrow-right" /></a>
               <a className="btn-secondary" href="#menu">Jelajahi kategori</a>
