@@ -9,9 +9,11 @@ import { assertAdminConfig } from "../src/services/adminAuth.js";
 const SALT = "testsalt12345678";
 const PASS = "benar123";
 const pool = createPool();
-const XFF = `admin-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi dari file lain
-// CSRF: double-submit cookie + Origin sah. + XFF unik.
-const csrfHeaders = { "content-type": "application/json", origin: "http://localhost:5173", "x-csrf-token": "t1", cookie: "csrf_token=t1", "x-forwarded-for": XFF };
+// XFF unik per panggilan (bukan per file): tiap request dapat bucket rate-limit sendiri
+// agar test tak saling menghabiskan kuota POST saat Redis limiter aktif.
+function csrf(): Record<string, string> {
+  return { "content-type": "application/json", origin: "http://localhost:5173", "x-csrf-token": "t1", cookie: "csrf_token=t1", "x-forwarded-for": `admin-ip-${randomUUID()}` };
+}
 
 function loginUser(user: string): string { return `${user}-${Date.now()}`; }
 const createdUsers: string[] = [];
@@ -57,7 +59,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("kredensial salah -> 401 INVALID_CREDS", async () => {
     const u = loginUser("admin"); createdUsers.push(u);
-    const res = await createApp(pool).request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: u, password: "salah" }) });
+    const res = await createApp(pool).request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: u, password: "salah" }) });
     assert.equal(res.status, 401);
     assert.equal(((await res.json()) as { code: string }).code, "INVALID_CREDS");
   });
@@ -67,7 +69,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const app = createApp(pool);
     let last = 0;
     for (let i = 0; i < 6; i++) {
-      const r = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: u, password: "salah" }) });
+      const r = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: u, password: "salah" }) });
       last = r.status;
       if (last === 429) break;
     }
@@ -82,7 +84,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("login benar -> 200 + Set-Cookie admin_session; lalu GET products 200", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     assert.equal(login.status, 200);
     const sc = login.headers.get("set-cookie") ?? "";
     assert.match(sc, /admin_session=/);
@@ -93,13 +95,13 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("mark-paid idempoten: changed true lalu false; status paid; satu audit", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const code = `ORD-MP${Date.now()}`;
     const orderId = `HP-MP-${Date.now()}`;
     createdOrders.push(orderId);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'pending_payment','pickup','mp-sess',$2)", [orderId, code]);
-    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const first = await app.request(`/api/v1/admin/orders/${code}/mark-paid`, { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 1000 }) });
     assert.equal(first.status, 200);
     assert.equal(((await first.json()) as { data: { changed: boolean } }).data.changed, true);
@@ -114,27 +116,27 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("mark-paid kode tak dikenal -> 404", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
-    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const res = await app.request("/api/v1/admin/orders/ORD-TIDAKADA/mark-paid", { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 1000 }) });
     assert.equal(res.status, 404);
   });
 
   it("mark-paid paid_amount=0 -> 400 VALIDATION_ERROR", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
-    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const res = await app.request("/api/v1/admin/orders/ORD-X/mark-paid", { method: "POST", headers: h, body: JSON.stringify({ paid_amount: 0 }) });
     assert.equal(res.status, 400);
   });
 
   it("mark-paid kurang -> underpaid; settle-parent butuh anak lunas", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
-    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const code = `ORD-SP${Date.now()}`;
     const orderId = `HP-SP-${Date.now()}`;
     const childId = `HP-SPC-${Date.now()}`;
@@ -161,7 +163,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("GET /admin/orders?status=underpaid|preparing|ready|done -> 200 (bukan 400)", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     for (const s of ["underpaid", "preparing", "ready", "done"]) {
       const res = await app.request(`/api/v1/admin/orders?status=${s}`, { headers: { cookie: `admin_session=${sid}` } });
@@ -170,19 +172,19 @@ describe("admin login + guard (DB-backed, serenity)", () => {
   });
 
   it("PUT /admin/products/:id tanpa session -> 401 UNAUTH", async () => {
-    const res = await createApp(pool).request("/api/v1/admin/products/prod_001", { method: "PUT", headers: csrfHeaders, body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
+    const res = await createApp(pool).request("/api/v1/admin/products/prod_001", { method: "PUT", headers: csrf(), body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
     assert.equal(res.status, 401);
     assert.equal(((await res.json()) as { code: string }).code, "UNAUTH");
   });
 
   it("PUT /admin/products/:id -> 200 + field berubah di DB + audit update_product", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const pid = `prod-edit-${Date.now()}`;
     createdProducts.push(pid);
     await pool.query("INSERT INTO products (id, name, category_id, price, tags) VALUES ($1,'Lama','cat_food',10000,'{}')", [pid]);
-    const h = { ...csrfHeaders, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const res = await app.request(`/api/v1/admin/products/${pid}`, { method: "PUT", headers: h, body: JSON.stringify({ name: "Baru Enak", category_id: "cat_dessert", price: 55000, tags: ["low-sugar"] }) });
     assert.equal(res.status, 200);
     const row = await pool.query<{ name: string; price: number; category_id: string }>("SELECT name, price, category_id FROM products WHERE id = $1", [pid]);
@@ -202,7 +204,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("GET /admin/orders?status=pending_payment -> hanya pending, TANPA delivery_address", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const codePend = `ORD-ADMINLIST-${Date.now()}`;
     const idPend = `HP-AL-${Date.now()}`;
@@ -223,7 +225,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("GET /admin/orders/:code -> detail dgn item + alamat (delivery)", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const code = `ORD-DET-${Date.now()}`;
     const id = `HP-DET-${Date.now()}`;
@@ -242,7 +244,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("GET /admin/orders/:code underpaid -> detail ada paid_amount + parent_code", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const code = `ORD-DPU-${Date.now()}`;
     const id = `HP-DPU-${Date.now()}`;
@@ -262,7 +264,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("POST /admin/orders/:code/advance -> paid->preparing->ready->done; tolak lanjut setelah done", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const code = `ORD-ADV-${Date.now()}`;
     const id = `HP-ADV-${Date.now()}`;
@@ -288,7 +290,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
 
   it("POST /admin/orders/:code/advance pada pending_payment -> 409 (belum lunas)", async () => {
     const app = createApp(pool);
-    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const code = `ORD-ADVP-${Date.now()}`;
     const id = `HP-ADVP-${Date.now()}`;
