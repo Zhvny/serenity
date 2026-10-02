@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { CheckoutPage } from "./CheckoutPage.tsx";
 
@@ -15,7 +14,7 @@ describe("CheckoutPage", () => {
   it("bayar + checkbox terkunci sampai jeda baca selesai", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
-    expect(await screen.findByRole("button", { name: /bayar/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /bayar/i })).toBeDisabled();
     expect(screen.getByRole("checkbox")).toBeDisabled();
     await act(async () => { vi.advanceTimersByTime(5000); });
     expect(screen.getByRole("checkbox")).toBeEnabled();
@@ -23,7 +22,6 @@ describe("CheckoutPage", () => {
   });
 
   it("tanpa centang -> tetap disabled; centang -> kirim donation_consent true", async () => {
-    const user = userEvent.setup({ delay: null });
     const bodies: Array<string | undefined> = [];
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
       bodies.push(init?.body as string | undefined);
@@ -33,12 +31,11 @@ describe("CheckoutPage", () => {
     await act(async () => { vi.advanceTimersByTime(5000); });
     expect(screen.getByRole("button", { name: /bayar/i })).toBeDisabled();
     fireEvent.click(screen.getByRole("checkbox"));
-    const btn = screen.getByRole("button", { name: /bayar/i });
-    expect(btn).toBeEnabled();
+    expect(screen.getByRole("button", { name: /bayar/i })).toBeEnabled();
     let changed = 0;
-    window.addEventListener("cart:changed", () => { changed += 1; }, { once: true });
-    await user.click(btn);
+    window.addEventListener("cart:changed", () => { changed += 1; });
+    fireEvent.click(screen.getByRole("button", { name: /bayar/i }));
+    await vi.waitFor(() => expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":true'))).toBe(true));
     expect(changed).toBe(1);
-    expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":true'))).toBe(true);
   });
 });

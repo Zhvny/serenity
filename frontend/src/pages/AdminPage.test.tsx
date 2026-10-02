@@ -79,6 +79,7 @@ describe("AdminPage", () => {
       return resp({ status: "success", data: [prod] });
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: "Produk" });
     await user.click(screen.getByRole("button", { name: "Produk" }));
     expect(await screen.findByRole("group", { name: "Tag yang sudah ada" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "vegan" }));
@@ -137,7 +138,7 @@ describe("AdminPage", () => {
       return resp({ status: "success", data: [] });
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
-    await user.click(screen.getByRole("button", { name: /detail ORD-U2/i }));
+    await user.click(await screen.findByRole("button", { name: /detail ORD-U2/i }));
     expect(await screen.findByText(/Dibayar/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /lunaskan/i }));
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U2/settle-parent"))).toBe(true);
@@ -164,7 +165,7 @@ describe("AdminPage", () => {
       return resp({ status: "success", data: [] });
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
-    await user.click(screen.getByRole("button", { name: /detail ORD-U3/i }));
+    await user.click(await screen.findByRole("button", { name: /detail ORD-U3/i }));
     const input = await screen.findByLabelText(/nominal masuk/i) as HTMLInputElement;
     expect(input.value).toBe("50000");
     expect(screen.getByRole("button", { name: /^tandai lunas$/i })).toBeInTheDocument();

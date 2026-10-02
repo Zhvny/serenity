@@ -44,6 +44,6 @@ describe("StatusPage polling", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText(/kurang bayar/i)).toBeInTheDocument();
-    expect(screen.getByText(/Kurang/)).toBeInTheDocument();
+    expect(screen.getByText(/Kurang Rp/)).toBeInTheDocument();
   });
 });
