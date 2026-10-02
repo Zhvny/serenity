@@ -1,0 +1,69 @@
+# Parity lokal: postgres + redis + migrate (one-off) + backend + frontend.
+# Jalankan: DB_PASSWORD=... docker compose up --build
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: serenity
+      POSTGRES_USER: serenity_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U serenity_app -d serenity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: ./backend
+    command: ["node", "scripts/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://serenity_app:${DB_PASSWORD}@postgres:5432/serenity?sslmode=disable
+      ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgres://serenity_app:${DB_PASSWORD}@postgres:5432/serenity?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      FRONTEND_ORIGIN: http://localhost:8080
+      QUASI_STATIC_QR_URL: ${QUASI_STATIC_QR_URL:-https://qr.serenity.dev/merchant-static}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS_HASH: ${ADMIN_PASS_HASH:?set ADMIN_PASS_HASH}
+      INTERNAL_KEY: ${INTERNAL_KEY:-dev-internal-key}
+      PORT: "3000"
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000/api/v1
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data: {}
