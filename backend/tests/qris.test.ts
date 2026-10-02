@@ -54,6 +54,33 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(qty, 2);
   });
 
+  it("generate-code: donation_consent true tersimpan", async () => {
+    const cartId = await seedCart();
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
+      body: JSON.stringify({ donation_consent: true }),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { unique_code: string; order_id: string } };
+    createdOrders.push(data.order_id);
+    const row = await pool.query<{ donation_consent: boolean }>("SELECT donation_consent FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(row.rows[0]?.donation_consent, true);
+  });
+
+  it("thanks: sertakan paid_amount + donation_consent", async () => {
+    const cartId = await seedCart();
+    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
+    const { data } = (await gen.json()) as { data: { unique_code: string; order_id: string } };
+    createdOrders.push(data.order_id);
+    await pool.query("UPDATE orders SET paid_amount = 50000, donation_consent = TRUE WHERE id = $1", [data.order_id]);
+    const owner = await createApp(pool).request(`/api/v1/thanks?ref=${data.unique_code}`, { headers: { cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF } });
+    assert.equal(owner.status, 200);
+    const body = (await owner.json()) as { data: Record<string, unknown> };
+    assert.equal(body.data["paid_amount"], 50000);
+    assert.equal(body.data["donation_consent"], true);
+  });
+
   it("thanks: pemilik sesi -> 200 (kode+nominal+qr), sesi lain -> 404 seragam", async () => {
     const cartId = await seedCart();
     const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });

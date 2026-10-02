@@ -11,15 +11,26 @@ function resp(body: unknown, status = 200): Response {
 }
 
 describe("CheckoutPage", () => {
-  it("klik Bayar -> panggil generate-code", async () => {
+  it("tombol Bayar disabled sampai consent dicentang", async () => {
     const user = userEvent.setup();
-    const calls: string[] = [];
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      calls.push(String(url));
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
+    render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
+    const btn = await screen.findByRole("button", { name: /bayar/i });
+    expect(btn).toBeDisabled();
+    await user.click(screen.getByRole("checkbox"));
+    expect(btn).not.toBeDisabled();
+  });
+
+  it("klik Bayar -> panggil generate-code dgn donation_consent", async () => {
+    const user = userEvent.setup();
+    const bodies: Array<string | undefined> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      bodies.push(init?.body as string | undefined);
       return resp({ status: "success", data: { order_id: "HP-1", unique_code: "ORD-1", qr_url: "https://qr?ref=ORD-1", nominal: 90000 } });
     }));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
+    await user.click(screen.getByRole("checkbox"));
     await user.click(await screen.findByRole("button", { name: /bayar/i }));
-    expect(calls.some((u) => u.includes("/orders/generate-code"))).toBe(true);
+    expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":true'))).toBe(true);
   });
 });

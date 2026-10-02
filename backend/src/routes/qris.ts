@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { getCart } from "../services/cart.js";
 import { nextOrderId, newCode } from "../services/orders.js";
@@ -12,8 +14,12 @@ export function qrisRoutes(pool: Pool): Hono {
   const r = new Hono();
   const products = productRepo(pool);
 
+  const generateSchema = z.object({ donation_consent: z.boolean().optional().default(false) });
+
   // Generate kode QRIS: nominal OTORITATIF server (hitung ulang dari cart sesi).
-  r.post("/orders/generate-code", async (c) => {
+  r.post("/orders/generate-code", zValidator("json", generateSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+  }), async (c) => {
     const cartId = cartIdOf(c);
     if (cartId === undefined) {
       return c.json({ status: "error", code: "NO_CART", message: "Keranjang tidak ditemukan" }, 400);
@@ -35,6 +41,7 @@ export function qrisRoutes(pool: Pool): Hono {
     }
     const qrBase = process.env.QUASI_STATIC_QR_URL ?? "";
     const orderId = await nextOrderId(pool);
+    const donationConsent = c.req.valid("json").donation_consent;
     // Siapkan harga per item sekali (sudah tervalidasi di loop total di atas).
     const priced: Array<{ product_id: string; quantity: number; price: number }> = [];
     for (const it of items) {
@@ -49,8 +56,8 @@ export function qrisRoutes(pool: Pool): Hono {
       try {
         await client.query("BEGIN");
         await client.query(
-          "INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code, qr_url) VALUES ($1, 'instant', $2, 'pending_payment', 'pickup', $3, $4, $5)",
-          [orderId, total, cartId, code, qrUrl],
+          "INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code, qr_url, donation_consent) VALUES ($1, 'instant', $2, 'pending_payment', 'pickup', $3, $4, $5, $6)",
+          [orderId, total, cartId, code, qrUrl, donationConsent],
         );
         // Salin isi cart ke order_items agar detail pesanan (menu) tersimpan permanen.
         for (const it of priced) {
@@ -80,8 +87,8 @@ export function qrisRoutes(pool: Pool): Hono {
     if (ref === undefined || ref === "" || cartId === undefined) {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
-    const { rows } = await pool.query<{ unique_code: string; total_amount: number; qr_url: string | null; status: string; session_id: string | null }>(
-      "SELECT unique_code, total_amount, qr_url, status, session_id FROM orders WHERE unique_code = $1",
+    const { rows } = await pool.query<{ unique_code: string; total_amount: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null }>(
+      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -89,8 +96,8 @@ export function qrisRoutes(pool: Pool): Hono {
       // 404 seragam agar tak membocorkan eksistensi order milik sesi lain.
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
-    // Hanya kode + nominal + QR + status. Tanpa alamat/nama.
-    return c.json({ status: "success", data: { unique_code: order.unique_code, nominal: order.total_amount, qr_url: order.qr_url, status: order.status } });
+    // Hanya kode + nominal + QR + status + info bayar. Tanpa alamat/nama.
+    return c.json({ status: "success", data: { unique_code: order.unique_code, nominal: order.total_amount, paid_amount: order.paid_amount, donation_consent: order.donation_consent, qr_url: order.qr_url, status: order.status } });
   });
 
   return r;
