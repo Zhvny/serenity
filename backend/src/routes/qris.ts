@@ -66,6 +66,8 @@ export function qrisRoutes(pool: Pool): Hono {
             [orderId, it.product_id, it.quantity, it.price],
           );
         }
+        // Kosongkan cart sesi agar tak dipesan ulang (atomik dalam transaksi yang sama).
+        await client.query("DELETE FROM cart_items WHERE cart_id = $1", [cartId]);
         await client.query("COMMIT");
         client.release();
         return c.json({ status: "success", data: { order_id: orderId, unique_code: code, qr_url: qrUrl, nominal: total } });

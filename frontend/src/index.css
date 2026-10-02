@@ -149,6 +149,14 @@ code { font-family: var(--font-mono); font-size: 14px; }
 .site-header nav a[aria-current="page"] { color: var(--ink); }
 .site-header nav a[aria-current="page"]::after { right: 0; }
 
+.header-link {
+  color: var(--ink-mute);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 150ms ease;
+}
+.header-link:hover { color: var(--ink); }
+
 .theme-toggle {
   appearance: none;
   display: inline-flex;

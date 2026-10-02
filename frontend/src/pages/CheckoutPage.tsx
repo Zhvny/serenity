@@ -26,6 +26,7 @@ export function CheckoutPage() {
     setMsg("");
     try {
       const { unique_code } = await generateCode(consent);
+      window.dispatchEvent(new Event("cart:changed"));
       navigate(`/thanks?ref=${encodeURIComponent(unique_code)}`);
     } catch (e: unknown) {
       setMsg(e instanceof ApiError ? e.message : "Gagal membuat pembayaran");

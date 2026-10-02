@@ -56,7 +56,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
           <Link key={c.id} to={`/?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{c.name}</Link>
         ))}
       </nav>
-      <Link to="/riwayat">Riwayat</Link>
+      <Link to="/riwayat" className="header-link">Riwayat</Link>
       <div className="header-actions">
         <button
           type="button"

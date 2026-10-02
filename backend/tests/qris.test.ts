@@ -81,6 +81,16 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(body.data["donation_consent"], true);
   });
 
+  it("generate-code: keranjang dikosongkan setelah order dibuat", async () => {
+    const cartId = await seedCart();
+    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
+    assert.equal(gen.status, 200);
+    const { data } = (await gen.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const cart = await pool.query("SELECT count(*)::int AS n FROM cart_items WHERE cart_id = $1", [cartId]);
+    assert.equal(Number(cart.rows[0]?.n), 0);
+  });
+
   it("thanks: pemilik sesi -> 200 (kode+nominal+qr), sesi lain -> 404 seragam", async () => {
     const cartId = await seedCart();
     const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
