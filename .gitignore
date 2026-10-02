@@ -27,6 +27,7 @@ dist-ssr
 
 # Secret
 .env
+DEPLOY-AZURE.ps1
 # Local assets (placeholder images — never commit real assets)
 frontend/public/images/*.jpg
 frontend/public/images/*.png
@@ -38,3 +39,5 @@ frontend/public/images/*.png
 
 # docs/ : lacak env-reference + adr, tetap abaikan superpowers (plan/spec internal)
 docs/   
+
+tags pada /admin tidak menunjukan tags apa saja yang sudah ada.
