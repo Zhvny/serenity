@@ -270,7 +270,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const id = `HP-ADV-${Date.now()}`;
     createdOrders.push(id);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'paid','pickup','adv-sess',$2)", [id, code]);
-    const h = { ...csrfHeaders, "x-forwarded-for": `adv-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), "x-forwarded-for": `adv-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
     const seq = ["preparing", "ready", "done"];
     for (const expected of seq) {
       const r = await app.request(`/api/v1/admin/orders/${code}/advance`, { method: "POST", headers: h, body: "{}" });
@@ -296,7 +296,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const id = `HP-ADVP-${Date.now()}`;
     createdOrders.push(id);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'pending_payment','pickup','advp-sess',$2)", [id, code]);
-    const h = { ...csrfHeaders, "x-forwarded-for": `advp-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const h = { ...csrf(), "x-forwarded-for": `advp-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
     const r = await app.request(`/api/v1/admin/orders/${code}/advance`, { method: "POST", headers: h, body: "{}" });
     assert.equal(r.status, 409);
     assert.equal(((await r.json()) as { code: string }).code, "INVALID_TRANSITION");
