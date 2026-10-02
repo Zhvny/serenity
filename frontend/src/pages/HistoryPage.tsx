@@ -3,10 +3,17 @@ import { Link, useNavigate } from "react-router";
 import { ApiError, getMyOrders, topupOrder } from "../services/api.ts";
 import type { HistoryOrder } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
+import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
 
 const FILTERS = ["semua", "pending_payment", "underpaid", "paid", "expired", "cancelled"] as const;
 type Filter = (typeof FILTERS)[number];
+
+const DOT: Record<string, string> = {
+  paid: "history-dot history-dot--paid",
+  underpaid: "history-dot history-dot--underpaid",
+  pending_payment: "history-dot history-dot--pending",
+};
 
 const LABEL: Record<string, string> = {
   pending_payment: "Menunggu pembayaran",
@@ -15,6 +22,11 @@ const LABEL: Record<string, string> = {
   expired: "Kedaluwarsa",
   cancelled: "Dibatalkan",
 };
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export function HistoryPage() {
   const navigate = useNavigate();
@@ -62,7 +74,7 @@ export function HistoryPage() {
   return (
     <div>
       <Header />
-      <main>
+      <main className="history-page">
         <h1>Riwayat Pesanan</h1>
         <div className="filter-bar" role="group" aria-label="Filter status">
           {FILTERS.map((f) => (
@@ -91,40 +103,46 @@ export function HistoryPage() {
             <Link className="btn-secondary" to="/">Lihat menu</Link>
           </div>
         ) : (
-          <div className="grid-menu">
+          <ul className="history-list">
             {orders.map((o) => {
               const sisa = o.paid_amount === null ? null : o.total_amount - o.paid_amount;
+              const kurang = o.status === "underpaid" && sisa !== null && sisa > 0;
               return (
-                <article key={o.unique_code} className="product-card">
-                  <h3>{o.unique_code}</h3>
-                  {o.items.length > 0 ? (
-                    <ul>
-                      {o.items.map((it) => (
-                        <li key={it.product_id}>{it.quantity}× {it.name}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  <p className="price">{rupiah(o.total_amount)}</p>
-                  <p><span className="status-badge">{LABEL[o.status] ?? o.status}</span></p>
-                  {o.paid_amount !== null ? <p>Dibayar {rupiah(o.paid_amount)} dari {rupiah(o.total_amount)}</p> : null}
-                  {o.status === "underpaid" && sisa !== null && sisa > 0 ? (
-                    <p>Kurang {rupiah(sisa)}</p>
-                  ) : null}
-                  {o.donation_consent ? <p><span className="tag">Donasi disetujui</span></p> : null}
-                  <div className="tags">
-                    {o.status === "underpaid" && o.parent_code === null ? (
-                      <button type="button" className="btn-primary btn-sm" disabled={topupBusy} onClick={() => void handleTopup(o.unique_code)}>
-                        Bayar sisa
-                      </button>
+                <li key={o.unique_code} className="history-row">
+                  <span className={DOT[o.status] ?? "history-dot"} aria-hidden="true" />
+                  <div className="history-main">
+                    <p className="history-date">{fmtDate(o.created_at)}</p>
+                    {o.items.length > 0 ? (
+                      <ul className="history-items">
+                        {o.items.map((it) => (
+                          <li key={it.product_id}>{it.quantity}× {it.name}</li>
+                        ))}
+                      </ul>
                     ) : null}
-                    <Link className="btn-secondary btn-sm" to={`/status/${encodeURIComponent(o.unique_code)}`}>Lacak</Link>
+                    <span className="history-code">{o.unique_code}</span>
+                    {o.donation_consent ? <span className="tag">Donasi disetujui</span> : null}
                   </div>
-                </article>
+                  <div className="history-side">
+                    <span className="history-total">{rupiah(o.total_amount)}</span>
+                    <span className="status-badge">{LABEL[o.status] ?? o.status}</span>
+                    {o.paid_amount !== null ? <p className="history-sub">Dibayar {rupiah(o.paid_amount)}</p> : null}
+                    {kurang ? <p className="history-sub history-sub--warn">Kurang {rupiah(sisa)}</p> : null}
+                    <div className="history-actions">
+                      {o.status === "underpaid" && o.parent_code === null ? (
+                        <button type="button" className="btn-primary btn-sm" disabled={topupBusy} onClick={() => void handleTopup(o.unique_code)}>
+                          Bayar sisa
+                        </button>
+                      ) : null}
+                      <Link className="btn-secondary btn-sm" to={`/status/${encodeURIComponent(o.unique_code)}`}>Lacak</Link>
+                    </div>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
