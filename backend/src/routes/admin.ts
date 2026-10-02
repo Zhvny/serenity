@@ -173,6 +173,10 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   }), async (c) => {
     const code = c.req.param("code");
     const paidAmount = c.req.valid("json").paid_amount;
+    const exists = await pool.query("SELECT 1 FROM orders WHERE unique_code = $1", [code]);
+    if ((exists.rowCount ?? 0) === 0) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
     const order = await markPaid(pool, code, paidAmount);
     const changed = order !== null;
     // Audit hanya saat transisi nyata terjadi (double-click -> satu catat).

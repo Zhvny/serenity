@@ -29,4 +29,21 @@ describe("StatusPage polling", () => {
     );
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
   });
+
+  it("underpaid -> Kurang bayar + sisa + tombol top-up", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (String(url).includes("/topup")) return resp({ status: "success", data: { order_id: "HP-C", unique_code: "ORD-C", qr_url: "q", nominal: 20000 } });
+      return resp({ status: "success", data: { unique_code: "ORD-U", nominal: 90000, paid_amount: 70000, qr_url: null, status: "underpaid" } });
+    }));
+    render(
+      <MemoryRouter initialEntries={["/status/ORD-U"]}>
+        <Routes>
+          <Route path="/status/:code" element={<StatusPage />} />
+          <Route path="/thanks" element={<div>THANKS</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText(/kurang bayar/i)).toBeInTheDocument();
+    expect(screen.getByText(/Kurang/)).toBeInTheDocument();
+  });
 });

@@ -139,6 +139,28 @@ describe("orders mine + topup (sesi)", () => {
     assert.equal(((await second.json()) as { code: string }).code, "INVALID_TOPUP");
     await pool.query("DELETE FROM orders WHERE id = $1", [childRow.rows[0]?.id]);
   });
+  it("topup me-refresh updated_at parent (lolos expire)", async () => {
+    const { id, code } = await seedMine(50000, 30000, "underpaid");
+    await pool.query("UPDATE orders SET updated_at = CURRENT_TIMESTAMP - INTERVAL '3 hours' WHERE id = $1", [id]);
+    const res = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(res.status, 200);
+    const child = ((await res.json()) as { data: { unique_code: string } }).data.unique_code;
+    const fresh = await pool.query<{ ok: boolean }>("SELECT updated_at > CURRENT_TIMESTAMP - INTERVAL '1 minute' AS ok FROM orders WHERE id = $1", [id]);
+    assert.equal(fresh.rows[0]?.ok, true);
+    const childRow = await pool.query<{ id: string }>("SELECT id FROM orders WHERE unique_code = $1", [child]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [childRow.rows[0]?.id]);
+  });
+  it("POST /:code/topup kedua (anak belum lunas) -> 409", async () => {
+    const { code } = await seedMine(50000, 30000, "underpaid");
+    const first = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(first.status, 200);
+    const child = ((await first.json()) as { data: { unique_code: string } }).data.unique_code;
+    const childRow = await pool.query<{ id: string }>("SELECT id FROM orders WHERE unique_code = $1", [child]);
+    const second = await req(`/orders/${code}/topup`, "POST", jar, {});
+    assert.equal(second.status, 409);
+    assert.equal(((await second.json()) as { code: string }).code, "INVALID_TOPUP");
+    await pool.query("DELETE FROM orders WHERE id = $1", [childRow.rows[0]?.id]);
+  });
   it("POST /:code/topup pada paid -> 409", async () => {
     const { code } = await seedMine(50000, 50000, "paid");
     const res = await req(`/orders/${code}/topup`, "POST", jar, {});
@@ -195,6 +217,22 @@ describe("orders underpaid service", () => {
   it("markPaid non-pending -> null", async () => {
     const { code } = await seedOrder(50000, "paid");
     assert.equal(await markPaid(pool, code, 50000), null);
+  });
+  it("markPaid konkuren -> tepat satu menang", async () => {
+    const { code } = await seedOrder(50000);
+    const [a, b] = await Promise.all([markPaid(pool, code, 30000), markPaid(pool, code, 50000)]);
+    const won = [a, b].filter((o) => o !== null);
+    assert.equal(won.length, 1);
+  });
+  it("listMine sertakan ringkas item (nama produk)", async () => {
+    const { id } = await seedOrder(90000);
+    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1, 'prod_001', 2, NULL, 45000)", [id]);
+    const mine = await listMine(pool, sess);
+    const found = mine.find((o) => o.order_id === id);
+    assert.ok(found !== undefined);
+    assert.equal(found.items.length, 1);
+    assert.equal(found.items[0]?.quantity, 2);
+    assert.ok(typeof found.items[0]?.name === "string" && found.items[0]?.name.length > 0);
   });
   it("listMine hanya milik sesi", async () => {
     await seedOrder(10000);

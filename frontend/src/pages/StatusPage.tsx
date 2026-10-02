@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router";
-import { ApiError, getThanks } from "../services/api.ts";
+import { useParams, Link, useNavigate } from "react-router";
+import { ApiError, getThanks, topupOrder, type ThanksData } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { rupiah } from "../utils/format.ts";
 
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
 
 export function StatusPage() {
   const { code } = useParams();
+  const navigate = useNavigate();
   const ref = code ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
-  const [status, setStatus] = useState<string>("");
+  const [data, setData] = useState<ThanksData | null>(null);
+  const [topupMsg, setTopupMsg] = useState("");
+  const [topupBusy, setTopupBusy] = useState(false);
   const polls = useRef(0);
 
   useEffect(() => {
@@ -25,7 +29,7 @@ export function StatusPage() {
       try {
         const d = await getThanks(ref);
         if (!alive) return;
-        setStatus(d.status);
+        setData(d);
         setState("done");
         // Berhenti polling pada status final atau batas maksimum.
         if (d.status === "paid" || d.status === "cancelled" || polls.current >= MAX_POLLS) {
@@ -63,9 +67,41 @@ export function StatusPage() {
       </div>
     );
   }
+  if (state === "done" && data === null) {
+    return (
+      <div>
+        <Header />
+        <main className="pay-wrap">
+          <div className="pay-card" role="alert">
+            <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
+            <h1>Pesanan tidak ditemukan</h1>
+            <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  const status = data?.status ?? "";
   const paid = status === "paid";
-  const label = paid ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : status === "underpaid" ? "Kurang bayar" : "Menunggu pembayaran";
+  const underpaid = status === "underpaid";
+  const sisa = data?.paid_amount === null || data?.paid_amount === undefined || data === null ? null : data.nominal - data.paid_amount;
+  const label = paid ? "Dibayar (Lunas)" : status === "cancelled" ? "Dibatalkan" : underpaid ? "Kurang bayar" : "Menunggu pembayaran";
   const icon = paid ? "check" : status === "cancelled" ? "warning" : "clock";
+
+  async function handleTopup(): Promise<void> {
+    setTopupBusy(true);
+    setTopupMsg("");
+    try {
+      const child = await topupOrder(ref);
+      navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
+    } catch (e: unknown) {
+      setTopupMsg(e instanceof ApiError ? "Top-up tidak dapat dibuat. Muat ulang halaman." : "Gagal membuat kode top-up.");
+    } finally {
+      setTopupBusy(false);
+    }
+  }
+
   return (
     <div>
       <Header />
@@ -75,6 +111,13 @@ export function StatusPage() {
           <h1>Status Pesanan</h1>
           <p className="pay-meta">Kode: <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
+          {underpaid && sisa !== null && sisa > 0 ? (
+            <>
+              <p className="pay-meta">Kurang {rupiah(sisa)}</p>
+              <button type="button" className="btn-primary" disabled={topupBusy} onClick={() => void handleTopup()}>Buat kode top-up</button>
+              {topupMsg !== "" ? <p className="detail-msg detail-msg--err" role="alert">{topupMsg}</p> : null}
+            </>
+          ) : null}
           <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
         </div>
       </main>

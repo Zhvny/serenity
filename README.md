@@ -40,7 +40,7 @@ serenity/
 │   │   ├── repos/products.ts      # query produk
 │   │   ├── db/{pool,redis}.ts     # PG pool + Redis fail-open
 │   │   └── middleware/{csrf,security}.ts
-│   ├── migrations/       # 001–009 (*.sql + *.down.sql) + seed_dev.sql
+│   ├── migrations/       # 001–010 (*.sql + *.down.sql) + seed_dev.sql
 │   ├── scripts/migrate.js         # runner bernomor + lock + checksum
 │   └── tests/            # node --test: admin, cart, orders, qris, security, e2e… (≥80% handler)
 ├── infra/                # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh

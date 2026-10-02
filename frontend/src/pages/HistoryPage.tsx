@@ -53,7 +53,7 @@ export function HistoryPage() {
       const child = await topupOrder(code);
       navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
     } catch (e: unknown) {
-      setTopupMsg(e instanceof ApiError && e.code === "INVALID_TOPUP" ? "Kode top-up sudah ada untuk pesanan ini." : "Gagal membuat kode top-up.");
+      setTopupMsg(e instanceof ApiError ? "Top-up tidak dapat dibuat. Muat ulang halaman." : "Gagal membuat kode top-up.");
     } finally {
       setTopupBusy(false);
     }
@@ -97,6 +97,13 @@ export function HistoryPage() {
               return (
                 <article key={o.unique_code} className="product-card">
                   <h3>{o.unique_code}</h3>
+                  {o.items.length > 0 ? (
+                    <ul>
+                      {o.items.map((it) => (
+                        <li key={it.product_id}>{it.quantity}× {it.name}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                   <p className="price">{rupiah(o.total_amount)}</p>
                   <p><span className="status-badge">{LABEL[o.status] ?? o.status}</span></p>
                   {o.paid_amount !== null ? <p>Dibayar {rupiah(o.paid_amount)} dari {rupiah(o.total_amount)}</p> : null}
