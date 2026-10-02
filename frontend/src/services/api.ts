@@ -166,7 +166,7 @@ export function adminUpdateProduct(id: string, product: { name: string; category
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
-export type PendingOrder = { id: string; unique_code: string; total_amount: number; status: string; delivery_method: string; created_at: string };
+export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; created_at: string };
 
 export function adminListOrders(status = "pending_payment"): Promise<PendingOrder[]> {
   return apiGet<PendingOrder[]>(`/admin/orders?status=${encodeURIComponent(status)}`);
@@ -174,7 +174,7 @@ export function adminListOrders(status = "pending_payment"): Promise<PendingOrde
 
 export type OrderItemDetail = { product_id: string; name: string; quantity: number; note: string | null; price_at_order: number };
 export type OrderDetail = {
-  id: string; unique_code: string; total_amount: number; status: string; mode: string;
+  id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string;
   scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
 };
@@ -187,8 +187,12 @@ export function adminAdvanceOrder(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/advance`, "POST");
 }
 
-export function adminMarkPaid(code: string): Promise<{ paid: boolean; changed: boolean }> {
-  return adminMutate<{ paid: boolean; changed: boolean }>(`/admin/orders/${encodeURIComponent(code)}/mark-paid`, "POST");
+export function adminMarkPaid(code: string, paidAmount: number): Promise<{ paid: boolean; changed: boolean; status: string | null }> {
+  return adminMutate<{ paid: boolean; changed: boolean; status: string | null }>(`/admin/orders/${encodeURIComponent(code)}/mark-paid`, "POST", { paid_amount: paidAmount });
+}
+
+export function adminSettleParent(code: string): Promise<{ status: string }> {
+  return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
 }
 
 // --- QRIS (public cart flow) ---
