@@ -36,6 +36,6 @@ describe("CheckoutPage", () => {
     window.addEventListener("cart:changed", () => { changed += 1; });
     fireEvent.click(screen.getByRole("button", { name: /bayar/i }));
     await vi.waitFor(() => expect(bodies.some((b) => b !== undefined && b.includes('"donation_consent":true'))).toBe(true));
-    expect(changed).toBe(1);
+    await vi.waitFor(() => expect(changed).toBe(1));
   });
 });

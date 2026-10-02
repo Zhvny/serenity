@@ -34,7 +34,7 @@ describe("ThanksPage", () => {
       return resp({ status: "success", data: { unique_code: "ORD-U", nominal: 90000, paid_amount: 70000, qr_url: "q", status: "underpaid" } });
     }));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-U"]}><ThanksPage /></MemoryRouter>);
-    expect(await screen.findByText(/Kurang/)).toBeInTheDocument();
+    expect(await screen.findByText(/Kurang Rp/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /top-up/i }));
     expect(await screen.findByText(/ORD-CHILD/)).toBeInTheDocument();
   });
