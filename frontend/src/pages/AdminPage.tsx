@@ -122,6 +122,12 @@ export function AdminPage() {
   }
   function cancelEdit(): void { setEditingId(null); setForm(EMPTY); }
 
+  const knownTags = [...new Set(products.flatMap((p) => p.tags))];
+  function addTag(t: string): void {
+    const cur = form.tagsInput.split(",").map((x) => x.trim()).filter((x) => x !== "");
+    if (!cur.includes(t)) setForm({ ...form, tagsInput: [...cur, t].join(", ") });
+  }
+
   async function act(fn: () => Promise<unknown>, fallback: string): Promise<void> {
     setError("");
     try { await fn(); await refresh(); } catch (e: unknown) { onError(e, fallback); }
@@ -264,6 +270,14 @@ export function AdminPage() {
               <input id="prod-price" type="number" min="1" value={form.price} onChange={(e) => setForm({ ...form, price: Number.parseInt(e.target.value, 10) || 0 })} required />
               <label htmlFor="prod-tags">Tags (pisah koma)</label>
               <input id="prod-tags" type="text" value={form.tagsInput} onChange={(e) => setForm({ ...form, tagsInput: e.target.value })} />
+              {knownTags.length > 0 ? (
+                <div className="admin-form-actions" role="group" aria-label="Tag yang sudah ada">
+                  <span className="admin-id">Tag yang sudah ada:</span>
+                  {knownTags.map((t) => (
+                    <button key={t} type="button" className="chip" onClick={() => addTag(t)}>{t}</button>
+                  ))}
+                </div>
+              ) : null}
               <div className="admin-form-actions">
                 <button type="submit" className="admin-btn">{editingId !== null ? "Simpan Perubahan" : "Tambah Produk"}</button>
                 {editingId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={cancelEdit}>Batal</button> : null}

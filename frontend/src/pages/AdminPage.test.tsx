@@ -37,8 +37,7 @@ describe("AdminPage", () => {
     expect(await screen.findByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 
-  it("klik Edit -> form terisi + submit kirim PUT update", async () => {
-    const user = userEvent.setup();
+  it("klik Edit -> form terisi + submit kirim PUT update", async () => {    const user = userEvent.setup();
     const prod = { id: "prod_001", name: "Choco Lava", category_id: "cat_dessert", price: 30000, tags: ["low-sugar"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
     const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
@@ -61,6 +60,24 @@ describe("AdminPage", () => {
     const put = calls.find((c) => c.method === "PUT" && c.url.includes("/admin/products/prod_001"));
     expect(put).toBeDefined();
     expect(put?.body).toContain("Choco Lava");
+  });
+
+  it("tag produk tampil sebagai chip; klik chip mengisi input", async () => {
+    const user = userEvent.setup();
+    const prod = { id: "prod_001", name: "Choco Lava", category_id: "cat_dessert", price: 30000, tags: ["low-sugar", "vegan"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [prod] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(screen.getByRole("button", { name: "Produk" }));
+    expect(await screen.findByRole("group", { name: "Tag yang sudah ada" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "vegan" }));
+    expect((screen.getByLabelText(/tags/i) as HTMLInputElement).value).toBe("vegan");
+    await user.click(screen.getByRole("button", { name: "low-sugar" }));
+    expect((screen.getByLabelText(/tags/i) as HTMLInputElement).value).toBe("vegan, low-sugar");
   });
 
   it("panel pending + Tandai Lunas -> POST mark-paid dgn paid_amount=total", async () => {
