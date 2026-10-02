@@ -19,12 +19,11 @@ describe("AdminPage", () => {
 
   it("sesi habis saat submit -> kembali ke form Login", async () => {
     const user = userEvent.setup();
-    let n = 0;
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      // 1: list awal 200 (data kosong) -> tampil form tambah; csrf GET 200; create -> 401 UNAUTH
-      if (String(url).includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
-      n += 1;
-      if (n === 1) return resp({ status: "success", data: [] });
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      // GET awal (products + orders) sukses -> tampil form; mutation (POST create) -> 401.
+      if (method === "GET") return resp({ status: "success", data: [] });
       return resp({ status: "error", code: "UNAUTH", message: "Sesi habis" }, 401);
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
@@ -44,6 +43,7 @@ describe("AdminPage", () => {
       const u = String(url); const method = init?.method ?? "GET";
       calls.push({ url: u, method, body: init?.body as string | undefined });
       if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
       if (u.includes("/admin/products/prod_001") && method === "PUT") return resp({ status: "success", data: { id: "prod_001" } });
       if (u.includes("/admin/products")) return resp({ status: "success", data: [prod] });
       return resp({ status: "success", data: [prod] });
@@ -57,5 +57,24 @@ describe("AdminPage", () => {
     const put = calls.find((c) => c.method === "PUT" && c.url.includes("/admin/products/prod_001"));
     expect(put).toBeDefined();
     expect(put?.body).toContain("Choco Lava");
+  });
+
+  it("panel pending + Tandai Lunas -> POST mark-paid", async () => {
+    const user = userEvent.setup();
+    const order = { id: "HP-1", unique_code: "ORD-ABC", total_amount: 90000, status: "pending_payment", delivery_method: "delivery", created_at: "2026-10-02T00:00:00Z" };
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-ABC/mark-paid")) return resp({ status: "success", data: { paid: true, changed: true } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByText("ORD-ABC");
+    await user.click(screen.getByRole("button", { name: /tandai lunas ORD-ABC/i }));
+    expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-ABC/mark-paid"))).toBe(true);
   });
 });

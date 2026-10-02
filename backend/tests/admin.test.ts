@@ -135,4 +135,31 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(Number(audit.rows[0]?.n), 1);
     await pool.query("DELETE FROM audit_logs WHERE action='update_product' AND detail::text LIKE $1", [`%${pid}%`]);
   });
+
+  it("GET /admin/orders tanpa session -> 401 UNAUTH", async () => {
+    const res = await createApp(pool).request("/api/v1/admin/orders?status=pending_payment");
+    assert.equal(res.status, 401);
+    assert.equal(((await res.json()) as { code: string }).code, "UNAUTH");
+  });
+
+  it("GET /admin/orders?status=pending_payment -> hanya pending, TANPA delivery_address", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const codePend = `ORD-ADMINLIST-${Date.now()}`;
+    const idPend = `HP-AL-${Date.now()}`;
+    const idPaid = `HP-AL2-${Date.now()}`;
+    createdOrders.push(idPend, idPaid);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, delivery_address, session_id, unique_code) VALUES ($1,'instant',77000,'pending_payment','delivery','Jl. RAHASIA No.9','al-sess',$2)", [idPend, codePend]);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',5000,'paid','pickup','al-sess2',$2)", [idPaid, `ORD-PAID-${Date.now()}`]);
+    const res = await app.request("/api/v1/admin/orders?status=pending_payment", { headers: { cookie: `admin_session=${sid}` } });
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { data: Array<{ id: string; unique_code: string; status: string } & Record<string, unknown>> };
+    const ids = body.data.map((o) => o.id);
+    assert.ok(ids.includes(idPend), "order pending harus ada");
+    assert.ok(!ids.includes(idPaid), "order paid tak boleh muncul");
+    assert.ok(body.data.every((o) => o.status === "pending_payment"));
+    assert.ok(body.data.every((o) => o["delivery_address"] === undefined), "delivery_address bocor di list");
+    assert.doesNotMatch(JSON.stringify(body.data), /RAHASIA/);
+  });
 });

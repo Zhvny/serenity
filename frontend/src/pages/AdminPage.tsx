@@ -8,7 +8,10 @@ import {
   adminUpdateProduct,
   adminDeactivateProduct,
   adminReactivateProduct,
+  adminListOrders,
+  adminMarkPaid,
   type Product,
+  type PendingOrder,
 } from "../services/api.ts";
 import "./admin.css";
 
@@ -22,11 +25,13 @@ export function AdminPage() {
   const [loadError, setLoadError] = useState("");
   const [form, setForm] = useState<Form>(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingOrder[]>([]);
 
   async function refresh(): Promise<void> {
     try {
-      const list = await adminListProducts();
+      const [list, orders] = await Promise.all([adminListProducts(), adminListOrders("pending_payment")]);
       setProducts(list);
+      setPending(orders);
       setLoggedIn(true);
       setLoadError("");
     } catch (e: unknown) {
@@ -114,6 +119,20 @@ export function AdminPage() {
     }
   }
 
+  async function handleMarkPaid(code: string): Promise<void> {
+    setError("");
+    try {
+      await adminMarkPaid(code);
+      await refresh();
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.code === "UNAUTH") {
+        setLoggedIn(false);
+        return;
+      }
+      setError(e instanceof Error ? e.message : "Gagal menandai lunas");
+    }
+  }
+
   if (!loggedIn) {
     return <LoginForm onLogin={handleLogin} />;
   }
@@ -126,6 +145,27 @@ export function AdminPage() {
       </div>
       {error !== "" ? <p className="admin-error" role="alert">{error}</p> : null}
       {loadError !== "" ? <p className="admin-error" role="alert">{loadError}</p> : null}
+
+      <section className="admin-section">
+        <h2 className="admin-subhead">Pembayaran menunggu konfirmasi ({pending.length})</h2>
+        {pending.length === 0 ? (
+          <p className="admin-empty">Tidak ada pembayaran yang menunggu konfirmasi.</p>
+        ) : (
+          <ul className="admin-list">
+            {pending.map((o) => (
+              <li key={o.id} className="admin-row">
+                <h3>{o.id}</h3>
+                <span className="admin-id">{o.unique_code}</span>
+                <span className="admin-price">Rp {o.total_amount.toLocaleString("id-ID")}</span>
+                <span className="status-badge">{o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</span>
+                <div className="admin-row-actions">
+                  <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code)}>Tandai Lunas</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="admin-section">
         <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>

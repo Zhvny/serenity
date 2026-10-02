@@ -105,6 +105,22 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { id } });
   });
 
+  // Daftar order untuk konfirmasi (default: pending_payment). PII tulis-saja:
+  // delivery_address/koordinat TIDAK dikembalikan di list.
+  r.get("/orders", async (c) => {
+    const status = c.req.query("status") ?? "pending_payment";
+    const allowed = new Set(["pending_payment", "paid", "expired", "failed", "cancelled"]);
+    if (!allowed.has(status)) {
+      return c.json({ status: "error", code: "INVALID_STATUS", message: "Status tidak valid" }, 400);
+    }
+    const { rows } = await pool.query(
+      `SELECT id, unique_code, total_amount, status, delivery_method, created_at
+       FROM orders WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
+      [status],
+    );
+    return c.json({ status: "success", data: rows });
+  });
+
   // Mark-paid QRIS: idempoten (hanya transisi dari pending_payment) + audit.
   r.post("/orders/:code/mark-paid", async (c) => {
     const code = c.req.param("code");
