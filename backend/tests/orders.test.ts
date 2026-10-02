@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
 import { closeRedis } from "../src/db/redis.js";
+import { markPaid, listMine, expireStale } from "../src/services/orders.js";
 
 // DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed prod_001.
 const pool = createPool();
@@ -74,5 +75,60 @@ describe("orders delivery", () => {
     createdOrders.push(json.data.order_id);
     assert.equal(json.data.delivery_method, "delivery");
     assert.equal(json.data.delivery_address, "Jl. Sehat No. 10 Jakarta");
+  });
+});
+
+describe("orders underpaid service", () => {
+  const sess = `sess-${randomUUID()}`;
+  async function seedOrder(total: number, status = "pending_payment"): Promise<{ id: string; code: string }> {
+    const id = `T-${randomUUID().slice(0, 8)}`;
+    const code = `ORD-${randomUUID().replace(/-/g, "").toUpperCase().slice(0, 16)}`;
+    await pool.query(
+      "INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1, 'instant', $2, $3, 'pickup', $4, $5)",
+      [id, total, status, sess, code],
+    );
+    createdOrders.push(id);
+    return { id, code };
+  }
+
+  it("markPaid kurang -> underpaid + paid_amount tercatat", async () => {
+    const { code } = await seedOrder(50000);
+    const o = await markPaid(pool, code, 30000);
+    assert.equal(o?.status, "underpaid");
+    assert.equal(o?.paid_amount, 30000);
+  });
+  it("markPaid pas -> paid", async () => {
+    const { code } = await seedOrder(50000);
+    const o = await markPaid(pool, code, 50000);
+    assert.equal(o?.status, "paid");
+    assert.equal(o?.paid_amount, 50000);
+  });
+  it("markPaid lebih -> paid", async () => {
+    const { code } = await seedOrder(50000);
+    const o = await markPaid(pool, code, 60000);
+    assert.equal(o?.status, "paid");
+    assert.equal(o?.paid_amount, 60000);
+  });
+  it("markPaid non-pending -> null", async () => {
+    const { code } = await seedOrder(50000, "paid");
+    assert.equal(await markPaid(pool, code, 50000), null);
+  });
+  it("listMine hanya milik sesi", async () => {
+    await seedOrder(10000);
+    const mine = await listMine(pool, sess);
+    assert.ok(mine.length >= 1);
+    const other = await listMine(pool, `sess-lain-${randomUUID()}`);
+    assert.equal(other.length, 0);
+  });
+  it("expireStale: basi -> expired, fresh -> tetap", async () => {
+    const old = await seedOrder(10000);
+    await pool.query("UPDATE orders SET updated_at = CURRENT_TIMESTAMP - INTERVAL '3 hours' WHERE id = $1", [old.id]);
+    const fresh = await seedOrder(10000);
+    const n = await expireStale(pool, 2);
+    assert.ok(n >= 1);
+    const o = await pool.query<{ status: string }>("SELECT status FROM orders WHERE id = $1", [old.id]);
+    assert.equal(o.rows[0]?.status, "expired");
+    const f = await pool.query<{ status: string }>("SELECT status FROM orders WHERE id = $1", [fresh.id]);
+    assert.equal(f.rows[0]?.status, "pending_payment");
   });
 });
