@@ -27,6 +27,10 @@ dist-ssr
 
 # Secret
 .env
+# Runbook deploy berisi password hardcode (keputusan grill 2026-10-02): DILARANG commit.
+DEPLOY-AZURE.ps1
+# State sesi runbook Azure (nama resource/URL/ID; rahasia tak pernah ditulis ke sini).
+.azure-state
 DEPLOY-AZURE.ps1
 # Local assets (placeholder images — never commit real assets)
 frontend/public/images/*.jpg
