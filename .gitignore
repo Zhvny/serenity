@@ -39,5 +39,3 @@ frontend/public/images/*.png
 
 # docs/ : lacak env-reference + adr, tetap abaikan superpowers (plan/spec internal)
 docs/   
-
-tags pada /admin tidak menunjukan tags apa saja yang sudah ada.

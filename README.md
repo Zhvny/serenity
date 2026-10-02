@@ -44,7 +44,6 @@ serenity/
 │   ├── scripts/migrate.js         # runner bernomor + lock + checksum
 │   └── tests/            # node --test: admin, cart, orders, qris, security, e2e… (≥80% handler)
 ├── infra/                # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
-├── docs/                 # SPEC, DESIGN, API, env-reference, adr/, specs/, azure-deployment-plan.md
 ├── .github/workflows/deploy.yml   # CI: lint → verify → acr build → migrasi → rollout → SWA
 └── README.md
 ```
@@ -83,4 +82,4 @@ Target aktual = **Azure**. Ikuti `DEPLOY-AZURE.md` (bash) atau `DEPLOY-AZURE.ps1
 
 ## License
 
-MIT — lihat `LICENSE` (Copyright © 2026 Fransiskus Xaverius Kevin).
+MIT `LICENSE` (Copyright © 2026 Serenity).
