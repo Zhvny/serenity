@@ -1,7 +1,7 @@
 // Ikon SVG inline (tanpa dependency). stroke=currentColor, ukuran = 1em (ikut font-size).
 // aria-hidden secara default; beri `title` untuk ikon bermakna.
 
-export type IconName = "cart" | "warning" | "check" | "arrow-right" | "leaf" | "clock" | "spark";
+export type IconName = "cart" | "warning" | "check" | "arrow-right" | "leaf" | "clock" | "spark" | "sun" | "moon";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   cart: (
@@ -38,6 +38,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   spark: <path d="M12 2v6m0 8v6m10-10h-6M8 12H2m14.5-6.5-4 4m-5 5-4 4m13 0-4-4m-5-5-4-4" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" />
+    </>
+  ),
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />,
 };
 
 export function Icon({ name, title, className }: { name: IconName; title?: string; className?: string }) {

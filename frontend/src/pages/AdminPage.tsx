@@ -37,6 +37,7 @@ const ADVANCE_LABEL: Record<string, string> = { paid: "Mulai Siapkan", preparing
 
 export function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [booting, setBooting] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -72,6 +73,8 @@ export function AdminPage() {
     } catch (e: unknown) {
       if (e instanceof ApiError && e.code === "UNAUTH") setLoggedIn(false);
       else setLoadError(e instanceof Error ? e.message : "Gagal memuat");
+    } finally {
+      setBooting(false);
     }
   }
 
@@ -159,6 +162,13 @@ export function AdminPage() {
   async function handleDeactivate(id: string): Promise<void> { await act(() => adminDeactivateProduct(id), "Gagal menonaktifkan"); }
   async function handleReactivate(id: string): Promise<void> { await act(() => adminReactivateProduct(id), "Gagal mengaktifkan"); }
 
+  if (booting) {
+    return (
+      <main className="admin-page" aria-label="Memuat admin">
+        <div className="skeleton" aria-hidden="true" />
+      </main>
+    );
+  }
   if (!loggedIn) return <LoginForm onLogin={handleLogin} />;
 
   return (

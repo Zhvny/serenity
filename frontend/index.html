@@ -5,6 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="[placeholder]" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>serenity</title>
+    <script>
+      // Tema sebelum paint (DESIGN.md §16): localStorage dulu, default light.
+      try {
+        if (localStorage.getItem("serenity-theme") === "dark") document.documentElement.dataset.theme = "dark";
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
