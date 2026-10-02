@@ -23,8 +23,19 @@ permissions:
   contents: read
 
 jobs:
+  # 0) Validasi workflow sendiri (actionlint) — tangkap error YAML/ekspresi lebih awal.
+  lint-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        run: |
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+
   # 1) Gate kualitas — WAJIB hijau sebelum build/deploy apa pun.
   verify:
+    needs: lint-workflow
     runs-on: ubuntu-latest
     services:
       postgres:
