@@ -41,17 +41,36 @@ export function qrisRoutes(pool: Pool): Hono {
     }
     const qrBase = process.env.QUASI_STATIC_QR_URL ?? "";
     const orderId = await nextOrderId(pool);
+    // Siapkan harga per item sekali (sudah tervalidasi di loop total di atas).
+    const priced: Array<{ product_id: string; quantity: number; price: number }> = [];
+    for (const it of items) {
+      const p = await products.getById(it.product_id);
+      priced.push({ product_id: it.product_id, quantity: it.quantity, price: p === null ? 0 : p.price });
+    }
     // unique_code crypto + retry bila bentrok UNIQUE (sangat jarang untuk 128-bit).
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const code = newCode();
       const qrUrl = `${qrBase}?ref=${code}`;
+      const client = await pool.connect();
       try {
-        await pool.query(
+        await client.query("BEGIN");
+        await client.query(
           "INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code, qr_url) VALUES ($1, 'instant', $2, 'pending_payment', 'pickup', $3, $4, $5)",
           [orderId, total, cartId, code, qrUrl],
         );
+        // Salin isi cart ke order_items agar detail pesanan (menu) tersimpan permanen.
+        for (const it of priced) {
+          await client.query(
+            "INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1, $2, $3, NULL, $4)",
+            [orderId, it.product_id, it.quantity, it.price],
+          );
+        }
+        await client.query("COMMIT");
+        client.release();
         return c.json({ status: "success", data: { order_id: orderId, unique_code: code, qr_url: qrUrl, nominal: total } });
       } catch (e) {
+        await client.query("ROLLBACK");
+        client.release();
         // Konflik unique_code -> coba kode baru; error lain -> lempar ke onError.
         if (e instanceof Error && /unique/i.test(e.message)) continue;
         throw e;
