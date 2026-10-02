@@ -43,7 +43,7 @@ export function CheckoutPage() {
           <p>Buat kode QRIS untuk menyelesaikan pesanan dari keranjang Anda.</p>
           <label className="pay-consent" htmlFor="donation-consent">
             <input id="donation-consent" type="checkbox" checked={consent} disabled={waitLeft > 0} onChange={(e) => setConsent(e.target.checked)} />
-            Saya menyetujui bahwa selisih lebih menjadi <strong>donasi</strong>
+            Saya menyetujui bahwa selisih lebih dari nominal pesanan ini menjadi <strong>donasi</strong> (tidak dikembalikan). Jika keberatan, pastikan nominal transfer <strong>persis</strong> seperti tertera.
             {waitLeft > 0 ? ` (baca dulu… ${waitLeft})` : ""}
           </label>
           <button type="button" className="btn-primary btn-lg pay-cta" disabled={state === "sending" || !consent} onClick={() => void handlePay()}>
