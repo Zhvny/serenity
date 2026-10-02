@@ -1,6 +1,6 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { scryptSync } from "node:crypto";
+import { scryptSync, randomUUID } from "node:crypto";
 import { createApp } from "../src/app.js";
 import { createPool } from "../src/db/pool.js";
 import { getRedis, closeRedis } from "../src/db/redis.js";
@@ -9,8 +9,9 @@ import { assertAdminConfig } from "../src/services/adminAuth.js";
 const SALT = "testsalt12345678";
 const PASS = "benar123";
 const pool = createPool();
-// CSRF: double-submit cookie + Origin sah.
-const csrfHeaders = { "content-type": "application/json", origin: "http://localhost:5173", "x-csrf-token": "t1", cookie: "csrf_token=t1" };
+const XFF = `admin-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi dari file lain
+// CSRF: double-submit cookie + Origin sah. + XFF unik.
+const csrfHeaders = { "content-type": "application/json", origin: "http://localhost:5173", "x-csrf-token": "t1", cookie: "csrf_token=t1", "x-forwarded-for": XFF };
 
 function loginUser(user: string): string { return `${user}-${Date.now()}`; }
 const createdUsers: string[] = [];
@@ -161,5 +162,69 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.ok(body.data.every((o) => o.status === "pending_payment"));
     assert.ok(body.data.every((o) => o["delivery_address"] === undefined), "delivery_address bocor di list");
     assert.doesNotMatch(JSON.stringify(body.data), /RAHASIA/);
+  });
+
+  it("GET /admin/orders/:code -> detail dgn item + alamat (delivery)", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-DET-${Date.now()}`;
+    const id = `HP-DET-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, delivery_address, session_id, unique_code) VALUES ($1,'instant',45000,'paid','delivery','Jl. Detail No.3','det-sess',$2)", [id, code]);
+    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1,'prod_001',2,'tanpa gula',22500)", [id]);
+    const res = await app.request(`/api/v1/admin/orders/${code}`, { headers: { cookie: `admin_session=${sid}` } });
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { data: { unique_code: string; delivery_address: string | null; items: Array<{ product_id: string; quantity: number; name: string }> } };
+    assert.equal(body.data.unique_code, code);
+    assert.equal(body.data.delivery_address, "Jl. Detail No.3");
+    assert.equal(body.data.items.length, 1);
+    assert.equal(body.data.items[0]?.quantity, 2);
+    assert.ok(typeof body.data.items[0]?.name === "string");
+  });
+
+  it("GET /admin/orders/:code tanpa session -> 401", async () => {
+    const res = await createApp(pool).request("/api/v1/admin/orders/ORD-X");
+    assert.equal(res.status, 401);
+  });
+
+  it("POST /admin/orders/:code/advance -> paid->preparing->ready->done; tolak lanjut setelah done", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-ADV-${Date.now()}`;
+    const id = `HP-ADV-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'paid','pickup','adv-sess',$2)", [id, code]);
+    const h = { ...csrfHeaders, "x-forwarded-for": `adv-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const seq = ["preparing", "ready", "done"];
+    for (const expected of seq) {
+      const r = await app.request(`/api/v1/admin/orders/${code}/advance`, { method: "POST", headers: h, body: "{}" });
+      assert.equal(r.status, 200);
+      assert.equal(((await r.json()) as { data: { status: string } }).data.status, expected);
+    }
+    // Sudah done -> advance lagi ditolak 409.
+    const over = await app.request(`/api/v1/admin/orders/${code}/advance`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(over.status, 409);
+    const dbStatus = (await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code=$1", [code])).rows[0]?.status;
+    assert.equal(dbStatus, "done");
+    // Audit: tiga transisi tercatat.
+    const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action='advance_order' AND detail::text LIKE $1", [`%${code}%`])).rows[0]?.n;
+    assert.equal(Number(n), 3);
+    await pool.query("DELETE FROM audit_logs WHERE action='advance_order' AND detail::text LIKE $1", [`%${code}%`]);
+  });
+
+  it("POST /admin/orders/:code/advance pada pending_payment -> 409 (belum lunas)", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-ADVP-${Date.now()}`;
+    const id = `HP-ADVP-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'pending_payment','pickup','advp-sess',$2)", [id, code]);
+    const h = { ...csrfHeaders, "x-forwarded-for": `advp-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
+    const r = await app.request(`/api/v1/admin/orders/${code}/advance`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(r.status, 409);
+    assert.equal(((await r.json()) as { code: string }).code, "INVALID_TRANSITION");
   });
 });

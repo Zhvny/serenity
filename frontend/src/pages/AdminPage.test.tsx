@@ -27,6 +27,8 @@ describe("AdminPage", () => {
       return resp({ status: "error", code: "UNAUTH", message: "Sesi habis" }, 401);
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: "Produk" });
+    await user.click(screen.getByRole("button", { name: "Produk" }));
     await screen.findByRole("button", { name: /tambah produk/i });
     await user.type(screen.getByLabelText(/id produk/i), "p9");
     await user.type(screen.getByLabelText(/nama/i), "X");
@@ -49,6 +51,8 @@ describe("AdminPage", () => {
       return resp({ status: "success", data: [prod] });
     }));
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: "Produk" });
+    await user.click(screen.getByRole("button", { name: "Produk" }));
     await screen.findByRole("button", { name: /edit choco lava/i });
     await user.click(screen.getByRole("button", { name: /edit choco lava/i }));
     expect(screen.getByLabelText(/id produk/i)).toBeDisabled();
@@ -76,5 +80,28 @@ describe("AdminPage", () => {
     await screen.findByText("ORD-ABC");
     await user.click(screen.getByRole("button", { name: /tandai lunas ORD-ABC/i }));
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-ABC/mark-paid"))).toBe(true);
+  });
+
+  it("klik order -> detail (item+alamat) + Majukan -> POST advance", async () => {
+    const user = userEvent.setup();
+    const paidOrder = { id: "HP-9", unique_code: "ORD-PAID9", total_amount: 45000, status: "paid", delivery_method: "delivery", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...paidOrder, mode: "instant", scheduled_at: null, delivery_address: "Jl. Mawar No.5", delivery_lat: null, delivery_lng: null, items: [{ product_id: "prod_001", name: "Choco Lava", quantity: 2, note: null, price_at_order: 22500 }] };
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-PAID9/advance")) return resp({ status: "success", data: { status: "preparing" } });
+      if (u.includes("/admin/orders/ORD-PAID9")) return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [paidOrder] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: /detail ORD-PAID9/i }));
+    expect(await screen.findByText("Jl. Mawar No.5")).toBeInTheDocument();
+    expect(screen.getByText(/Choco Lava/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mulai Siapkan" }));
+    expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-PAID9/advance"))).toBe(true);
   });
 });
