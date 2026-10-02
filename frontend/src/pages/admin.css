@@ -117,3 +117,6 @@
 
 .admin-form-actions { display: flex; gap: var(--sp-sm); margin-top: var(--sp-xs); }
 .admin-row-actions { display: flex; gap: var(--sp-sm); margin-left: auto; flex-wrap: wrap; }
+
+
+.admin-empty { color: var(--ink-mute); font-size: 14px; margin: 0; }
