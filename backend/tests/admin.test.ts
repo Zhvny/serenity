@@ -231,6 +231,21 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.ok(typeof body.data.items[0]?.name === "string");
   });
 
+  it("GET /admin/orders/:code underpaid -> detail ada paid_amount + parent_code", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrfHeaders, body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-DPU-${Date.now()}`;
+    const id = `HP-DPU-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, paid_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',50000,30000,'underpaid','pickup','dpu-sess',$2)", [id, code]);
+    const res = await app.request(`/api/v1/admin/orders/${code}`, { headers: { cookie: `admin_session=${sid}` } });
+    assert.equal(res.status, 200);
+    const data = ((await res.json()) as { data: Record<string, unknown> }).data;
+    assert.equal(data["paid_amount"], 30000);
+    assert.ok("parent_code" in data);
+  });
+
   it("GET /admin/orders/:code tanpa session -> 401", async () => {
     const res = await createApp(pool).request("/api/v1/admin/orders/ORD-X");
     assert.equal(res.status, 401);

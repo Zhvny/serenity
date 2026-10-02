@@ -63,15 +63,15 @@ describe("AdminPage", () => {
     expect(put?.body).toContain("Choco Lava");
   });
 
-  it("panel pending + Tandai Lunas -> POST mark-paid", async () => {
+  it("panel pending + Tandai Lunas -> POST mark-paid dgn paid_amount=total", async () => {
     const user = userEvent.setup();
     const order = { id: "HP-1", unique_code: "ORD-ABC", total_amount: 90000, status: "pending_payment", delivery_method: "delivery", created_at: "2026-10-02T00:00:00Z" };
-    const calls: Array<{ url: string; method: string }> = [];
+    const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url); const method = init?.method ?? "GET";
-      calls.push({ url: u, method });
+      calls.push({ url: u, method, body: init?.body as string | undefined });
       if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
-      if (u.includes("/admin/orders/ORD-ABC/mark-paid")) return resp({ status: "success", data: { paid: true, changed: true } });
+      if (u.includes("/admin/orders/ORD-ABC/mark-paid")) return resp({ status: "success", data: { paid: true, changed: true, status: "paid" } });
       if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
       if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
       return resp({ status: "success", data: [] });
@@ -79,7 +79,70 @@ describe("AdminPage", () => {
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
     await screen.findByText("ORD-ABC");
     await user.click(screen.getByRole("button", { name: /tandai lunas ORD-ABC/i }));
-    expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-ABC/mark-paid"))).toBe(true);
+    const mp = calls.find((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-ABC/mark-paid"));
+    expect(mp).toBeDefined();
+    expect(mp?.body).toContain('"paid_amount":90000');
+  });
+
+  it("filter Kurang bayar -> fetch status=underpaid", async () => {
+    const user = userEvent.setup();
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      urls.push(String(url));
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: "Kurang bayar" });
+    await user.click(screen.getByRole("button", { name: "Kurang bayar" }));
+    await vi.waitFor(() => expect(urls.some((u) => u.includes("status=underpaid"))).toBe(true));
+  });
+
+  it("detail underpaid -> Dibayar X dari Y + Lunaskan -> POST settle-parent", async () => {
+    const user = userEvent.setup();
+    const order = { id: "HP-2", unique_code: "ORD-U2", total_amount: 50000, paid_amount: 30000, parent_code: null, status: "underpaid", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...order, mode: "instant", scheduled_at: null, delivery_address: null, delivery_lat: null, delivery_lng: null, items: [] };
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-U2/settle-parent")) return resp({ status: "success", data: { status: "paid" } });
+      if (u.includes("/admin/orders/ORD-U2") && method === "GET") return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(screen.getByRole("button", { name: /detail ORD-U2/i }));
+    expect(await screen.findByText(/Dibayar/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /lunaskan/i }));
+    expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U2/settle-parent"))).toBe(true);
+  });
+
+  it("detail pending -> input nominal (default total) -> kirim angka ubahan", async () => {
+    const user = userEvent.setup();
+    const order = { id: "HP-3", unique_code: "ORD-U3", total_amount: 50000, status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...order, paid_amount: null, parent_code: null, mode: "instant", scheduled_at: null, delivery_address: null, delivery_lat: null, delivery_lng: null, items: [] };
+    const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method, body: init?.body as string | undefined });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-U3/mark-paid")) return resp({ status: "success", data: { paid: false, changed: true, status: "underpaid" } });
+      if (u.includes("/admin/orders/ORD-U3") && method === "GET") return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(screen.getByRole("button", { name: /detail ORD-U3/i }));
+    const input = await screen.findByLabelText(/nominal masuk/i) as HTMLInputElement;
+    expect(input.value).toBe("50000");
+    await user.clear(input);
+    await user.type(input, "30000");
+    await user.click(screen.getByRole("button", { name: /^tandai lunas$/i }));
+    const mp = calls.find((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U3/mark-paid"));
+    expect(mp?.body).toContain('"paid_amount":30000');
   });
 
   it("klik order -> detail (item+alamat) + Majukan -> POST advance", async () => {

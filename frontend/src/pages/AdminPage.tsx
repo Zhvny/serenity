@@ -12,6 +12,7 @@ import {
   adminOrderDetail,
   adminAdvanceOrder,
   adminMarkPaid,
+  adminSettleParent,
   type Product,
   type PendingOrder,
   type OrderDetail,
@@ -25,12 +26,13 @@ type Tab = "orders" | "products";
 
 const ORDER_FILTERS: Array<{ key: string; label: string }> = [
   { key: "pending_payment", label: "Menunggu bayar" },
+  { key: "underpaid", label: "Kurang bayar" },
   { key: "paid", label: "Lunas" },
   { key: "preparing", label: "Disiapkan" },
   { key: "ready", label: "Siap" },
   { key: "done", label: "Selesai" },
 ];
-const STATUS_LABEL: Record<string, string> = { pending_payment: "Menunggu pembayaran", paid: "Lunas", preparing: "Disiapkan", ready: "Siap diambil/antar", done: "Selesai" };
+const STATUS_LABEL: Record<string, string> = { pending_payment: "Menunggu pembayaran", underpaid: "Kurang bayar", paid: "Lunas", preparing: "Disiapkan", ready: "Siap diambil/antar", done: "Selesai" };
 const ADVANCE_LABEL: Record<string, string> = { paid: "Mulai Siapkan", preparing: "Tandai Siap", ready: "Tandai Selesai" };
 
 export function AdminPage() {
@@ -44,6 +46,7 @@ export function AdminPage() {
   const [orderFilter, setOrderFilter] = useState("pending_payment");
   const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [detail, setDetail] = useState<OrderDetail | null>(null);
+  const [paidInput, setPaidInput] = useState("");
 
   async function refreshProducts(): Promise<void> {
     const list = await adminListProducts();
@@ -126,11 +129,19 @@ export function AdminPage() {
 
   async function openDetail(code: string): Promise<void> {
     setError("");
-    try { setDetail(await adminOrderDetail(code)); } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
+    try {
+      const d = await adminOrderDetail(code);
+      setDetail(d);
+      setPaidInput(String(d.total_amount));
+    } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
   }
 
-  async function handleMarkPaid(code: string): Promise<void> {
-    await act(() => adminMarkPaid(code), "Gagal menandai lunas");
+  async function handleMarkPaid(code: string, paidAmount: number): Promise<void> {
+    await act(() => adminMarkPaid(code, paidAmount), "Gagal menandai lunas");
+    if (detail?.unique_code === code) await openDetail(code);
+  }
+  async function handleSettle(code: string): Promise<void> {
+    await act(() => adminSettleParent(code), "Gagal melunaskan");
     if (detail?.unique_code === code) await openDetail(code);
   }
   async function handleAdvance(code: string): Promise<void> {
@@ -174,11 +185,13 @@ export function AdminPage() {
                   {orders.map((o) => (
                     <tr key={o.id} className={detail?.unique_code === o.unique_code ? "is-selected" : ""}>
                       <td><button type="button" className="admin-link" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>{o.id}</button><br /><small className="admin-id">{o.unique_code}</small></td>
-                      <td className="admin-price">{rupiah(o.total_amount)}</td>
+                      <td className="admin-price">{rupiah(o.total_amount)}{o.paid_amount !== null && o.paid_amount !== undefined ? <><br /><small className="admin-id">Dibayar {rupiah(o.paid_amount)}</small></> : null}</td>
                       <td>{o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</td>
                       <td>
                         {o.status === "pending_payment" ? (
-                          <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code)}>Tandai Lunas</button>
+                          <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code, o.total_amount)}>Tandai Lunas</button>
+                        ) : o.status === "underpaid" ? (
+                          <button type="button" className="admin-btn" aria-label={`Periksa ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>Periksa</button>
                         ) : ADVANCE_LABEL[o.status] !== undefined ? (
                           <button type="button" className="admin-btn" aria-label={`Majukan ${o.unique_code}`} onClick={() => void handleAdvance(o.unique_code)}>{ADVANCE_LABEL[o.status]}</button>
                         ) : <span className="status-badge status-badge--ok">Selesai</span>}
@@ -196,6 +209,9 @@ export function AdminPage() {
               <p className="admin-detail-row"><span>Kode</span><strong>{detail.unique_code}</strong></p>
               <p className="admin-detail-row"><span>Status</span><strong>{STATUS_LABEL[detail.status] ?? detail.status}</strong></p>
               <p className="admin-detail-row"><span>Total</span><strong>{rupiah(detail.total_amount)}</strong></p>
+              {detail.paid_amount !== null && detail.paid_amount !== undefined ? (
+                <p className="admin-detail-row"><span>Dibayar</span><strong>{rupiah(detail.paid_amount)} dari {rupiah(detail.total_amount)}</strong></p>
+              ) : null}
               <p className="admin-detail-row"><span>Metode</span><strong>{detail.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</strong></p>
               {detail.delivery_method === "delivery" && detail.delivery_address !== null ? (
                 <p className="admin-detail-row"><span>Alamat</span><strong>{detail.delivery_address}</strong></p>
@@ -208,7 +224,13 @@ export function AdminPage() {
               </ul>
               <div className="admin-detail-actions">
                 {detail.status === "pending_payment" ? (
-                  <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code)}>Tandai Lunas</button>
+                  <>
+                    <label htmlFor="paid-amount">Nominal masuk</label>
+                    <input id="paid-amount" type="number" min={1} value={paidInput} onChange={(e) => setPaidInput(e.target.value)} />
+                    <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code, Number(paidInput) || 0)}>Tandai Lunas</button>
+                  </>
+                ) : detail.status === "underpaid" ? (
+                  <button type="button" className="admin-btn" aria-label={`Lunaskan ${detail.unique_code}`} onClick={() => void handleSettle(detail.unique_code)}>Lunaskan</button>
                 ) : ADVANCE_LABEL[detail.status] !== undefined ? (
                   <button type="button" className="admin-btn" onClick={() => void handleAdvance(detail.unique_code)}>{ADVANCE_LABEL[detail.status]}</button>
                 ) : <span className="status-badge status-badge--ok">Pesanan selesai</span>}

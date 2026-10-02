@@ -115,7 +115,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       return c.json({ status: "error", code: "INVALID_STATUS", message: "Status tidak valid" }, 400);
     }
     const { rows } = await pool.query(
-      `SELECT id, unique_code, total_amount, status, delivery_method, created_at
+      `SELECT id, unique_code, total_amount, paid_amount, status, delivery_method, created_at
        FROM orders WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
       [status],
     );
@@ -150,8 +150,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Detail satu order (untuk konfirmasi admin): item + alamat bila delivery (PII, hanya di detail).
   r.get("/orders/:code", async (c) => {
     const code = c.req.param("code");
-    const o = await pool.query<{ id: string; unique_code: string; total_amount: number; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date }>(
-      `SELECT id, unique_code, total_amount, status, mode, scheduled_at, delivery_method, delivery_address, delivery_lat, delivery_lng, created_at FROM orders WHERE unique_code = $1`,
+    const o = await pool.query<{ id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date }>(
+      `SELECT id, unique_code, total_amount, paid_amount, parent_code, status, mode, scheduled_at, delivery_method, delivery_address, delivery_lat, delivery_lng, created_at FROM orders WHERE unique_code = $1`,
       [code],
     );
     const order = o.rows[0];
