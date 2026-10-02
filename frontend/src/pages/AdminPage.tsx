@@ -136,9 +136,11 @@ export function AdminPage() {
     } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
   }
 
-  async function handleMarkPaid(code: string, paidAmount: number): Promise<void> {
-    await act(() => adminMarkPaid(code, paidAmount), "Gagal menandai lunas");
+  async function handleMarkPaid(code: string, paidAmount: number): Promise<string | null> {
+    let status: string | null = null;
+    await act(() => adminMarkPaid(code, paidAmount).then((r) => { status = r.status; }), "Gagal menandai lunas");
     if (detail?.unique_code === code) await openDetail(code);
+    return status;
   }
   async function handleSettle(code: string): Promise<void> {
     await act(() => adminSettleParent(code), "Gagal melunaskan");
@@ -227,7 +229,11 @@ export function AdminPage() {
                   <>
                     <label htmlFor="paid-amount">Nominal masuk</label>
                     <input id="paid-amount" type="number" min={1} value={paidInput} onChange={(e) => setPaidInput(e.target.value)} />
-                    <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code, Number(paidInput) || 0)}>Tandai Lunas</button>
+                    {Number(paidInput) < detail.total_amount ? (
+                      <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code, Number(paidInput) || 0).then((s) => { if (s === "underpaid") setOrderFilter("underpaid"); })}>Catat Kurang Bayar</button>
+                    ) : (
+                      <button type="button" className="admin-btn" onClick={() => void handleMarkPaid(detail.unique_code, Number(paidInput) || 0)}>Tandai Lunas</button>
+                    )}
                   </>
                 ) : detail.status === "underpaid" ? (
                   <button type="button" className="admin-btn" aria-label={`Lunaskan ${detail.unique_code}`} onClick={() => void handleSettle(detail.unique_code)}>Lunaskan</button>
