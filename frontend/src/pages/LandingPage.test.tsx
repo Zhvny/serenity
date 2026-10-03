@@ -25,5 +25,6 @@ describe("LandingPage", () => {
     expect(await screen.findByText("Post 1")).toBeInTheDocument();
     expect(screen.getByText("Post 3")).toBeInTheDocument();
     expect(screen.queryByText("Post 4")).toBeNull();
+    expect(screen.getByRole("link", { name: /lihat semua post/i })).toHaveAttribute("href", "/funfact");
   });
 });
