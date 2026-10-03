@@ -591,6 +591,10 @@ code { font-family: var(--font-mono); font-size: 14px; }
 
 /* Section + head */
 .section { padding: var(--sp-xl) 0 var(--sp-huge); }
+.section--boxed > .section-head,
+.section--boxed > .facts-grid,
+.section--boxed > .section-more { max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: var(--sp-lg); padding-right: var(--sp-lg); }
+.section-more { margin-top: var(--sp-lg); }
 .section-head {
   display: flex;
   flex-direction: column;
