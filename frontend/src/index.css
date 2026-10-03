@@ -513,6 +513,9 @@ code { font-family: var(--font-mono); font-size: 16px; }
 @media (max-width: 640px) {
   .site-header { justify-content: flex-start; }
 }
+@media (max-width: 768px) {
+  .site-header nav { display: none; }
+}
 @media (max-width: 374px) {
   .hero-copy h1 { font-size: 26px; letter-spacing: -0.6px; }
   .grid-menu { padding: var(--sp-md); gap: var(--sp-md); }
