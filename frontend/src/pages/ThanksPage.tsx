@@ -5,6 +5,8 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
+import { useT } from "../i18n/t.ts";
+import type { DictKey } from "../i18n/t.ts";
 
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
@@ -12,10 +14,11 @@ const MAX_POLLS = 60;
 export function ThanksPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const t = useT();
   const ref = params.get("ref") ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [data, setData] = useState<ThanksData | null>(null);
-  const [topupMsg, setTopupMsg] = useState("");
+  const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
   const polls = useRef(0);
 
@@ -53,7 +56,7 @@ export function ThanksPage() {
 
   if (state === "loading") {
     return (
-      <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label="Memuat" /></div></main></div>
+      <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.thanks.loading")} /></div></main></div>
     );
   }
   if (state === "notfound" || data === null) {
@@ -63,9 +66,9 @@ export function ThanksPage() {
         <main className="pay-wrap">
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
-            <h1>Pesanan tidak ditemukan</h1>
-            <p>Tautan tidak berlaku untuk sesi ini.</p>
-            <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+            <h1>{t("orders.common.notFoundTitle")}</h1>
+            <p>{t("orders.thanks.notFoundText")}</p>
+            <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
           </div>
         </main>
         <Footer />
@@ -83,7 +86,7 @@ export function ThanksPage() {
       const child = await topupOrder(ref);
       navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
     } catch (e: unknown) {
-      setTopupMsg(e instanceof ApiError && e.code === "INVALID_TOPUP" ? "Kode top-up sudah ada. Hubungi admin." : "Gagal membuat kode top-up.");
+      setTopupMsg(e instanceof ApiError && e.code === "INVALID_TOPUP" ? "orders.thanks.topupExists" : "orders.common.topupFailed");
     } finally {
       setTopupBusy(false);
     }
@@ -94,35 +97,35 @@ export function ThanksPage() {
       <main className="pay-wrap">
         <div className="pay-card">
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
-          <h1>{paid ? "Pembayaran diterima" : "Pembayaran QRIS"}</h1>
-          <p className="pay-meta">Kode pesanan: <strong>{data.unique_code}</strong></p>
-          <p className="pay-nominal">Bayar tepat <strong>{rupiah(data.nominal)}</strong></p>
+          <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
+          <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>
+          <p className="pay-nominal">{t("orders.thanks.payExactly")} <strong>{rupiah(data.nominal)}</strong></p>
           {paid ? (
             <>
-              <p className="status-badge status-badge--ok">Lunas</p>
-              <p className="pay-note">Terima kasih! Pesanan Anda sedang kami proses.</p>
+              <p className="status-badge status-badge--ok">{t("orders.status.paid")}</p>
+              <p className="pay-note">{t("orders.thanks.thanksNote")}</p>
             </>
           ) : underpaid && sisa !== null && sisa > 0 ? (
             <>
-              <p className="status-badge">Kurang bayar</p>
-              <p className="pay-meta">Masuk {rupiah(data.paid_amount ?? 0)} dari {rupiah(data.nominal)} — Kurang {rupiah(sisa)}</p>
-              <button type="button" className="btn-primary" disabled={topupBusy} onClick={() => void handleTopup()}>Buat kode top-up</button>
-              {topupMsg !== "" ? <p className="detail-msg detail-msg--err" role="alert">{topupMsg}</p> : null}
-              <p className="pay-note">Atau hubungi admin untuk bantuan.</p>
+              <p className="status-badge">{t("orders.status.underpaid")}</p>
+              <p className="pay-meta">{t("orders.thanks.received", { paid: rupiah(data.paid_amount ?? 0), total: rupiah(data.nominal), rest: rupiah(sisa) })}</p>
+              <button type="button" className="btn-primary" disabled={topupBusy} onClick={() => void handleTopup()}>{t("orders.common.topup")}</button>
+              {topupMsg !== "" ? <p className="detail-msg detail-msg--err" role="alert">{t(topupMsg)}</p> : null}
+              <p className="pay-note">{t("orders.thanks.contactAdmin")}</p>
             </>
           ) : (
             <>
-              {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt="QRIS pembayaran Serenity" /> : null}
+              {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt={t("orders.thanks.qrAlt")} /> : null}
               <ol className="pay-steps">
-                <li>Scan QRIS di atas dengan aplikasi e-wallet / m-banking (GoPay, OVO, DANA, bank, dll).</li>
-                <li>Masukkan nominal <strong>persis {rupiah(data.nominal)}</strong>. Nominal yang berbeda membuat pesanan sulit dikonfirmasi.</li>
-                <li>Selesaikan pembayaran, lalu tunggu — status berubah jadi <strong>Lunas</strong> setelah transaksi terverifikasi (max. 5-30 menit).</li>
+                <li>{t("orders.thanks.step1")}</li>
+                <li>{t("orders.thanks.step2a")} <strong>{t("orders.thanks.step2b", { amount: rupiah(data.nominal) })}</strong>{t("orders.thanks.step2c")}</li>
+                <li>{t("orders.thanks.step3a")} <strong>{t("orders.status.paid")}</strong> {t("orders.thanks.step3b")}</li>
               </ol>
-              <p className="status-badge">Menunggu pembayaran</p>
-              <p className="pay-note">Simpan halaman ini atau catat kode pesanan untuk konfirmasi.</p>
+              <p className="status-badge">{t("orders.status.pending")}</p>
+              <p className="pay-note">{t("orders.thanks.saveNote")}</p>
             </>
           )}
-          <Link className="btn-secondary" to="/">Kembali ke beranda</Link>
+          <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
         </div>
       </main>
       <Footer />

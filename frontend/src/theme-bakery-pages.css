@@ -1,0 +1,42 @@
+/* Halaman pesanan: struk keranjang, tiket pembayaran, status, riwayat (cap), 404.
+   Dimuat setelah theme-pixel.css (lihat main.tsx). */
+
+/* ---------- Keranjang = struk kertas ---------- */
+.cart-main { position: relative; margin: 18px 0 14px; background: var(--surface); box-shadow: 5px 6px 0 var(--drop); }
+.cart-main::before, .cart-main::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 10px; pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--surface) 25%, transparent 25%) 0 0 / 20px 20px,
+    linear-gradient(225deg, var(--surface) 25%, transparent 25%) 0 0 / 20px 20px;
+}
+.cart-main::before { top: -10px; transform: scaleY(-1); }
+.cart-main::after { bottom: -10px; }
+.cart-main > p[role="alert"] { margin: 0; padding: 10px 16px 0; }
+.receipt-title { margin: 0; padding: 18px 12px 8px; text-align: center; font-family: var(--font-pixel); font-weight: 700; font-size: 22px; letter-spacing: 0.14em; color: var(--ink); border-bottom: 3px dashed var(--hairline-strong); }
+.cart-main .cart-list { background: transparent; box-shadow: none; overflow: visible; }
+.cart-row { border-bottom: 2px dashed var(--hairline-strong); }
+.cart-row:last-child { border-bottom: 0; }
+.cart-panel > h2.cart-panel-title { display: inline-block; padding: 3px 12px; background: var(--butter); color: #3b2a24; letter-spacing: 0.08em; }
+.cart-summary h2 { border-top: 3px dashed var(--hairline-strong); padding-top: 8px; margin-top: 12px; }
+.empty-bag { display: block; width: 96px; height: auto; margin: 0 auto 12px; }
+
+/* ---------- Tiket pembayaran & status ---------- */
+.pay-card .sprite.mascot, .pay-card .status-sprite { display: block; width: 120px; height: auto; margin: 0 auto 12px; }
+.pay-card .pay-nominal { display: inline-block; margin: 6px 0 14px; padding: 6px 18px; background: var(--butter); color: #3b2a24; transform: rotate(-1.5deg);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc), 4px 4px 0 var(--drop); }
+.pay-card .pay-nominal strong { color: #3b2a24; }
+.pay-steps { margin-top: 16px; padding: 16px 18px 16px 40px; background: var(--canvas-soft); outline: 3px dashed var(--ink-mute-2); outline-offset: -6px; }
+.pay-card .status-badge { background: transparent; color: var(--berry-deep); --bc: var(--berry-deep); transform: rotate(-3deg); letter-spacing: 0.06em; text-transform: uppercase; font-size: 15px; }
+
+/* ---------- Riwayat: cap karet ---------- */
+.history-main .history-code { display: inline-block; max-width: 100%; margin-right: 8px; overflow-wrap: anywhere; }
+.history-main .tag { margin-top: 4px; }
+.pay-card .btn-primary + .detail-msg, .pay-card .btn-primary + .pay-note { margin-top: 12px; }
+.pay-card .btn-primary + .btn-secondary, .pay-card .pay-note + .btn-secondary, .pay-card .detail-msg + .btn-secondary { margin-top: 14px; }
+.pay-card .pay-meta strong { overflow-wrap: anywhere; word-break: break-all; }
+.history-row .status-badge { background: transparent; color: var(--berry-deep); --bc: var(--berry-deep); transform: rotate(-3deg); letter-spacing: 0.06em; text-transform: uppercase; font-size: 14px; }
+.history-row .status-badge--ok { color: var(--primary-deep); --bc: var(--primary-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pay-nominal, .pay-card .status-badge, .history-row .status-badge { transform: none; }
+}

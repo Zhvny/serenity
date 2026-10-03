@@ -3,8 +3,9 @@ import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { CartPage } from "./CartPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 const p1 = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
 const p2 = { id: "p2", name: "Jus", category_id: "cat_drink", price: 20000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
@@ -190,5 +191,46 @@ describe("CartPage", () => {
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("minimal 10 karakter");
     expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+});
+
+describe("CartPage (English)", () => {
+  it("judul, struk, ringkasan, aria-label qty, chip & tombol checkout dalam bahasa Inggris", async () => {
+    setLang("en");
+    stubCart();
+    const { container } = render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    expect(screen.getByRole("heading", { level: 1, name: "Your cart" })).toBeInTheDocument();
+    expect(container.querySelector(".receipt-title")).toHaveTextContent("ORDER RECEIPT");
+    expect(screen.getByRole("heading", { name: "Summary" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Increase Salad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decrease Salad" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Quantity of Salad")).toHaveValue(2);
+    expect(screen.getByRole("button", { name: "Remove Salad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pick up" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to payment" })).toBeInTheDocument();
+    expect(screen.queryByText("Ringkasan")).toBeNull();
+  });
+  it("Delivery -> label alamat + validasi (Inggris); slot waktu 12 jam", async () => {
+    setLang("en");
+    const user = userEvent.setup();
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Scheduled" }));
+    expect(screen.getByRole("button", { name: "12:00 PM" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "6:00 PM" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Instant" }));
+    await user.click(screen.getByRole("button", { name: "Delivery" }));
+    await user.type(screen.getByLabelText("Delivery address"), "jl a");
+    await user.click(screen.getByRole("button", { name: "Continue to payment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("at least 10 characters");
+    expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+  it("keranjang kosong -> pesan Inggris", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/products") ? [p1, p2] : [] }))));
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    expect(await screen.findByText("Your cart is empty")).toBeInTheDocument();
   });
 });

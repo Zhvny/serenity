@@ -1,0 +1,136 @@
+/* Storefront: awning, tombol suara/bahasa, saklar SIANG/MALAM, kantong roti, bunting, footer gingham.
+   Dimuat setelah theme-pixel.css (lihat main.tsx). */
+
+/* ---------- Awning bergaris merah muda/krem, tepi bawah bergigi bertingkat ---------- */
+.site-header::after {
+  height: 18px;
+  background: repeating-linear-gradient(90deg, var(--awning-a) 0 24px, var(--awning-b) 24px 48px);
+  -webkit-mask:
+    linear-gradient(#000 0 0) 0 0 / 100% 10px no-repeat,
+    linear-gradient(90deg, #000 0 20px, transparent 20px 24px) 0 10px / 24px 4px repeat-x,
+    linear-gradient(90deg, transparent 0 6px, #000 6px 18px, transparent 18px 24px) 0 14px / 24px 4px repeat-x;
+  mask:
+    linear-gradient(#000 0 0) 0 0 / 100% 10px no-repeat,
+    linear-gradient(90deg, #000 0 20px, transparent 20px 24px) 0 10px / 24px 4px repeat-x,
+    linear-gradient(90deg, transparent 0 6px, #000 6px 18px, transparent 18px 24px) 0 14px / 24px 4px repeat-x;
+}
+.site-header .logo { letter-spacing: 0.02em; }
+.site-header .logo:hover .sprite { animation: logo-hop 420ms steps(4) 1; }
+@keyframes logo-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+.site-header nav a { transition: transform 80ms steps(2), background-color 80ms steps(2); }
+.site-header nav a:hover { transform: translateY(-2px); }
+.header-actions { gap: 12px; }
+
+/* ---------- Tombol suara ---------- */
+.sound-toggle {
+  --bw: 2px;
+  appearance: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin: var(--bw); padding: 0; border: 0; border-radius: 0;
+  background: var(--canvas-soft); color: var(--ink); font-size: 22px; cursor: pointer;
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+  transition: transform 80ms steps(2), background-color 80ms steps(2);
+}
+.sound-toggle:hover { background: var(--accent-butter); transform: translateY(-2px); }
+[data-theme="dark"] .sound-toggle:hover { background: var(--accent-lav); }
+.sound-toggle[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.sound-toggle:active { transform: translateY(2px); }
+.sound-toggle:focus-visible { outline-offset: 5px; }
+/* instans footer: hanya di ponsel (di header disembunyikan agar muat) */
+.footer-sound { display: none; }
+
+/* ---------- Pil bahasa ID | EN ---------- */
+.lang-toggle {
+  --bw: 2px;
+  display: inline-flex; align-items: stretch; height: 36px; margin: var(--bw);
+  background: var(--canvas-soft);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+}
+.lang-toggle button {
+  appearance: none; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; height: 100%; margin: 0; padding: 0 6px; border: 0; border-radius: 0;
+  background: transparent; color: var(--ink); cursor: pointer;
+  font-family: var(--font-ui); font-size: 18px; line-height: 1; letter-spacing: 0.02em;
+  transition: background-color 80ms steps(2);
+}
+.lang-toggle button + button { box-shadow: inset var(--bw) 0 0 0 var(--bc); }
+.lang-toggle button:hover { background: var(--accent-butter); }
+[data-theme="dark"] .lang-toggle button:hover { background: var(--accent-lav); }
+.lang-toggle button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); font-weight: 700; }
+.lang-toggle button:focus-visible { outline: 2px dashed var(--focus); outline-offset: -5px; }
+
+/* ---------- Saklar SIANG / MALAM ---------- */
+.daynight {
+  --bw: 3px;
+  --dn-w: 96px; --dn-h: 36px; --dn-thumb: 28px; --dn-pad: 4px;
+  --dn-sky: var(--accent-sky); --dn-sky-ink: #3b2a24;
+  --dn-night: #1d2350; --dn-night-ink: #fff9ea;
+  appearance: none; position: relative; display: block; flex: none;
+  width: var(--dn-w); height: var(--dn-h); margin: var(--bw); padding: 0; border: 0; border-radius: 0;
+  background: var(--dn-sky); color: var(--dn-sky-ink); cursor: pointer;
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+  transition: transform 80ms steps(2), background-color 220ms steps(4);
+}
+.daynight[aria-pressed="true"] { background: var(--dn-night); color: var(--dn-night-ink); }
+.daynight:hover { transform: translateY(-2px); }
+.daynight:active { transform: translateY(2px); }
+.daynight:focus-visible { outline-offset: 7px; }
+.dn-track { position: absolute; inset: 0; overflow: hidden; display: block; }
+.dn-thumb {
+  --bw: 2px;
+  position: absolute; top: var(--dn-pad); left: var(--dn-pad); display: flex; align-items: center; justify-content: center;
+  width: var(--dn-thumb); height: var(--dn-thumb); background: #fff9ea;
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+  translate: 0 0; transition: translate 220ms steps(4), background-color 220ms steps(4);
+}
+.daynight[aria-pressed="true"] .dn-thumb { translate: calc(var(--dn-w) - var(--dn-thumb) - 2 * var(--dn-pad)) 0; background: #3a4488; }
+.dn-orb { width: 24px; height: 24px; }
+.dn-label {
+  position: absolute; top: 0; bottom: 0; left: calc(var(--dn-pad) * 2 + var(--dn-thumb)); right: var(--dn-pad);
+  display: flex; align-items: center; justify-content: center; padding-top: 2px;
+  font-family: var(--font-ui); font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: 0.02em; white-space: nowrap;
+}
+.daynight[aria-pressed="true"] .dn-label { left: var(--dn-pad); right: calc(var(--dn-pad) * 2 + var(--dn-thumb)); justify-content: flex-start; padding-left: 5px; }
+.dn-cloud { position: absolute; left: 40px; top: 1px; width: 16px; height: 8px; }
+.dn-star { position: absolute; width: 9px; height: 9px; display: none; }
+.dn-star--a { left: 6px; top: 5px; }
+.dn-star--b { left: 18px; top: 17px; }
+.daynight[aria-pressed="true"] .dn-cloud { display: none; }
+/* bintang hanya di ponsel (di desktop ruang trek dipakai label) */
+@media (max-width: 480px) { .daynight[aria-pressed="true"] .dn-star { display: block; } }
+
+/* lonceng toko di adegan tetap memakai sign-swing */
+@keyframes sign-swing { 0% { transform: rotate(0); } 18% { transform: rotate(5deg); } 40% { transform: rotate(-4deg); } 62% { transform: rotate(2.5deg); } 82% { transform: rotate(-1deg); } 100% { transform: rotate(0); } }
+
+/* ---------- Kantong kertas = keranjang ---------- */
+.header-cart { position: relative; width: 44px; height: 44px; justify-content: center; }
+.header-cart .bag { width: 32px; height: auto; transition: transform 80ms steps(2); }
+.header-cart .bag--open { position: absolute; display: none; }
+.header-cart:hover .bag--closed, .header-cart:focus-visible .bag--closed { display: none; }
+.header-cart:hover .bag--open, .header-cart:focus-visible .bag--open { display: block; }
+.header-cart:hover .bag { transform: translateY(-2px); }
+.header-cart .cart-badge { position: absolute; top: -4px; right: -8px; z-index: 2; }
+
+/* ---------- Bunting ---------- */
+.bunting { display: flex; overflow: hidden; height: 44px; margin-top: 4px; justify-content: center; }
+.bunting .sprite { width: 36px; height: auto; transform-origin: 50% 0; }
+.bunting:hover .sprite:nth-child(2n) { animation: flag-sway 1000ms steps(5) 1; }
+.bunting:hover .sprite:nth-child(2n+1) { animation: flag-sway 1000ms steps(5) 1 reverse; }
+@keyframes flag-sway { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(6deg); } 65% { transform: rotate(-5deg); } }
+
+/* ---------- Footer toko roti ---------- */
+.gingham-strip {
+  height: 28px; margin-bottom: 8px;
+  background-color: var(--awning-b);
+  background-image: repeating-linear-gradient(90deg, var(--gingham) 0 8px, transparent 8px 16px), repeating-linear-gradient(0deg, var(--gingham) 0 8px, transparent 8px 16px);
+  border-bottom: var(--bw) solid var(--outline);
+}
+.site-footer { margin-top: 56px; box-shadow: none; }
+.footer-base { gap: 14px; flex-wrap: wrap; }
+.footer-base .footer-prop { width: 32px; }
+.footer-base .sprite:not(.footer-prop) { width: 56px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header .logo:hover .sprite, .bunting:hover .sprite { animation: none; }
+  .daynight, .dn-thumb, .lang-toggle button, .sound-toggle { transition: none; }
+  .daynight:hover { transform: none; }
+}
