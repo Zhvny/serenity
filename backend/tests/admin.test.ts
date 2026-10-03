@@ -262,6 +262,33 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(res.status, 401);
   });
 
+  it("POST /admin/posts valid -> 200 + tersimpan", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "Judul Tes", body: "Isi tes.", tag: "News" }) });
+    assert.equal(res.status, 200);
+    const id = ((await res.json()) as { data: { id: string } }).data.id;
+    const row = await pool.query<{ title: string }>("SELECT title FROM posts WHERE id = $1", [id]);
+    assert.equal(row.rows[0]?.title, "Judul Tes");
+    await pool.query("DELETE FROM posts WHERE id = $1", [id]);
+  });
+
+  it("POST /admin/posts tag ilegal -> 400", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "X", body: "Y", tag: "Spam" }) });
+    assert.equal(res.status, 400);
+  });
+
+  it("POST /admin/posts tanpa session -> 401", async () => {
+    const res = await createApp(pool).request("/api/v1/admin/posts", { method: "POST", headers: csrf(), body: JSON.stringify({ title: "X", body: "Y", tag: "News" }) });
+    assert.equal(res.status, 401);
+  });
+
   it("POST /admin/orders/:code/advance -> paid->preparing->ready->done; tolak lanjut setelah done", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });

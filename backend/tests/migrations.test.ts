@@ -72,4 +72,13 @@ describe("migrations", () => {
     assert.doesNotMatch(ddl, /DROP TABLE/i);
     assert.doesNotMatch(ddl, /CREATE TABLE orders/i);
   });
+
+  it("011 posts: tabel posts + tag CHECK + product FK", () => {
+    const sql = readFileSync(new URL("../migrations/011_posts.sql", import.meta.url), "utf8");
+    assert.match(sql, /CREATE TABLE IF NOT EXISTS posts/i);
+    assert.match(sql, /SoftSelling/);
+    assert.match(sql, /product_id/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });

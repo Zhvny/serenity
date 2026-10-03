@@ -13,6 +13,7 @@ import {
   adminAdvanceOrder,
   adminMarkPaid,
   adminSettleParent,
+  adminCreatePost,
   type Product,
   type PendingOrder,
   type OrderDetail,
@@ -22,7 +23,7 @@ import "./admin.css";
 
 type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string };
 const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "" };
-type Tab = "orders" | "products";
+type Tab = "orders" | "products" | "posts";
 
 const ORDER_FILTERS: Array<{ key: string; label: string }> = [
   { key: "pending_payment", label: "Menunggu bayar" },
@@ -48,6 +49,11 @@ export function AdminPage() {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [paidInput, setPaidInput] = useState("");
+  const [postTitle, setPostTitle] = useState("");
+  const [postBody, setPostBody] = useState("");
+  const [postTag, setPostTag] = useState("FunFact");
+  const [postProduct, setPostProduct] = useState("");
+  const [postMsg, setPostMsg] = useState("");
 
   async function refreshProducts(): Promise<void> {
     const list = await adminListProducts();
@@ -155,6 +161,24 @@ export function AdminPage() {
     await act(() => adminSettleParent(code), "Gagal melunaskan");
     if (detail?.unique_code === code) await openDetail(code);
   }
+
+  async function handlePostSubmit(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    setPostMsg("");
+    if (postTitle.trim() === "" || postBody.trim() === "") {
+      setPostMsg("Judul dan isi wajib diisi.");
+      return;
+    }
+    try {
+      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct });
+      setPostTitle("");
+      setPostBody("");
+      setPostProduct("");
+      setPostMsg("Post tersimpan.");
+    } catch (err: unknown) {
+      onError(err, "Gagal menyimpan post");
+    }
+  }
   async function handleAdvance(code: string): Promise<void> {
     await act(() => adminAdvanceOrder(code), "Gagal memajukan status");
     if (detail?.unique_code === code) await openDetail(code);
@@ -181,6 +205,7 @@ export function AdminPage() {
       <nav className="admin-tabs" aria-label="Bagian admin">
         <button type="button" className={tab === "orders" ? "admin-tab admin-tab--active" : "admin-tab"} aria-pressed={tab === "orders"} onClick={() => setTab("orders")}>Pesanan</button>
         <button type="button" className={tab === "products" ? "admin-tab admin-tab--active" : "admin-tab"} aria-pressed={tab === "products"} onClick={() => setTab("products")}>Produk</button>
+        <button type="button" className={tab === "posts" ? "admin-tab admin-tab--active" : "admin-tab"} aria-pressed={tab === "posts"} onClick={() => setTab("posts")}>Post</button>
       </nav>
 
       {error !== "" ? <p className="admin-error" role="alert">{error}</p> : null}
@@ -317,6 +342,33 @@ export function AdminPage() {
             </ul>
           </section>
         </>
+      ) : (
+        <section className="admin-section">
+          <h2 className="admin-subhead">Tambah Post (FunFact / News / SoftSelling)</h2>
+          <form className="admin-form" onSubmit={(e) => void handlePostSubmit(e)}>
+            <label htmlFor="post-title">Judul</label>
+            <input id="post-title" type="text" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} required aria-required="true" maxLength={200} />
+            <label htmlFor="post-body">Isi</label>
+            <textarea id="post-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} required aria-required="true" maxLength={2000} rows={4} />
+            <label htmlFor="post-tag">Tag</label>
+            <select id="post-tag" value={postTag} onChange={(e) => setPostTag(e.target.value)}>
+              <option value="FunFact">FunFact</option>
+              <option value="News">News</option>
+              <option value="SoftSelling">SoftSelling</option>
+            </select>
+            <label htmlFor="post-product">Produk terkait (opsional)</label>
+            <select id="post-product" value={postProduct} onChange={(e) => setPostProduct(e.target.value)}>
+              <option value="">— Tanpa produk —</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <div className="admin-form-actions">
+              <button type="submit" className="admin-btn" disabled={postTitle.trim() === "" || postBody.trim() === ""}>Simpan Post</button>
+            </div>
+            {postMsg !== "" ? <p role="status">{postMsg}</p> : null}
+          </form>
+        </section>
       )}
     </main>
   );
