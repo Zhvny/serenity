@@ -5,10 +5,27 @@ import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { ProductPhoto } from "../components/ProductPhoto.tsx";
 import { LocationPicker, type LatLng } from "../components/LocationPicker.tsx";
 import { rupiah } from "../utils/format.ts";
+import { burstAt } from "../fx/fx.ts";
+import { Sprite } from "../pixel/Sprite.tsx";
+import { PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
+import { playSound } from "../fx/sound.ts";
+import { tNow, useT } from "../i18n/t.ts";
+import type { DictKey } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { localeOf } from "../i18n/store.ts";
+import type { Lang } from "../i18n/store.ts";
 
 const SLOTS = ["12:00", "15:00", "18:00", "21:00"];
+
+// Label slot: Indonesia memakai "12:00" apa adanya; Inggris memakai format 12 jam ("12:00 PM").
+function slotLabel(slot: string, lang: Lang): string {
+  if (lang !== "en") return slot;
+  const [h, m] = slot.split(":").map(Number);
+  return new Date(2000, 0, 1, h ?? 0, m ?? 0).toLocaleTimeString(localeOf(lang), { hour: "numeric", minute: "2-digit" });
+}
 
 function tomorrowISO(): string {
   const d = new Date();
@@ -17,8 +34,14 @@ function tomorrowISO(): string {
 }
 
 function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: Product | undefined; onQty: (q: number) => void; onRemove: () => void }) {
-  const [imgOk, setImgOk] = useState(true);
+  const t = useT();
   const [draft, setDraft] = useState(String(item.quantity));
+  const [pop, setPop] = useState(0); // naik setiap qty berubah -> animasi "pop" pada harga
+  function changeQty(q: number): void {
+    setPop((p) => p + 1);
+    playSound("click");
+    onQty(q);
+  }
   // Sinkronkan input bila qty berubah dari luar (mis. gagal update -> balik ke nilai lama).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkron state eksternal (prop qty) ke draft lokal
   useEffect(() => { setDraft(String(item.quantity)); }, [item.quantity]);
@@ -27,50 +50,58 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
     const n = Number.parseInt(raw, 10);
     if (!Number.isFinite(n)) { setDraft(String(item.quantity)); return; }
     const clamped = Math.min(10, Math.max(1, n));
-    if (clamped !== item.quantity) onQty(clamped);
+    if (clamped !== item.quantity) changeQty(clamped);
     setDraft(String(clamped));
   }
 
   if (product === undefined) {
     return (
       <li className="cart-row">
-        <p>Produk tidak tersedia</p>
-        <button type="button" className="btn-secondary cart-remove" aria-label={`Hapus item ${item.item_id}`} onClick={onRemove}>Hapus</button>
+        <p>{t("shop.cart.row.unavailable")}</p>
+        <button type="button" className="btn-secondary cart-remove" aria-label={t("shop.cart.row.removeItem", { id: item.item_id })} onClick={onRemove}>{t("shop.cart.remove")}</button>
       </li>
     );
   }
   return (
     <li className="cart-row">
-      {product.image_url === null || !imgOk ? (
-        <div className="cart-thumb product-photo--empty" aria-hidden="true" />
-      ) : (
-        <img className="cart-thumb" src={product.image_url} alt={product.name} onError={() => setImgOk(false)} />
-      )}
+      <ProductPhoto product={product} className="cart-thumb" />
       <h3>{product.name}</h3>
       <div className="qty-ctrl">
-        <button type="button" aria-label={`Kurangi ${product.name}`} disabled={item.quantity <= 1} onClick={() => onQty(item.quantity - 1)}>−</button>
+        <button type="button" aria-label={t("shop.cart.row.dec", { name: product.name })} disabled={item.quantity <= 1} onClick={() => changeQty(item.quantity - 1)}>−</button>
         <input
           type="number"
           className="qty-input"
           min={1}
           max={10}
           inputMode="numeric"
-          aria-label={`Jumlah ${product.name}`}
+          aria-label={t("shop.cart.row.qty", { name: product.name })}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { commit((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).blur(); } }}
         />
-        <button type="button" aria-label={`Tambah ${product.name}`} disabled={item.quantity >= 10} onClick={() => onQty(item.quantity + 1)}>+</button>
+        <button type="button" aria-label={t("shop.cart.row.inc", { name: product.name })} disabled={item.quantity >= 10} onClick={() => changeQty(item.quantity + 1)}>+</button>
       </div>
       {item.note !== null && item.note.trim() !== "" ? <p className="cart-note">{item.note}</p> : null}
-      <p className="cart-price">{rupiah(product.price * item.quantity)}</p>
-      <button type="button" className="cart-remove" aria-label={`Hapus ${product.name}`} onClick={onRemove}>Hapus</button>
+      <p key={pop} className={pop > 0 ? "cart-price fx-pop" : "cart-price"}>{rupiah(product.price * item.quantity)}</p>
+      <button
+        type="button"
+        className="cart-remove"
+        aria-label={t("shop.cart.row.remove", { name: product.name })}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          burstAt(r.left + r.width / 2, r.top + r.height / 2, "crumbs");
+          playSound("pop");
+          onRemove();
+        }}
+      >{t("shop.cart.remove")}</button>
     </li>
   );
 }
 
 export function CartPage() {
+  const t = useT();
+  const [lang] = useLang();
   const [items, setItems] = useState<CartItem[]>([]);
   const [prods, setProds] = useState<Product[]>([]);
   const [state, setState] = useState<"loading" | "error" | "done">("loading");
@@ -84,7 +115,7 @@ export function CartPage() {
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState<DictKey | "">("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -101,7 +132,7 @@ export function CartPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setErrorMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+        setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
         setState("error");
       });
     return () => {
@@ -120,7 +151,7 @@ export function CartPage() {
       setItems((prev) => prev.map((i) => (i.item_id === item.item_id ? updated : i)));
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
-      setErrorMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
     }
   }
 
@@ -131,19 +162,19 @@ export function CartPage() {
       setItems((prev) => prev.filter((i) => i.item_id !== item.item_id));
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
-      setErrorMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
     }
   }
 
   async function handleCheckout(): Promise<void> {
     if (mode === "scheduled") {
       if (date === "" || date < minDate) {
-        setFormError("Pilih tanggal mulai besok atau sesudahnya");
+        setFormError("shop.cart.err.date");
         return;
       }
     }
     if (delivery === "delivery" && address.trim().length < 10) {
-      setFormError("Tandai lokasi di peta atau pakai lokasi saat ini (alamat minimal 10 karakter)");
+      setFormError("shop.cart.err.address");
       return;
     }
     setFormError("");
@@ -157,7 +188,7 @@ export function CartPage() {
       // Validasi server lolos -> lanjut ke halaman pembayaran QRIS.
       navigate("/checkout");
     } catch (e: unknown) {
-      setCheckoutMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+      setCheckoutMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
       setCheckout("fail");
     }
   }
@@ -166,24 +197,26 @@ export function CartPage() {
     <div>
       <Header />
       <main className="cart-page">
-        <h1>Keranjang</h1>
+        <h1>{t("shop.cart.title")}</h1>
         {state === "loading" ? (
-          <div className="skeleton" aria-label="Memuat keranjang" />
+          <div className="skeleton" aria-label={t("shop.cart.loading")} />
         ) : state === "error" ? (
           <div className="state" role="alert">
-            <h2>Keranjang gagal dimuat</h2>
+            <h2>{t("shop.cart.error.title")}</h2>
             <p>{errorMsg}</p>
-            <button type="button" className="btn-primary" onClick={() => setReloadKey((k) => k + 1)}>Coba lagi</button>
+            <button type="button" className="btn-primary" onClick={() => setReloadKey((k) => k + 1)}>{t("shop.common.retry")}</button>
           </div>
         ) : items.length === 0 ? (
           <div className="state" role="status">
-            <h2>Keranjang kosong</h2>
-            <p>Belum ada item di keranjang.</p>
+            <Sprite sprite={PAPER_BAG_OPEN} className="empty-bag" />
+            <h2>{t("shop.cart.empty.title")}</h2>
+            <p>{t("shop.cart.empty.body")}</p>
           </div>
         ) : (
           <div className="cart-grid">
             <div className="cart-main">
               {errorMsg !== "" ? <p role="alert">{errorMsg}</p> : null}
+              <p className="receipt-title" aria-hidden="true">{t("shop.cart.receipt")}</p>
               <ul className="cart-list">
                 {items.map((i) => (
                   <CartRow key={i.item_id} item={i} product={byId.get(i.product_id)} onQty={(q) => void handleQty(i, q)} onRemove={() => void handleRemove(i)} />
@@ -192,48 +225,48 @@ export function CartPage() {
             </div>
             <aside className="cart-aside">
               <div className="cart-panel">
-                <h2 className="cart-panel-title">Ringkasan</h2>
+                <h2 className="cart-panel-title">{t("shop.cart.summary.title")}</h2>
                 <div className="cart-summary">
-                  <p>Subtotal <span>{rupiah(total)}</span></p>
-                  <h2>Total <span>{rupiah(total)}</span></h2>
-                  <p>Estimasi ongkir dihitung saat checkout</p>
+                  <p>{t("shop.cart.summary.subtotal")} <span>{rupiah(total)}</span></p>
+                  <h2>{t("shop.cart.summary.total")} <span>{rupiah(total)}</span></h2>
+                  <p>{t("shop.cart.summary.shipnote")}</p>
                 </div>
               </div>
               <div className="cart-panel">
-                <h2 className="cart-panel-title">Waktu &amp; pengambilan</h2>
-                <div className="chip-group" role="group" aria-label="Mode order">
-                  <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>Instant</button>
-                  <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>Scheduled</button>
+                <h2 className="cart-panel-title">{t("shop.cart.when.title")}</h2>
+                <div className="chip-group" role="group" aria-label={t("shop.cart.mode.label")}>
+                  <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>{t("shop.cart.mode.instant")}</button>
+                  <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>{t("shop.cart.mode.scheduled")}</button>
                 </div>
                 {mode === "scheduled" ? (
                   <div>
-                    <label htmlFor="sched-date">Tanggal</label>
+                    <label htmlFor="sched-date">{t("shop.cart.date")}</label>
                     <input id="sched-date" type="date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} />
-                    <div className="chip-group" role="group" aria-label="Slot waktu">
+                    <div className="chip-group" role="group" aria-label={t("shop.cart.slot.label")}>
                       {SLOTS.map((s) => (
-                        <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{s}</button>
+                        <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{slotLabel(s, lang)}</button>
                       ))}
                     </div>
                   </div>
                 ) : null}
-                <div className="chip-group" role="group" aria-label="Metode pengambilan">
-                  <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>Ambil sendiri</button>
-                  <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>Diantar</button>
+                <div className="chip-group" role="group" aria-label={t("shop.cart.method.label")}>
+                  <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>{t("shop.cart.method.pickup")}</button>
+                  <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>{t("shop.cart.method.delivery")}</button>
                 </div>
                 {delivery === "delivery" ? (
                   <div>
-                    <label htmlFor="delivery-address">Alamat pengiriman</label>
+                    <label htmlFor="delivery-address">{t("shop.cart.address.label")}</label>
                     <LocationPicker value={coords} onChange={(v, addr) => { setCoords(v); if (addr !== null) setAddress(addr); }} />
-                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Alamat terisi otomatis dari peta; sunting bila perlu (patokan, nomor rumah)" />
-                    <p className="cart-opt-note"><Icon name="warning" /> Biaya pengiriman mengikuti harga Gosend atau layanan pengiriman lainnya — dapat berbeda saat checkout.</p>
+                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("shop.cart.address.placeholder")} />
+                    <p className="cart-opt-note"><Icon name="warning" /> {t("shop.cart.address.note")}</p>
                   </div>
                 ) : null}
-                {formError !== "" ? <p role="alert">{formError}</p> : null}
-                <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>Lanjut ke Pembayaran <Icon name="arrow-right" /></button>
+                {formError !== "" ? <p role="alert">{t(formError)}</p> : null}
+                <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>{t("shop.cart.checkout")} <Icon name="arrow-right" /></button>
                 {checkout === "fail" ? (
                   <div role="alert">
                     <p>{checkoutMsg}</p>
-                    <button type="button" className="btn-secondary" onClick={() => void handleCheckout()}>Coba lagi</button>
+                    <button type="button" className="btn-secondary" onClick={() => void handleCheckout()}>{t("shop.common.retry")}</button>
                   </div>
                 ) : null}
               </div>

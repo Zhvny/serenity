@@ -1,0 +1,43 @@
+// Kamus area "shell" (header, footer, tombol tema/bahasa/suara). Kunci berawalan shell.*.
+// Indonesia = teks asli persis; Inggris = terjemahan alami.
+export const id = {
+  "shell.nav.categories": "Kategori",
+  "shell.nav.history": "Riwayat",
+  "shell.nav.cart": "Keranjang",
+  "shell.theme.toDark": "Ganti ke mode gelap",
+  "shell.theme.toLight": "Ganti ke mode terang",
+  "shell.theme.day": "SIANG",
+  "shell.theme.night": "MALAM",
+  "shell.sound.on": "Suara aktif",
+  "shell.sound.off": "Suara mati",
+  "shell.lang.label": "Bahasa",
+  "shell.lang.id": "Bahasa Indonesia",
+  "shell.lang.en": "English",
+  "shell.footer.tagline": "Pre-order dessert & minuman sehat rendah gula, dibuat segar. Pesan, bayar QRIS, ambil atau antar.",
+  "shell.footer.links": "Tautan",
+  "shell.footer.explore": "Jelajah",
+  "shell.footer.menu": "Menu",
+  "shell.footer.categories": "Kategori",
+  "shell.footer.base": "Healthy Pre-Order",
+} as const;
+
+export const en = {
+  "shell.nav.categories": "Categories",
+  "shell.nav.history": "Orders",
+  "shell.nav.cart": "Cart",
+  "shell.theme.toDark": "Switch to dark mode",
+  "shell.theme.toLight": "Switch to light mode",
+  "shell.theme.day": "DAY",
+  "shell.theme.night": "NIGHT",
+  "shell.sound.on": "Sound on",
+  "shell.sound.off": "Sound off",
+  "shell.lang.label": "Language",
+  "shell.lang.id": "Bahasa Indonesia",
+  "shell.lang.en": "English",
+  "shell.footer.tagline": "Pre-order low-sugar healthy desserts & drinks, made fresh. Order, pay with QRIS, then pick up or get it delivered.",
+  "shell.footer.links": "Links",
+  "shell.footer.explore": "Explore",
+  "shell.footer.menu": "Menu",
+  "shell.footer.categories": "Categories",
+  "shell.footer.base": "Healthy Pre-Order",
+} satisfies Record<keyof typeof id, string>;

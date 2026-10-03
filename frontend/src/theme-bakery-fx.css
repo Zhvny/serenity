@@ -1,0 +1,32 @@
+/* Interaksi: partikel, keranjang mantul, gelembung ucapan, kursor pixel. Dimuat setelah theme-pixel.css. */
+/* ---------- Efek & interaksi (fx.ts) ---------- */
+.fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
+.fx-particle { position: absolute; display: block; will-change: transform; }
+.fx-particle svg { display: block; }
+
+@keyframes fx-bump { 0% { transform: translateY(0); } 20% { transform: translateY(-8px); } 45% { transform: translateY(0); } 65% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
+@keyframes fx-pop { 0% { transform: scale(1); } 30% { transform: scale(1.6); } 60% { transform: scale(0.88); } 100% { transform: scale(1); } }
+.fx-bump { animation: fx-bump 480ms steps(6) 1; }
+.fx-pop { animation: fx-pop 420ms steps(5) 1; display: inline-block; }
+
+/* gelembung ucapan pixel (dipakai maskot kucing) */
+.fx-bubble {
+  --bw: 2px;
+  position: absolute; z-index: 30; padding: 6px 12px; max-width: 220px;
+  background: var(--surface); color: var(--ink); font-size: 16px; line-height: 1.25; text-align: center; white-space: nowrap;
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc), 4px 4px 0 var(--drop);
+  animation: fx-bubble-in 160ms steps(3) 1;
+}
+.fx-bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 8px; height: 8px; margin-left: -4px; background: var(--surface); box-shadow: 2px 2px 0 var(--bc), -2px 0 0 var(--bc), 0 2px 0 var(--bc); transform: rotate(45deg) scale(0.7); }
+@keyframes fx-bubble-in { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* kursor pixel (panah & tangan); input teks tetap kursor teks */
+body { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2011%2016%22%20width%3D%2222%22%20height%3D%2232%22%20shape-rendering%3D%22crispEdges%22%3E%3Cpath%20fill%3D%22%233b2a24%22%20d%3D%22M0%200h1v1h-1zM0%201h2v1h-2zM0%202h1v1h-1zM2%202h1v1h-1zM0%203h1v1h-1zM3%203h1v1h-1zM0%204h1v1h-1zM4%204h1v1h-1zM0%205h1v1h-1zM5%205h1v1h-1zM0%206h1v1h-1zM6%206h1v1h-1zM0%207h1v1h-1zM7%207h1v1h-1zM0%208h1v1h-1zM8%208h1v1h-1zM0%209h1v1h-1zM6%209h4v1h-4zM0%2010h1v1h-1zM3%2010h1v1h-1zM6%2010h1v1h-1zM0%2011h1v1h-1zM2%2011h1v1h-1zM4%2011h1v1h-1zM7%2011h1v1h-1zM0%2012h2v1h-2zM4%2012h1v1h-1zM7%2012h1v1h-1zM0%2013h1v1h-1zM5%2013h1v1h-1zM8%2013h1v1h-1zM5%2014h1v1h-1zM8%2014h1v1h-1zM6%2015h2v1h-2z%22%2F%3E%3Cpath%20fill%3D%22%23fff9ea%22%20d%3D%22M1%202h1v1h-1zM1%203h2v1h-2zM1%204h3v1h-3zM1%205h4v1h-4zM1%206h5v1h-5zM1%207h6v1h-6zM1%208h7v1h-7zM1%209h5v1h-5zM1%2010h2v1h-2zM4%2010h2v1h-2zM1%2011h1v1h-1zM5%2011h2v1h-2zM5%2012h2v1h-2zM6%2013h2v1h-2zM6%2014h2v1h-2z%22%2F%3E%3C%2Fsvg%3E") 0 0, auto; }
+a, button, [role="button"], summary, select, label[for], input[type="checkbox"], input[type="radio"], input[type="date"] { cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2013%2016%22%20width%3D%2226%22%20height%3D%2232%22%20shape-rendering%3D%22crispEdges%22%3E%3Cpath%20fill%3D%22%233b2a24%22%20d%3D%22M4%200h2v1h-2zM3%201h1v1h-1zM6%201h1v1h-1zM3%202h1v1h-1zM6%202h1v1h-1zM3%203h1v1h-1zM6%203h1v1h-1zM3%204h1v1h-1zM6%204h3v1h-3zM3%205h1v1h-1zM6%205h1v1h-1zM9%205h2v1h-2zM1%206h3v1h-3zM6%206h1v1h-1zM9%206h1v1h-1zM11%206h1v1h-1zM0%207h1v1h-1zM3%207h1v1h-1zM12%207h1v1h-1zM0%208h1v1h-1zM4%208h1v1h-1zM12%208h1v1h-1zM1%209h1v1h-1zM12%209h1v1h-1zM2%2010h1v1h-1zM12%2010h1v1h-1zM2%2011h1v1h-1zM11%2011h1v1h-1zM3%2012h1v1h-1zM11%2012h1v1h-1zM3%2013h1v1h-1zM10%2013h1v1h-1zM4%2014h1v1h-1zM10%2014h1v1h-1zM4%2015h7v1h-7z%22%2F%3E%3Cpath%20fill%3D%22%23fff9ea%22%20d%3D%22M4%201h2v1h-2zM4%202h2v1h-2zM4%203h2v1h-2zM4%204h2v1h-2zM4%205h2v1h-2zM7%205h2v1h-2zM4%206h2v1h-2zM7%206h2v1h-2zM10%206h1v1h-1zM1%207h2v1h-2zM4%207h8v1h-8zM1%208h3v1h-3zM5%208h7v1h-7zM2%209h10v1h-10zM3%2010h9v1h-9zM3%2011h8v1h-8zM4%2012h7v1h-7zM4%2013h6v1h-6zM5%2014h5v1h-5z%22%2F%3E%3C%2Fsvg%3E") 12 0, pointer; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="date"]), textarea { cursor: text; }
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-bump, .fx-pop, .fx-bubble { animation: none; }
+  .fx-layer { display: none; }
+}
