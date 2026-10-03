@@ -55,11 +55,11 @@ describe("Header badge", () => {
 
   it("riwayat = ikon jam ke /riwayat (bukan teks)", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
-    const { container } = render(<MemoryRouter><Header /></MemoryRouter>);
+    render(<MemoryRouter><Header /></MemoryRouter>);
     await screen.findByRole("link", { name: "Keranjang" });
     const riwayat = screen.getByRole("link", { name: "Riwayat pesanan" });
     expect(riwayat).toHaveAttribute("href", "/riwayat");
-    expect(container.queryByText("Riwayat")).toBeNull();
+    expect(screen.queryByText("Riwayat")).toBeNull();
   });
 });
 

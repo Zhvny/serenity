@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
-import { ApiError, getPosts } from "../services/api.ts";
+import { getPosts } from "../services/api.ts";
 import type { Post } from "../services/api.ts";
 
 const FALLBACK = [
