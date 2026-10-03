@@ -286,7 +286,7 @@ export function AdminPage() {
             </aside>
           ) : null}
         </div>
-      ) : (
+      ) : tab === "products" ? (
         <>
           <section className="admin-section">
             <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>
