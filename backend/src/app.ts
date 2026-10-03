@@ -11,6 +11,7 @@ import { issueCsrf, csrfMw } from "./middleware/csrf.js";
 import { loginRoute, adminRoutes } from "./routes/admin.js";
 import { qrisRoutes } from "./routes/qris.js";
 import { internalRoutes } from "./routes/internal.js";
+import { postRoutes } from "./routes/posts.js";
 
 export function createApp(pool: Pool): Hono {
   const app = new Hono().basePath("/api/v1");
@@ -26,6 +27,7 @@ export function createApp(pool: Pool): Hono {
   app.route("/admin", loginRoute(pool));
   app.route("/admin", adminRoutes(pool));
   app.route("/internal", internalRoutes(pool));
+  app.route("/", postRoutes(pool));
   app.notFound((c) => c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404));
   app.onError((_e, c) => {
     console.error(JSON.stringify({ route: c.req.path, msg: "internal" }));

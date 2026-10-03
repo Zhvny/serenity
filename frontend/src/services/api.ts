@@ -195,6 +195,16 @@ export function adminSettleParent(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
 }
 
+export type Post = { id: string; title: string; body: string; tag: string; product_id: string | null; created_at: string };
+
+export function getPosts(): Promise<Post[]> {
+  return apiGet<Post[]>("/posts");
+}
+
+export function adminCreatePost(input: { title: string; body: string; tag: string; product_id?: string | null }): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>("/admin/posts", "POST", input);
+}
+
 // --- QRIS (public cart flow) ---
 
 export type ThanksData = { unique_code: string; nominal: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string };

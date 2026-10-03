@@ -186,6 +186,32 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { paid: order?.status === "paid", changed, status: order?.status ?? null } });
   });
 
+  // Buat post FunFact/News/SoftSelling (opsional kait produk).
+  const postSchema = z.object({
+    title: z.string().min(1).max(200),
+    body: z.string().min(1).max(2000),
+    tag: z.enum(["FunFact", "News", "SoftSelling"]),
+    product_id: z.string().min(1).nullish(),
+  });
+  r.post("/posts", zValidator("json", postSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+  }), async (c) => {
+    const body = c.req.valid("json");
+    if (body.product_id != null) {
+      const prod = await pool.query("SELECT 1 FROM products WHERE id = $1", [body.product_id]);
+      if ((prod.rowCount ?? 0) === 0) {
+        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+      }
+    }
+    const ins = await pool.query<{ id: string }>(
+      "INSERT INTO posts (title, body, tag, product_id) VALUES ($1, $2, $3, $4) RETURNING id",
+      [body.title, body.body, body.tag, body.product_id ?? null],
+    );
+    const id = ins.rows[0]?.id ?? "";
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_post", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { id } });
+  });
+
   // Lunaskan parent underpaid secara manual: syarat anak lunas menutup sisa.
   r.post("/orders/:code/settle-parent", async (c) => {
     const code = c.req.param("code");

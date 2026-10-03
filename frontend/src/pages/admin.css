@@ -16,7 +16,8 @@
 }
 
 .admin-form input,
-.admin-form select {
+.admin-form select,
+.admin-form textarea {
   min-height: 36px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-sm);
@@ -29,7 +30,8 @@
 }
 
 .admin-form input:focus,
-.admin-form select:focus {
+.admin-form select:focus,
+.admin-form textarea:focus {
   border-color: var(--ink-mute);
 }
 

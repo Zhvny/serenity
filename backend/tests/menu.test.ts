@@ -39,4 +39,13 @@ describe("menu", () => {
     const res = await createApp(inactive).request("/api/v1/products/prod_off");
     assert.equal(res.status, 404);
   });
+
+  it("GET /posts 200 + daftar post", async () => {
+    const mock = { query: async (text: string) => ({ rows: String(text).includes("FROM posts") ? [{ id: "00000000-0000-0000-0000-000000000001", title: "T", body: "B", tag: "FunFact", product_id: null, created_at: new Date().toISOString() }] : [] }) } as unknown as Pool;
+    const res = await createApp(mock).request("/api/v1/posts");
+    assert.equal(res.status, 200);
+    const body = await res.json() as { status: string; data: Array<{ title: string; tag: string }> };
+    assert.equal(body.data[0]?.title, "T");
+    assert.equal(body.data[0]?.tag, "FunFact");
+  });
 });

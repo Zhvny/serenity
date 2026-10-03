@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
+import { ApiError, getPosts } from "../services/api.ts";
+import type { Post } from "../services/api.ts";
 
-const FACTS = [
+const FALLBACK = [
   {
     title: "Kenapa beli Serenity?",
     body: "Kami memisahkan proses alergen/non-alergen secara higienis — tanpa catatan cross-contamination. Setiap porsi lengkap nutrisi: kalori, protein, karbo, lemak, serat, gula.",
@@ -20,6 +23,27 @@ const FACTS = [
 ];
 
 export function FunFactPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [state, setState] = useState<"loading" | "done">("loading");
+
+  useEffect(() => {
+    let alive = true;
+    getPosts()
+      .then((p) => { if (alive) { setPosts(p); setState("done"); } })
+      .catch(() => { if (alive) setState("done"); }); // gagal -> fallback konten brand
+    return () => { alive = false; };
+  }, []);
+
+  const list = posts.length > 0 ? posts : FALLBACK;
+  if (state === "loading") {
+    return (
+      <div>
+        <Header />
+        <main className="content"><div className="skeleton" aria-label="Memuat fun fact" /></main>
+        <Footer />
+      </div>
+    );
+  }
   return (
     <div>
       <Header />
@@ -27,7 +51,7 @@ export function FunFactPage() {
         <h1>Fun Fact & News — Serenity</h1>
         <p className="subtitle">Kenapa memilih Serenity? Ini cerita di balik dessert sehat kami.</p>
         <div className="facts-grid">
-          {FACTS.map((f) => (
+          {list.map((f) => (
             <article key={f.title} className="fact-card" aria-label={f.title}>
               <span className="fact-tag">{f.tag}</span>
               <h2>{f.title}</h2>

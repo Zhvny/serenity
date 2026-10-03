@@ -18,4 +18,15 @@ describe("FunFactPage", () => {
     expect(screen.getByText("Dessert sehat bukan mitos")).toBeInTheDocument();
     expect(screen.getByText("Pre-order = lebih segar")).toBeInTheDocument();
   });
+
+  it("ada post DB -> tampil post DB (bukan fallback)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [{ id: "p1", title: "Promo Akhir Tahun", body: "Diskon.", tag: "News", product_id: null, created_at: "2026-10-03T00:00:00Z" }] }))));
+    render(
+      <MemoryRouter initialEntries={["/funfact"]}>
+        <Routes><Route path="/funfact" element={<FunFactPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Promo Akhir Tahun")).toBeInTheDocument();
+    expect(screen.queryByText("Dessert sehat bukan mitos")).toBeNull();
+  });
 });

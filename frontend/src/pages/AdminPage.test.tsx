@@ -199,4 +199,29 @@ describe("AdminPage", () => {
     await user.click(screen.getByRole("button", { name: "Mulai Siapkan" }));
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-PAID9/advance"))).toBe(true);
   });
+
+  it("tab Post -> isi form -> submit kirim POST /admin/posts", async () => {
+    const user = userEvent.setup();
+    const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method, body: init?.body as string | undefined });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/posts")) return resp({ status: "success", data: { id: "post-1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Post" }));
+    const btn = screen.getByRole("button", { name: /simpan post/i });
+    expect(btn).toBeDisabled();
+    await user.type(screen.getByLabelText(/judul/i), "Judul Baru");
+    await user.type(screen.getByLabelText(/^isi/i), "Isi baru.");
+    expect(btn).toBeEnabled();
+    await user.click(btn);
+    const post = calls.find((c) => c.method === "POST" && c.url.includes("/admin/posts"));
+    expect(post?.body).toContain('"title":"Judul Baru"');
+    expect(await screen.findByText("Post tersimpan.")).toBeInTheDocument();
+  });
 });
