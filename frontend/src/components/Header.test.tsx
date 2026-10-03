@@ -52,6 +52,15 @@ describe("Header badge", () => {
     expect(await screen.findByRole("link", { name: "Makanan" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Minuman" })).not.toHaveAttribute("aria-current");
   });
+
+  it("riwayat = ikon jam ke /riwayat (bukan teks)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
+    const { container } = render(<MemoryRouter><Header /></MemoryRouter>);
+    await screen.findByRole("link", { name: "Keranjang" });
+    const riwayat = screen.getByRole("link", { name: "Riwayat pesanan" });
+    expect(riwayat).toHaveAttribute("href", "/riwayat");
+    expect(container.queryByText("Riwayat")).toBeNull();
+  });
 });
 
 describe("Header i18n + aksi", () => {

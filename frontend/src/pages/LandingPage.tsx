@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { getPosts } from "../services/api.ts";
+import type { Post } from "../services/api.ts";
 
 const HERO_QUOTES = [
   "Sweeten your day, the wholesome way.",
@@ -15,10 +17,19 @@ const HERO_QUOTES = [
 export function LandingPage() {
   const [shown, setShown] = useState(false);
   const [quote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? HERO_QUOTES[0]);
+  const [latest, setLatest] = useState<Post[]>([]);
 
   useEffect(() => {
     const t = setTimeout(() => setShown(true), 20);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    getPosts()
+      .then((p) => { if (alive) setLatest(p.slice(0, 3)); })
+      .catch(() => { /* sembunyikan section bila gagal */ });
+    return () => { alive = false; };
   }, []);
 
   return (
@@ -32,7 +43,6 @@ export function LandingPage() {
             <p className="lead">Low-sugar dessert &amp; healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.</p>
             <div className="hero-actions">
               <Link className="btn-primary" to="/menu">Lihat Menu <Icon name="arrow-right" /></Link>
-              <Link className="btn-secondary" to="/menu">Jelajahi kategori</Link>
               <Link className="btn-secondary" to="/funfact">Fun Fact</Link>
             </div>
           </div>
@@ -43,6 +53,23 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+        {latest.length > 0 ? (
+          <section className="section" aria-label="Terbaru dari Serenity">
+            <div className="section-head">
+              <span className="eyebrow">Terbaru</span>
+              <h2>Dari Serenity</h2>
+            </div>
+            <div className="facts-grid">
+              {latest.map((p) => (
+                <article key={p.id} className="fact-card" aria-label={p.title}>
+                  <span className="fact-tag">{p.tag}</span>
+                  <h3>{p.title}</h3>
+                  <p>{p.body}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </main>
       <Footer />
     </div>
