@@ -12,6 +12,7 @@ describe("LandingPage", () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: /sweet that loves/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu");
+    expect(screen.getByRole("link", { name: /fun fact/i })).toHaveAttribute("href", "/funfact");
     const urls = spy.mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("/categories") || u.includes("/products"))).toBe(false);
   });
