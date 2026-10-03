@@ -5,6 +5,10 @@ import type { HistoryOrder } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
+import { useT } from "../i18n/t.ts";
+import type { DictKey } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { localeOf } from "../i18n/store.ts";
 
 const FILTERS = ["semua", "pending_payment", "underpaid", "paid", "expired", "cancelled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -15,26 +19,29 @@ const DOT: Record<string, string> = {
   pending_payment: "history-dot history-dot--pending",
 };
 
-const LABEL: Record<string, string> = {
-  pending_payment: "Menunggu pembayaran",
-  underpaid: "Kurang bayar",
-  paid: "Lunas",
-  expired: "Kedaluwarsa",
-  cancelled: "Dibatalkan",
+const LABEL: Record<string, DictKey> = {
+  pending_payment: "orders.status.pending",
+  underpaid: "orders.status.underpaid",
+  paid: "orders.status.paid",
+  expired: "orders.status.expired",
+  cancelled: "orders.status.cancelled",
 };
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string, locale: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 }
 
 export function HistoryPage() {
   const navigate = useNavigate();
+  const t = useT();
+  const [lang] = useLang();
+  const locale = localeOf(lang);
   const [filter, setFilter] = useState<Filter>("semua");
   const [orders, setOrders] = useState<HistoryOrder[]>([]);
   const [state, setState] = useState<"loading" | "error" | "done">("loading");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [topupMsg, setTopupMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -50,7 +57,7 @@ export function HistoryPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setErrorMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+        setErrorMsg(e instanceof ApiError ? e.message : null);
         setState("error");
       });
     return () => {
@@ -65,7 +72,7 @@ export function HistoryPage() {
       const child = await topupOrder(code);
       navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
     } catch (e: unknown) {
-      setTopupMsg(e instanceof ApiError ? "Top-up tidak dapat dibuat. Muat ulang halaman." : "Gagal membuat kode top-up.");
+      setTopupMsg(e instanceof ApiError ? "orders.common.topupUnavailable" : "orders.common.topupFailed");
     } finally {
       setTopupBusy(false);
     }
@@ -75,32 +82,32 @@ export function HistoryPage() {
     <div>
       <Header />
       <main className="history-page">
-        <h1>Riwayat Pesanan</h1>
-        <div className="filter-bar" role="group" aria-label="Filter status">
+        <h1>{t("orders.history.title")}</h1>
+        <div className="filter-bar" role="group" aria-label={t("orders.history.filterLabel")}>
           {FILTERS.map((f) => (
             <button key={f} type="button" className={filter === f ? "chip chip--active" : "chip"} onClick={() => setFilter(f)}>
-              {f === "semua" ? "Semua" : (LABEL[f] ?? f)}
+              {f === "semua" ? t("orders.history.all") : (LABEL[f] !== undefined ? t(LABEL[f]) : f)}
             </button>
           ))}
         </div>
-        {topupMsg !== "" ? <p role="alert">{topupMsg}</p> : null}
+        {topupMsg !== "" ? <p role="alert">{t(topupMsg)}</p> : null}
         {state === "loading" ? (
-          <div aria-label="Memuat riwayat">
+          <div aria-label={t("orders.history.loading")}>
             <div className="skeleton" aria-hidden="true" />
           </div>
         ) : state === "error" ? (
           <div className="state" role="alert">
-            <h2>Riwayat gagal dimuat</h2>
-            <p>{errorMsg}</p>
+            <h2>{t("orders.history.errorTitle")}</h2>
+            <p>{errorMsg ?? t("orders.history.errorGeneric")}</p>
             <button type="button" className="btn-primary" onClick={() => setReloadKey((k) => k + 1)}>
-              Coba lagi
+              {t("orders.history.retry")}
             </button>
           </div>
         ) : orders.length === 0 ? (
           <div className="state" role="status">
-            <h2>Belum ada pesanan</h2>
-            <p>Pesanan dari perangkat ini akan tampil di sini.</p>
-            <Link className="btn-secondary" to="/">Lihat menu</Link>
+            <h2>{t("orders.history.emptyTitle")}</h2>
+            <p>{t("orders.history.emptyText")}</p>
+            <Link className="btn-secondary" to="/">{t("orders.history.viewMenu")}</Link>
           </div>
         ) : (
           <ul className="history-list">
@@ -111,7 +118,7 @@ export function HistoryPage() {
                 <li key={o.unique_code} className="history-row">
                   <span className={DOT[o.status] ?? "history-dot"} aria-hidden="true" />
                   <div className="history-main">
-                    <p className="history-date">{fmtDate(o.created_at)}</p>
+                    <p className="history-date">{fmtDate(o.created_at, locale)}</p>
                     {o.items.length > 0 ? (
                       <ul className="history-items">
                         {o.items.map((it) => (
@@ -120,20 +127,20 @@ export function HistoryPage() {
                       </ul>
                     ) : null}
                     <span className="history-code">{o.unique_code}</span>
-                    {o.donation_consent ? <span className="tag">Donasi disetujui</span> : null}
+                    {o.donation_consent ? <span className="tag">{t("orders.history.donation")}</span> : null}
                   </div>
                   <div className="history-side">
                     <span className="history-total">{rupiah(o.total_amount)}</span>
-                    <span className="status-badge">{LABEL[o.status] ?? o.status}</span>
-                    {o.paid_amount !== null ? <p className="history-sub">Dibayar {rupiah(o.paid_amount)}</p> : null}
-                    {kurang ? <p className="history-sub history-sub--warn">Kurang {rupiah(sisa)}</p> : null}
+                    <span className="status-badge">{LABEL[o.status] !== undefined ? t(LABEL[o.status]) : o.status}</span>
+                    {o.paid_amount !== null ? <p className="history-sub">{t("orders.history.paidAmount", { amount: rupiah(o.paid_amount) })}</p> : null}
+                    {kurang ? <p className="history-sub history-sub--warn">{t("orders.common.shortBy", { amount: rupiah(sisa) })}</p> : null}
                     <div className="history-actions">
                       {o.status === "underpaid" && o.parent_code === null ? (
                         <button type="button" className="btn-primary btn-sm" disabled={topupBusy} onClick={() => void handleTopup(o.unique_code)}>
-                          Bayar sisa
+                          {t("orders.history.payRest")}
                         </button>
                       ) : null}
-                      <Link className="btn-secondary btn-sm" to={`/status/${encodeURIComponent(o.unique_code)}`}>Lacak</Link>
+                      <Link className="btn-secondary btn-sm" to={`/status/${encodeURIComponent(o.unique_code)}`}>{t("orders.history.track")}</Link>
                     </div>
                   </div>
                 </li>
