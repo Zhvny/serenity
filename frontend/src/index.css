@@ -919,7 +919,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
 .history-main { min-width: 0; }
 .history-date { font-size: 10px; color: var(--ink-mute); margin: 0 0 var(--sp-xs); }
 .history-items { list-style: none; margin: 0 0 var(--sp-xs); padding: 0; font-weight: 500; }
-.history-code { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); }
+.history-code { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); overflow-wrap: anywhere; }
 .history-side { text-align: right; display: flex; flex-direction: column; gap: var(--sp-xs); align-items: flex-end; }
 .history-total { font-size: 16px; font-weight: 500; }
 .history-sub { font-size: 10px; color: var(--ink-mute); margin: 0; }

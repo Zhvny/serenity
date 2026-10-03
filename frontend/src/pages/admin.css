@@ -111,7 +111,7 @@
 .admin-card h1 { margin: 0 0 var(--sp-lg); }
 
 .admin-row h3 { margin: 0; flex: 1 1 40%; min-width: 120px; }
-.admin-id { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); }
+.admin-id { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); overflow-wrap: anywhere; }
 .admin-price { font-weight: 500; }
 .admin-row .admin-btn--danger { margin-left: auto; }
 .status-badge--ok { background: color-mix(in srgb, var(--primary) 16%, #fff); border-color: var(--primary); color: var(--primary-deep); }
@@ -139,6 +139,7 @@
 .admin-filters { display: flex; flex-wrap: wrap; gap: var(--sp-sm); margin-bottom: var(--sp-lg); padding: 0; }
 
 .admin-orders { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); align-items: start; }
+.admin-orders > * { min-width: 0; }
 @media (min-width: 921px) { .admin-orders { grid-template-columns: 1.5fr 1fr; } }
 
 .admin-table { width: 100%; border-collapse: collapse; font-size: 16px; min-width: 560px; }
@@ -155,8 +156,8 @@
 }
 @media (min-width: 921px) { .admin-detail { position: sticky; top: 76px; } }
 .admin-detail-row { display: flex; justify-content: space-between; gap: var(--sp-md); margin: 0 0 var(--sp-xs); font-size: 16px; }
-.admin-detail-row span { color: var(--ink-mute); }
-.admin-detail-row strong { font-weight: 500; text-align: right; }
+.admin-detail-row span { color: var(--ink-mute); flex: none; }
+.admin-detail-row strong { font-weight: 500; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .admin-detail-sub { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: var(--sp-lg) 0 var(--sp-sm); }
 .admin-detail-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-xs); }
 .admin-detail-items li { display: flex; justify-content: space-between; gap: var(--sp-md); font-size: 16px; padding: var(--sp-xs) 0; border-bottom: 1px solid var(--hairline-cool); }
