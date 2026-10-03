@@ -25,6 +25,30 @@ type Form = { id: string; name: string; category_id: string; price: number; tags
 const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "" };
 type Tab = "orders" | "products" | "posts";
 
+function useDesktop(): boolean {
+  const [desktop, setDesktop] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 921px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 921px)");
+    const fn = () => setDesktop(mq.matches);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, []);
+  return desktop;
+}
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+
+const ORDER_DOT: Record<string, string> = {
+  paid: "history-dot history-dot--paid",
+  underpaid: "history-dot history-dot--underpaid",
+  pending_payment: "history-dot history-dot--pending",
+};
+
 const ORDER_FILTERS: Array<{ key: string; label: string }> = [
   { key: "pending_payment", label: "Menunggu bayar" },
   { key: "underpaid", label: "Kurang bayar" },
@@ -57,6 +81,7 @@ export function AdminPage() {
   const [postPids, setPostPids] = useState<string[]>([]);
   const [postMsg, setPostMsg] = useState("");
   const [postImgOk, setPostImgOk] = useState(true);
+  const desktop = useDesktop();
 
   function togglePid(id: string): void {
     setPostPids((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -230,7 +255,7 @@ export function AdminPage() {
             </div>
             {orders.length === 0 ? (
               <p className="admin-empty">Tidak ada pesanan pada status ini.</p>
-            ) : (
+            ) : desktop ? (
               <div className="admin-table-wrap" tabIndex={0} role="region" aria-label="Tabel pesanan, geser horizontal">
               <table className="admin-table">
                 <thead><tr><th scope="col">Order</th><th scope="col">Nominal</th><th scope="col">Metode</th><th scope="col">Aksi</th></tr></thead>
@@ -254,6 +279,33 @@ export function AdminPage() {
                 </tbody>
               </table>
               </div>
+            ) : (
+              <ul className="order-cards">
+                {orders.map((o) => (
+                  <li key={o.id} className={detail?.unique_code === o.unique_code ? "order-card is-selected" : "order-card"}>
+                    <span className={ORDER_DOT[o.status] ?? "history-dot"} aria-hidden="true" />
+                    <div className="order-card-main">
+                      <span className="status-badge">{STATUS_LABEL[o.status] ?? o.status}</span>
+                      <span className="order-card-total">{rupiah(o.total_amount)}</span>
+                      {o.paid_amount !== null && o.paid_amount !== undefined ? (
+                        <span className="history-sub">Dibayar {rupiah(o.paid_amount)}</span>
+                      ) : null}
+                      <span className="history-code">{o.unique_code}</span>
+                      <span className="history-date">{fmtDate(o.created_at)} · {o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</span>
+                    </div>
+                    <div className="order-card-actions">
+                      {o.status === "pending_payment" ? (
+                        <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code, o.total_amount)}>Tandai Lunas</button>
+                      ) : o.status === "underpaid" ? (
+                        <button type="button" className="admin-btn" aria-label={`Periksa ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>Periksa</button>
+                      ) : ADVANCE_LABEL[o.status] !== undefined ? (
+                        <button type="button" className="admin-btn" aria-label={`Majukan ${o.unique_code}`} onClick={() => void handleAdvance(o.unique_code)}>{ADVANCE_LABEL[o.status]}</button>
+                      ) : null}
+                      <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>Detail</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 
