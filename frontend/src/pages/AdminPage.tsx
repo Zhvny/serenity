@@ -434,7 +434,7 @@ export function AdminPage() {
             <label htmlFor="post-image">URL gambar (opsional)</label>
             <input id="post-image" type="url" value={postImage} onChange={(e) => { setPostImage(e.target.value); setPostImgOk(true); }} maxLength={500} placeholder="https://…" />
             {products.length > 0 ? (
-              <div className="admin-tags" role="group" aria-label="Produk yang disarankan">
+              <div className="admin-tags admin-tags--scroll" role="group" aria-label="Produk yang disarankan">
                 <span className="admin-id">Produk yang disarankan:</span>
                 {products.map((p) => (
                   <label key={p.id} className="chip">
