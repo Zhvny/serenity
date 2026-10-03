@@ -48,25 +48,46 @@ export function PostDetailPage() {
       </div>
     );
   }
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  };
   return (
     <div>
       <Header />
       <main className="content">
-        <span className="fact-tag">{post.tag}</span>
-        <h1>{post.title}</h1>
-        {post.image_url !== null && post.image_url !== "" ? (
-          <img className="post-image" src={post.image_url} alt={post.title} loading="lazy" />
-        ) : null}
-        <p className="post-body">{post.body}</p>
+        <p><Link className="btn-link" to="/funfact">← Fun Fact</Link></p>
+        <div className="detail-grid">
+          <div>
+            {post.image_url !== null && post.image_url !== "" ? (
+              <img className="product-photo post-photo" src={post.image_url} alt={post.title} loading="lazy" />
+            ) : (
+              <div className="product-photo product-photo--empty" aria-hidden="true" />
+            )}
+          </div>
+          <div>
+            <p className="post-meta">
+              <span className="fact-tag">{post.tag}</span>
+              <time className="history-date">{fmtDate(post.created_at)}</time>
+            </p>
+            <h1 className="post-title">{post.title}</h1>
+            <p className="post-body">{post.body}</p>
+          </div>
+        </div>
         {post.products.length > 0 ? (
           <section aria-label="Produk yang disarankan">
-            <h2>Produk yang disarankan</h2>
-            <div className="facts-grid">
+            <div className="section-head">
+              <span className="eyebrow">Disarankan</span>
+              <h2>Produk Serenity</h2>
+            </div>
+            <div className="mini-grid">
               {post.products.map((p) => (
-                <Link key={p.id} className="fact-card fact-card--link" to={`/products/${encodeURIComponent(p.id)}`} aria-label={p.name}>
+                <Link key={p.id} className="mini-card" to={`/products/${encodeURIComponent(p.id)}`} aria-label={p.name}>
                   {p.image_url !== null && p.image_url !== "" ? (
-                    <img className="product-photo" src={p.image_url} alt="" loading="lazy" />
-                  ) : null}
+                    <img className="mini-photo" src={p.image_url} alt="" loading="lazy" />
+                  ) : (
+                    <div className="mini-photo mini-photo--empty" aria-hidden="true" />
+                  )}
                   <h3>{p.name}</h3>
                   <p className="price">{rupiah(p.price)}</p>
                 </Link>
@@ -74,7 +95,6 @@ export function PostDetailPage() {
             </div>
           </section>
         ) : null}
-        <p><Link className="btn-secondary" to="/funfact">Kembali ke Fun Fact</Link></p>
       </main>
       <Footer />
     </div>
