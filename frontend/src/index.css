@@ -851,6 +851,13 @@ code { font-family: var(--font-mono); font-size: 14px; }
 .pay-steps { text-align: left; margin: var(--sp-lg) auto; padding-left: var(--sp-xl); max-width: 42ch; color: var(--ink); font-size: 14px; display: flex; flex-direction: column; gap: var(--sp-sm); }
 .pay-steps li { line-height: 1.5; }
 .pay-note { font-size: 13px; color: var(--ink-mute); margin: var(--sp-sm) auto 0; max-width: 40ch; }
+.pay-consent {
+  display: flex; align-items: flex-start; gap: var(--sp-sm);
+  font-size: 13px; color: var(--ink-mute); text-align: left;
+  margin: 0 auto var(--sp-lg); max-width: 40ch; cursor: pointer;
+}
+.pay-consent input { width: 18px; height: 18px; flex: none; margin-top: 1px; accent-color: var(--primary-deep); }
+.pay-consent strong { color: var(--ink); }
 
 /* ---- HistoryPage: daftar vertikal (DESIGN §5) ---- */
 .history-page { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-lg) var(--sp-huge); }
