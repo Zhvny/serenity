@@ -185,6 +185,20 @@ code { font-family: var(--font-mono); font-size: 14px; }
 
 .theme-toggle:hover { color: var(--primary-deep); background: var(--canvas-soft); }
 
+.header-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-full);
+  color: var(--ink-mute);
+  font-size: 18px;
+  text-decoration: none;
+  transition: color 150ms ease, background 150ms ease;
+}
+.header-icon-link:hover { color: var(--primary-deep); background: var(--canvas-soft); }
+
 .cart-badge {
   background: var(--primary);
   color: var(--on-primary);
