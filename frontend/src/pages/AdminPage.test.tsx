@@ -224,4 +224,20 @@ describe("AdminPage", () => {
     expect(post?.body).toContain('"title":"Judul Baru"');
     expect(await screen.findByText("Post tersimpan.")).toBeInTheDocument();
   });
+
+  it("tab Post -> ketik judul -> pratinjau ikut berubah", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Post" }));
+    await user.type(screen.getByLabelText(/judul/i), "Promo Spesial");
+    const preview = screen.getByLabelText("Pratinjau post");
+    expect(preview).toHaveTextContent("Promo Spesial");
+  });
 });

@@ -56,6 +56,7 @@ export function AdminPage() {
   const [postImage, setPostImage] = useState("");
   const [postPids, setPostPids] = useState<string[]>([]);
   const [postMsg, setPostMsg] = useState("");
+  const [postImgOk, setPostImgOk] = useState(true);
 
   function togglePid(id: string): void {
     setPostPids((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -355,6 +356,7 @@ export function AdminPage() {
       ) : (
         <section className="admin-section">
           <h2 className="admin-subhead">Tambah Post (FunFact / News / SoftSelling)</h2>
+          <div className="post-editor">
           <form className="admin-form" onSubmit={(e) => void handlePostSubmit(e)}>
             <label htmlFor="post-title">Judul</label>
             <input id="post-title" type="text" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} required aria-required="true" maxLength={200} />
@@ -374,7 +376,7 @@ export function AdminPage() {
               ))}
             </select>
             <label htmlFor="post-image">URL gambar (opsional)</label>
-            <input id="post-image" type="url" value={postImage} onChange={(e) => setPostImage(e.target.value)} maxLength={500} placeholder="https://…" />
+            <input id="post-image" type="url" value={postImage} onChange={(e) => { setPostImage(e.target.value); setPostImgOk(true); }} maxLength={500} placeholder="https://…" />
             {products.length > 0 ? (
               <div className="admin-tags" role="group" aria-label="Produk yang disarankan">
                 <span className="admin-id">Produk yang disarankan:</span>
@@ -390,6 +392,28 @@ export function AdminPage() {
             </div>
             {postMsg !== "" ? <p role="status">{postMsg}</p> : null}
           </form>
+          <div className="post-preview" aria-label="Pratinjau post" aria-live="off">
+            <p className="admin-subhead">Pratinjau</p>
+            {postImage.trim() !== "" && postImgOk ? (
+              <img className="post-image" src={postImage.trim()} alt="" onError={() => setPostImgOk(false)} />
+            ) : (
+              <div className="product-photo product-photo--empty" aria-hidden="true" />
+            )}
+            <p className="post-meta"><span className="fact-tag">{postTag}</span></p>
+            <h3>{postTitle.trim() === "" ? "Judul post…" : postTitle}</h3>
+            <p className="post-body">{postBody.trim() === "" ? "Isi post…" : postBody}</p>
+            {postPids.length > 0 ? (
+              <>
+                <h3 className="admin-detail-sub">Produk yang disarankan</h3>
+                <ul className="admin-detail-items">
+                  {postPids.map((id) => (
+                    <li key={id}>{products.find((p) => p.id === id)?.name ?? id}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+          </div>
+          </div>
         </section>
       )}
     </main>
