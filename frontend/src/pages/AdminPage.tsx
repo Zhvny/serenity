@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ApiError,
   adminLogin,
@@ -82,6 +82,7 @@ export function AdminPage() {
   const [postMsg, setPostMsg] = useState("");
   const [postImgOk, setPostImgOk] = useState(true);
   const desktop = useDesktop();
+  const formRef = useRef<HTMLElement>(null);
 
   function togglePid(id: string): void {
     setPostPids((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -162,6 +163,10 @@ export function AdminPage() {
     setTab("products");
   }
   function cancelEdit(): void { setEditingId(null); setForm(EMPTY); }
+
+  useEffect(() => {
+    if (editingId !== null) formRef.current?.scrollIntoView({ block: "nearest" });
+  }, [editingId]);
 
   const knownTags = [...new Set(products.flatMap((p) => p.tags))];
   function addTag(t: string): void {
@@ -350,8 +355,8 @@ export function AdminPage() {
           ) : null}
         </div>
       ) : tab === "products" ? (
-        <>
-          <section className="admin-section">
+        <div className="admin-orders">
+          <aside ref={formRef} className="admin-section admin-detail" aria-label="Form produk">
             <h2 className="admin-subhead">{editingId !== null ? `Edit produk: ${editingId}` : "Tambah produk"}</h2>
             <form className="admin-form" onSubmit={(e) => void handleSubmit(e)}>
               <label htmlFor="prod-id">ID Produk</label>
@@ -381,11 +386,10 @@ export function AdminPage() {
                 {editingId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={cancelEdit}>Batal</button> : null}
               </div>
             </form>
-          </section>
+          </aside>
 
           <section className="admin-section">
-            <h2 className="admin-subhead">Daftar produk</h2>
-            <ul className="admin-list">
+            <h2 className="admin-subhead">Daftar produk</h2>            <ul className="admin-list">
               {products.map((p) => (
                 <li key={p.id} className="admin-row">
                   <h3>{p.name}</h3>
@@ -404,7 +408,7 @@ export function AdminPage() {
               ))}
             </ul>
           </section>
-        </>
+        </div>
       ) : (
         <section className="admin-section">
           <h2 className="admin-subhead">Tambah Post (FunFact / News / SoftSelling)</h2>
