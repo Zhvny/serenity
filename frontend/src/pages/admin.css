@@ -127,14 +127,19 @@
 /* ===== Dashboard admin (rework) ===== */
 .admin-brand { font-weight: 500; font-size: 16px; letter-spacing: -0.3px; }
 
-.admin-tabs { display: flex; gap: var(--sp-xs); border-bottom: 1px solid var(--hairline); margin-bottom: var(--sp-lg); }
+.admin-tabs {
+  display: inline-flex; gap: var(--sp-xxs); background: var(--canvas-soft);
+  border: 1px solid var(--hairline); border-radius: var(--r-full);
+  padding: var(--sp-xs); margin-bottom: var(--sp-lg);
+}
 .admin-tab {
   appearance: none; background: none; border: none; cursor: pointer;
-  padding: var(--sp-sm) var(--sp-md); font-family: var(--font-body); font-size: 16px; font-weight: 500;
-  color: var(--ink-mute); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: var(--sp-sm) var(--sp-lg); font-family: var(--font-body); font-size: 16px; font-weight: 500;
+  color: var(--ink-mute); border-radius: var(--r-full);
+  transition: background 150ms ease, color 150ms ease;
 }
 .admin-tab:hover { color: var(--ink); }
-.admin-tab--active { color: var(--primary-deep); border-bottom-color: var(--primary); }
+.admin-tab--active { background: var(--primary); color: var(--on-primary); }
 
 .admin-filters { display: flex; flex-wrap: wrap; gap: var(--sp-sm); margin-bottom: var(--sp-lg); padding: 0; }
 
@@ -182,4 +187,11 @@
 
 /* Chip tag yang sudah ada di form produk */
 .admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-xs); align-items: center; margin-top: var(--sp-xs); }
-.admin-tags .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
+.admin-tags > .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
+.admin-tags .chip { display: inline-flex; align-items: center; cursor: pointer; }
+.admin-tags .chip input { display: none; }
+.admin-tags .chip:has(input:checked) {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
