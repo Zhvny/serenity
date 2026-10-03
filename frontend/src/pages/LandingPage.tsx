@@ -54,7 +54,7 @@ export function LandingPage() {
           </div>
         </section>
         {latest.length > 0 ? (
-          <section className="section" aria-label="Terbaru dari Serenity">
+          <section className="section section--boxed" aria-label="Terbaru dari Serenity">
             <div className="section-head">
               <span className="eyebrow">Terbaru</span>
               <h2>Dari Serenity</h2>
@@ -68,6 +68,9 @@ export function LandingPage() {
                 </article>
               ))}
             </div>
+            <p className="section-more">
+              <Link className="btn-secondary" to="/funfact">Lihat semua post</Link>
+            </p>
           </section>
         ) : null}
       </main>
