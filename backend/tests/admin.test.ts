@@ -289,6 +289,51 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(res.status, 401);
   });
 
+  it("GET /posts/:id -> detail + produk saran", async () => {
+    const app = createApp(pool);
+    const id = randomUUID();
+    await pool.query("INSERT INTO posts (id, title, body, tag, image_url, product_ids) VALUES ($1, 'Promo', 'Isi promo.', 'News', 'https://img/x.jpg', $2)", [id, ["prod_001"]]);
+    try {
+      const res = await app.request(`/api/v1/posts/${id}`);
+      assert.equal(res.status, 200);
+      const data = ((await res.json()) as { data: Record<string, unknown> }).data;
+      assert.equal(data["title"], "Promo");
+      assert.equal(data["image_url"], "https://img/x.jpg");
+      const prods = data["products"] as Array<{ id: string }>;
+      assert.equal(prods.length, 1);
+      assert.equal(prods[0]?.id, "prod_001");
+    } finally {
+      await pool.query("DELETE FROM posts WHERE id = $1", [id]);
+    }
+  });
+
+  it("GET /posts/:id unknown -> 404", async () => {
+    const res = await createApp(pool).request(`/api/v1/posts/${randomUUID()}`);
+    assert.equal(res.status, 404);
+  });
+
+  it("POST /admin/posts dgn media -> tersimpan", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "M", body: "B", tag: "FunFact", image_url: "https://img/y.jpg", product_ids: ["prod_001"] }) });
+    assert.equal(res.status, 200);
+    const id = ((await res.json()) as { data: { id: string } }).data.id;
+    const row = await pool.query<{ image_url: string }>("SELECT image_url FROM posts WHERE id = $1", [id]);
+    assert.equal(row.rows[0]?.image_url, "https://img/y.jpg");
+    await pool.query("DELETE FROM posts WHERE id = $1", [id]);
+  });
+
+  it("POST /admin/posts product_ids unknown -> 404", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "M", body: "B", tag: "News", product_ids: ["nope"] }) });
+    assert.equal(res.status, 404);
+  });
+
   it("POST /admin/orders/:code/advance -> paid->preparing->ready->done; tolak lanjut setelah done", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });

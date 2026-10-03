@@ -81,4 +81,12 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("012 post media: image_url + product_ids array", () => {
+    const sql = readFileSync(new URL("../migrations/012_post_media.sql", import.meta.url), "utf8");
+    assert.match(sql, /image_url/);
+    assert.match(sql, /product_ids/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });

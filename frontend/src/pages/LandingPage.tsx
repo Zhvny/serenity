@@ -61,11 +61,11 @@ export function LandingPage() {
             </div>
             <div className="facts-grid">
               {latest.map((p) => (
-                <article key={p.id} className="fact-card" aria-label={p.title}>
+                <Link key={p.id} className="fact-card fact-card--link" to={`/posts/${encodeURIComponent(p.id)}`} aria-label={p.title}>
                   <span className="fact-tag">{p.tag}</span>
                   <h3>{p.title}</h3>
-                  <p>{p.body}</p>
-                </article>
+                  <p>{p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body}</p>
+                </Link>
               ))}
             </div>
             <p className="section-more">

@@ -9,6 +9,8 @@ import { ThanksPage } from "./pages/ThanksPage.tsx";
 import { CheckoutPage } from "./pages/CheckoutPage.tsx";
 import { StatusPage } from "./pages/StatusPage.tsx";
 import { HistoryPage } from "./pages/HistoryPage.tsx";
+import { FunFactPage } from "./pages/FunFactPage.tsx";
+import { PostDetailPage } from "./pages/PostDetailPage.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 
 export default function App() {
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/status/:code" element={<StatusPage />} />
         <Route path="/riwayat" element={<HistoryPage />} />
+        <Route path="/funfact" element={<FunFactPage />} />
+        <Route path="/posts/:id" element={<PostDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ErrorBoundary>

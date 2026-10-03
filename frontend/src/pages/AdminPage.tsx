@@ -53,7 +53,13 @@ export function AdminPage() {
   const [postBody, setPostBody] = useState("");
   const [postTag, setPostTag] = useState("FunFact");
   const [postProduct, setPostProduct] = useState("");
+  const [postImage, setPostImage] = useState("");
+  const [postPids, setPostPids] = useState<string[]>([]);
   const [postMsg, setPostMsg] = useState("");
+
+  function togglePid(id: string): void {
+    setPostPids((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
 
   async function refreshProducts(): Promise<void> {
     const list = await adminListProducts();
@@ -170,10 +176,12 @@ export function AdminPage() {
       return;
     }
     try {
-      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct });
+      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
       setPostTitle("");
       setPostBody("");
       setPostProduct("");
+      setPostImage("");
+      setPostPids([]);
       setPostMsg("Post tersimpan.");
     } catch (err: unknown) {
       onError(err, "Gagal menyimpan post");
@@ -363,6 +371,18 @@ export function AdminPage() {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
+            <label htmlFor="post-image">URL gambar (opsional)</label>
+            <input id="post-image" type="url" value={postImage} onChange={(e) => setPostImage(e.target.value)} maxLength={500} placeholder="https://…" />
+            {products.length > 0 ? (
+              <div className="admin-tags" role="group" aria-label="Produk yang disarankan">
+                <span className="admin-id">Produk yang disarankan:</span>
+                {products.map((p) => (
+                  <label key={p.id} className="chip">
+                    <input type="checkbox" checked={postPids.includes(p.id)} onChange={() => togglePid(p.id)} aria-label={p.name} /> {p.name}
+                  </label>
+                ))}
+              </div>
+            ) : null}
             <div className="admin-form-actions">
               <button type="submit" className="admin-btn" disabled={postTitle.trim() === "" || postBody.trim() === ""}>Simpan Post</button>
             </div>
