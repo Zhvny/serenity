@@ -58,6 +58,7 @@ export function FunFactPage() {
     <div>
       <Header />
       <main className="content">
+        <p><Link className="btn-link" to="/">← Beranda</Link></p>
         <div className="section-head">
           <span className="eyebrow">Serenity</span>
           <h1>Fun Fact & News</h1>

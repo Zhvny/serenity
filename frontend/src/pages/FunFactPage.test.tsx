@@ -14,6 +14,7 @@ describe("FunFactPage", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByRole("heading", { name: /fun fact/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /beranda/i })).toHaveAttribute("href", "/");
     expect(screen.getByText("Kenapa beli Serenity?")).toBeInTheDocument();
     expect(screen.getByText("Dessert sehat bukan mitos")).toBeInTheDocument();
     expect(screen.getByText("Pre-order = lebih segar")).toBeInTheDocument();
