@@ -192,6 +192,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     body: z.string().min(1).max(2000),
     tag: z.enum(["FunFact", "News", "SoftSelling"]),
     product_id: z.string().min(1).nullish(),
+    image_url: z.string().max(500).nullish(),
+    product_ids: z.array(z.string().min(1)).max(10).nullish(),
   });
   r.post("/posts", zValidator("json", postSchema, (result, c) => {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
@@ -203,9 +205,16 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
         return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
       }
     }
+    const pids = body.product_ids ?? [];
+    for (const pid of pids) {
+      const prod = await pool.query("SELECT 1 FROM products WHERE id = $1", [pid]);
+      if ((prod.rowCount ?? 0) === 0) {
+        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+      }
+    }
     const ins = await pool.query<{ id: string }>(
-      "INSERT INTO posts (title, body, tag, product_id) VALUES ($1, $2, $3, $4) RETURNING id",
-      [body.title, body.body, body.tag, body.product_id ?? null],
+      "INSERT INTO posts (title, body, tag, product_id, image_url, product_ids) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      [body.title, body.body, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
     );
     const id = ins.rows[0]?.id ?? "";
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_post", JSON.stringify({ id })]);

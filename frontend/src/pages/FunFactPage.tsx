@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { ApiError, getPosts } from "../services/api.ts";
@@ -34,7 +35,11 @@ export function FunFactPage() {
     return () => { alive = false; };
   }, []);
 
-  const list = posts.length > 0 ? posts : FALLBACK;
+  type CardPost = { id: string | null; title: string; body: string; tag: string };
+  const list: CardPost[] = posts.length > 0
+    ? posts.map((p) => ({ id: p.id, title: p.title, body: p.body, tag: p.tag }))
+    : FALLBACK.map((f) => ({ ...f, id: null }));
+  const summary = (s: string) => (s.length > 120 ? `${s.slice(0, 120)}…` : s);
   if (state === "loading") {
     return (
       <div>
@@ -51,13 +56,20 @@ export function FunFactPage() {
         <h1>Fun Fact & News — Serenity</h1>
         <p className="subtitle">Kenapa memilih Serenity? Ini cerita di balik dessert sehat kami.</p>
         <div className="facts-grid">
-          {list.map((f) => (
-            <article key={f.title} className="fact-card" aria-label={f.title}>
-              <span className="fact-tag">{f.tag}</span>
-              <h2>{f.title}</h2>
-              <p>{f.body}</p>
-            </article>
-          ))}
+          {list.map((f) => {
+            const card = (
+              <>
+                <span className="fact-tag">{f.tag}</span>
+                <h2>{f.title}</h2>
+                <p>{summary(f.body)}</p>
+              </>
+            );
+            return f.id === null ? (
+              <article key={f.title} className="fact-card" aria-label={f.title}>{card}</article>
+            ) : (
+              <Link key={f.id} className="fact-card fact-card--link" to={`/posts/${encodeURIComponent(f.id)}`} aria-label={f.title}>{card}</Link>
+            );
+          })}
         </div>
       </main>
       <Footer />
