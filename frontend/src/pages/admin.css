@@ -142,6 +142,7 @@
 .admin-tab--active { background: var(--primary); color: var(--on-primary); }
 
 .admin-filters { display: flex; flex-wrap: wrap; gap: var(--sp-sm); margin-bottom: var(--sp-lg); padding: 0; }
+.admin-filters .chip, .admin-tags .chip { min-height: 36px; }
 
 .admin-orders { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); align-items: start; }
 .admin-orders > * { min-width: 0; }
@@ -189,7 +190,18 @@
 .admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-xs); align-items: center; margin-top: var(--sp-xs); }
 .admin-tags > .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
 .admin-tags .chip { display: inline-flex; align-items: center; cursor: pointer; }
-.admin-tags .chip input { display: none; }
+.admin-tags .chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.admin-tags .chip:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .admin-tags .chip:has(input:checked) {
   background: var(--primary);
   color: var(--on-primary);

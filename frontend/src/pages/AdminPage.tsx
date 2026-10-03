@@ -231,7 +231,7 @@ export function AdminPage() {
             {orders.length === 0 ? (
               <p className="admin-empty">Tidak ada pesanan pada status ini.</p>
             ) : (
-              <div className="admin-table-wrap">
+              <div className="admin-table-wrap" tabIndex={0} role="region" aria-label="Tabel pesanan, geser horizontal">
               <table className="admin-table">
                 <thead><tr><th scope="col">Order</th><th scope="col">Nominal</th><th scope="col">Metode</th><th scope="col">Aksi</th></tr></thead>
                 <tbody>
