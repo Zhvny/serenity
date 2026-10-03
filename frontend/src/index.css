@@ -212,7 +212,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--sp-lg);
-  padding: var(--sp-lg);
+  padding: var(--sp-lg) var(--sp-xl);
 }
 @media (min-width: 641px) {
   .grid-menu { grid-template-columns: repeat(2, 1fr); gap: var(--sp-xl); padding: var(--sp-xl); }
@@ -526,7 +526,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
   grid-template-columns: 1fr;
   gap: var(--sp-xl);
   align-items: center;
-  padding: var(--sp-xxl) var(--sp-lg) var(--sp-xl);
+  padding: var(--sp-xxl) var(--sp-xl) var(--sp-xl);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -860,12 +860,12 @@ code { font-family: var(--font-mono); font-size: 16px; }
 .pay-consent strong { color: var(--ink); }
 
 /* ---- HistoryPage: daftar vertikal (DESIGN §5) ---- */
-.history-page { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-lg) var(--sp-huge); }
+.history-page { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-xl) var(--sp-huge); }
 .history-page > h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.2px; margin: var(--sp-xl) 0 0; }
 .history-page > .filter-bar { padding-left: 0; padding-right: 0; max-width: none; }
 
 /* ---- FunFactPage: grid fakta responsif ---- */
-.content { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-lg) var(--sp-huge); }
+.content { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-xl) var(--sp-huge); }
 .content > h1 { font-size: clamp(24px, 5vw, 36px); font-weight: 500; letter-spacing: -0.5px; margin: var(--sp-xl) 0 var(--sp-sm); }
 .content > .subtitle { color: var(--ink-mute); font-size: 16px; margin: 0 0 var(--sp-lg); }
 .facts-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-lg); }
@@ -883,7 +883,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
 /* Post detail: meta + mini produk + link */
 .post-meta { display: flex; align-items: center; gap: var(--sp-sm); margin: 0 0 var(--sp-sm); }
 .post-title { font-size: clamp(26px, 5vw, 36px); font-weight: 500; letter-spacing: -0.5px; margin: 0 0 var(--sp-md); }
-.btn-link { color: var(--ink); font-size: 16px; font-weight: 500; text-decoration: none; }
+.btn-link { color: var(--ink); font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block; margin-top: var(--sp-xl); }
 .btn-link:hover { text-decoration: underline; }
 .fact-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
 .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-md); }
