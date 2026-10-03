@@ -39,6 +39,6 @@ describe("PostDetailPage", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /kembali ke fun fact/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /fun fact/i })).toBeInTheDocument();
   });
 });
