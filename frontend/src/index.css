@@ -114,12 +114,22 @@ code { font-family: var(--font-mono); font-size: 14px; }
   font-size: 20px;
   letter-spacing: -0.3px;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  flex: none;
 }
 
 .site-header nav {
   display: flex;
   gap: var(--sp-lg);
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+  flex: 1 1 auto;
+  justify-content: center;
 }
+.site-header nav::-webkit-scrollbar { display: none; }
 
 .site-header nav a {
   position: relative;
@@ -476,7 +486,6 @@ code { font-family: var(--font-mono); font-size: 14px; }
   flex: none;
 }
 
-.site-header .logo { display: inline-flex; align-items: center; gap: var(--sp-xs); }
 .site-header .logo .icon { color: var(--primary-deep); font-size: 20px; }
 
 .header-cart {
@@ -489,6 +498,10 @@ code { font-family: var(--font-mono); font-size: 14px; }
 }
 @media (max-width: 640px) {
   .site-header { justify-content: flex-start; }
+}
+@media (max-width: 374px) {
+  .hero-copy h1 { font-size: 32px; letter-spacing: -0.6px; }
+  .grid-menu { padding: var(--sp-md); gap: var(--sp-md); }
 }
 .header-cart:hover { color: var(--primary-deep); }
 .header-cart .cart-badge { font-size: 12px; }
@@ -574,6 +587,7 @@ code { font-family: var(--font-mono); font-size: 14px; }
 }
 .section-head .eyebrow { font-size: 13px; font-weight: 500; color: var(--primary-deep); letter-spacing: 0.02em; }
 .section-head h2 { margin: 0; }
+.section-head h1 { margin: 0; font-size: 28px; }
 @media (min-width: 1025px) { .section-head { padding: 0 var(--sp-xxl) var(--sp-lg); } }
 
 /* Stat-grid (nutrisi) */

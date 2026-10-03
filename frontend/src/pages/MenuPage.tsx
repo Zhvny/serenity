@@ -136,6 +136,7 @@ export function MenuPage() {
             <span className="eyebrow">{t("menu.section.eyebrow")}</span>
             <h2>{t("menu.section.title")}</h2>
           </div>
+          </div>
           <FilterBar categories={cats} value={filter} onChange={handleChange} />
           {state === "loading" ? (
             <>

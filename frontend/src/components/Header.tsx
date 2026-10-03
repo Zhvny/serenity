@@ -45,7 +45,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
       <Link to="/" className="logo"><Sprite sprite={SPROUT} /> <span className="logo-text">Serenity</span></Link>
       <nav aria-label={t("shell.nav.categories")}>
         {categories.map((c) => (
-          <Link key={c.id} to={`/?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{categoryLabel(c, lang)}</Link>
+          <Link key={c.id} to={`/menu?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{categoryLabel(c, lang)}</Link>
         ))}
       </nav>
       <Link to="/riwayat" className="header-link" aria-label={t("shell.nav.history")}>
