@@ -168,6 +168,16 @@
   padding: var(--sp-sm) var(--sp-md); font-size: 16px; font-family: var(--font-body); width: 100%;
   background: var(--canvas); color: var(--ink);
 }
+
+/* Editor post blog: form + pratinjau berdampingan di desktop */
+.post-editor { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); }
+@media (min-width: 861px) { .post-editor { grid-template-columns: 1fr 1fr; align-items: start; } }
+.post-preview {
+  border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sp-lg);
+  background: var(--canvas-soft); min-width: 0;
+}
+.post-preview h3 { margin-top: var(--sp-sm); }
+.post-preview .post-image { margin-top: 0; }
 .admin-detail-actions .admin-btn { width: 100%; }
 
 /* Chip tag yang sudah ada di form produk */
