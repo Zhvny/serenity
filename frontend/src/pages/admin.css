@@ -1,4 +1,4 @@
-.admin-page {
+﻿.admin-page {
   background: var(--canvas);
   color: var(--ink);
   padding: var(--sp-xl);
@@ -42,7 +42,7 @@
   background: var(--primary);
   color: var(--on-primary);
   padding: var(--sp-sm) var(--sp-lg);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -98,8 +98,8 @@
 .admin-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-lg); margin-bottom: var(--sp-lg); }
 .admin-head h1 { margin: 0; }
 .admin-section { margin-top: var(--sp-xl); }
-.admin-subhead { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: 0 0 var(--sp-md); }
-.admin-form label { font-size: 13px; color: var(--ink-mute); margin-bottom: calc(-1 * var(--sp-sm)); }
+.admin-subhead { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: 0 0 var(--sp-md); }
+.admin-form label { font-size: 10px; color: var(--ink-mute); margin-bottom: calc(-1 * var(--sp-sm)); }
 
 .admin-login { display: flex; align-items: center; justify-content: center; min-height: 70vh; }
 .admin-card {
@@ -111,7 +111,7 @@
 .admin-card h1 { margin: 0 0 var(--sp-lg); }
 
 .admin-row h3 { margin: 0; flex: 1 1 40%; min-width: 120px; }
-.admin-id { font-family: var(--font-mono); font-size: 12px; color: var(--ink-mute); }
+.admin-id { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); }
 .admin-price { font-weight: 500; }
 .admin-row .admin-btn--danger { margin-left: auto; }
 .status-badge--ok { background: color-mix(in srgb, var(--primary) 16%, #fff); border-color: var(--primary); color: var(--primary-deep); }
@@ -121,16 +121,16 @@
 .admin-row-actions { display: flex; gap: var(--sp-sm); margin-left: auto; flex-wrap: wrap; }
 
 
-.admin-empty { color: var(--ink-mute); font-size: 14px; margin: 0; }
+.admin-empty { color: var(--ink-mute); font-size: 16px; margin: 0; }
 
 
 /* ===== Dashboard admin (rework) ===== */
-.admin-brand { font-weight: 500; font-size: 18px; letter-spacing: -0.3px; }
+.admin-brand { font-weight: 500; font-size: 16px; letter-spacing: -0.3px; }
 
 .admin-tabs { display: flex; gap: var(--sp-xs); border-bottom: 1px solid var(--hairline); margin-bottom: var(--sp-lg); }
 .admin-tab {
   appearance: none; background: none; border: none; cursor: pointer;
-  padding: var(--sp-sm) var(--sp-md); font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  padding: var(--sp-sm) var(--sp-md); font-family: var(--font-body); font-size: 16px; font-weight: 500;
   color: var(--ink-mute); border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
 .admin-tab:hover { color: var(--ink); }
@@ -141,12 +141,12 @@
 .admin-orders { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); align-items: start; }
 @media (min-width: 921px) { .admin-orders { grid-template-columns: 1.5fr 1fr; } }
 
-.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 16px; min-width: 560px; }
 .admin-table-wrap { overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--r-lg); }
-.admin-table th { text-align: left; font-weight: 500; color: var(--ink-mute); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; padding: var(--sp-sm) var(--sp-md); border-bottom: 1px solid var(--hairline); }
+.admin-table th { text-align: left; font-weight: 500; color: var(--ink-mute); font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; padding: var(--sp-sm) var(--sp-md); border-bottom: 1px solid var(--hairline); }
 .admin-table td { padding: var(--sp-md); border-bottom: 1px solid var(--hairline-cool); vertical-align: top; }
 .admin-table tr.is-selected { background: var(--canvas-soft); }
-.admin-link { appearance: none; background: none; border: none; color: var(--primary-deep); font-weight: 500; cursor: pointer; padding: 0; font-size: 14px; text-align: left; }
+.admin-link { appearance: none; background: none; border: none; color: var(--primary-deep); font-weight: 500; cursor: pointer; padding: 0; font-size: 16px; text-align: left; }
 .admin-link:hover { text-decoration: underline; }
 
 .admin-detail {
@@ -154,14 +154,14 @@
   background: var(--canvas); box-shadow: var(--shadow-1);
 }
 @media (min-width: 921px) { .admin-detail { position: sticky; top: 76px; } }
-.admin-detail-row { display: flex; justify-content: space-between; gap: var(--sp-md); margin: 0 0 var(--sp-xs); font-size: 14px; }
+.admin-detail-row { display: flex; justify-content: space-between; gap: var(--sp-md); margin: 0 0 var(--sp-xs); font-size: 16px; }
 .admin-detail-row span { color: var(--ink-mute); }
 .admin-detail-row strong { font-weight: 500; text-align: right; }
-.admin-detail-sub { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: var(--sp-lg) 0 var(--sp-sm); }
+.admin-detail-sub { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-mute); margin: var(--sp-lg) 0 var(--sp-sm); }
 .admin-detail-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-xs); }
-.admin-detail-items li { display: flex; justify-content: space-between; gap: var(--sp-md); font-size: 14px; padding: var(--sp-xs) 0; border-bottom: 1px solid var(--hairline-cool); }
+.admin-detail-items li { display: flex; justify-content: space-between; gap: var(--sp-md); font-size: 16px; padding: var(--sp-xs) 0; border-bottom: 1px solid var(--hairline-cool); }
 .admin-detail-actions { display: flex; flex-direction: column; gap: var(--sp-sm); margin-top: var(--sp-lg); }
-.admin-detail-actions label { font-size: 13px; color: var(--ink-mute); margin-bottom: calc(-1 * var(--sp-xs)); }
+.admin-detail-actions label { font-size: 10px; color: var(--ink-mute); margin-bottom: calc(-1 * var(--sp-xs)); }
 .admin-detail-actions input {
   min-height: 36px; border: 1px solid var(--hairline); border-radius: var(--r-sm);
   padding: var(--sp-sm) var(--sp-md); font-size: 16px; font-family: var(--font-body); width: 100%;
