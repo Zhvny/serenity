@@ -205,6 +205,7 @@
 /* Editor post blog: form + pratinjau berdampingan di desktop */
 .post-editor { display: grid; grid-template-columns: 1fr; gap: var(--sp-xl); }
 @media (min-width: 861px) { .post-editor { grid-template-columns: 1fr 1fr; align-items: start; } }
+@media (max-width: 860px) { .post-editor > .post-preview { order: -1; } }
 .post-preview {
   border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sp-lg);
   background: var(--canvas-soft); min-width: 0;
@@ -220,7 +221,8 @@
 .admin-detail-actions .admin-btn { width: 100%; }
 
 /* Chip tag yang sudah ada di form produk */
-.admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-xs); align-items: center; margin-top: var(--sp-xs); }
+.admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; margin-top: var(--sp-xs); }
+.admin-tags--scroll { align-items: flex-start; align-content: flex-start; max-height: 190px; overflow-y: auto; padding: var(--sp-sm); border: 1px solid var(--hairline); border-radius: var(--r-md); }
 .admin-tags > .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
 .admin-tags .chip { display: inline-flex; align-items: center; cursor: pointer; }
 .admin-tags .chip input {
