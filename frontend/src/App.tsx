@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router";
+import { LandingPage } from "./pages/LandingPage.tsx";
 import { MenuPage } from "./pages/MenuPage.tsx";
 import { DetailPage } from "./pages/DetailPage.tsx";
 import { CartPage } from "./pages/CartPage.tsx";
@@ -14,7 +15,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/" element={<MenuPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/menu" element={<MenuPage />} />
         <Route path="/products/:id" element={<DetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/admin" element={<AdminPage />} />
