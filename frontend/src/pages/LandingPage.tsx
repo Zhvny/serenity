@@ -33,6 +33,7 @@ export function LandingPage() {
             <div className="hero-actions">
               <Link className="btn-primary" to="/menu">Lihat Menu <Icon name="arrow-right" /></Link>
               <Link className="btn-secondary" to="/menu">Jelajahi kategori</Link>
+              <Link className="btn-secondary" to="/funfact">Fun Fact</Link>
             </div>
           </div>
           <div className="hero-visual">
