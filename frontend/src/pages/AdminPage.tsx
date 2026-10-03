@@ -399,7 +399,7 @@ export function AdminPage() {
                   <div className="admin-row-actions">
                     <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}>Edit</button>
                     {p.is_active ? (
-                      <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
+                      <button type="button" className="admin-btn admin-btn--ghost-danger" onClick={() => void handleDeactivate(p.id)}>Nonaktifkan</button>
                     ) : (
                       <button type="button" className="admin-btn" onClick={() => void handleReactivate(p.id)}>Aktifkan</button>
                     )}
@@ -453,7 +453,7 @@ export function AdminPage() {
             {postImage.trim() !== "" && postImgOk ? (
               <img className="post-image" src={postImage.trim()} alt="" onError={() => setPostImgOk(false)} />
             ) : (
-              <div className="product-photo product-photo--empty" aria-hidden="true" />
+              <div className="post-empty" role="img" aria-label="Belum ada gambar">Belum ada gambar</div>
             )}
             <p className="post-meta"><span className="fact-tag">{postTag}</span></p>
             <h3>{postTitle.trim() === "" ? "Judul post…" : postTitle}</h3>

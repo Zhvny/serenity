@@ -65,6 +65,17 @@
   color: var(--on-dark);
 }
 
+.admin-btn--ghost-danger {
+  background: transparent;
+  color: var(--error);
+  border-color: var(--error);
+}
+.admin-btn--ghost-danger:hover {
+  background: var(--error);
+  color: var(--on-dark);
+  border-color: var(--error);
+}
+
 .admin-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -198,6 +209,12 @@
   border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sp-lg);
   background: var(--canvas-soft); min-width: 0;
 }
+.post-empty {
+  display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 16 / 9; border: 1px dashed var(--hairline-strong); border-radius: var(--r-md);
+  color: var(--ink-mute); font-size: 14px;
+}
+@media (min-width: 861px) { .post-preview { position: sticky; top: 76px; } }
 .post-preview h3 { margin-top: var(--sp-sm); }
 .post-preview .post-image { margin-top: 0; }
 .admin-detail-actions .admin-btn { width: 100%; }
