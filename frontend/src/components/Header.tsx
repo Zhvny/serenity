@@ -3,22 +3,23 @@ import { Link, useSearchParams } from "react-router";
 import { getCart } from "../services/api.ts";
 import type { Category } from "../services/api.ts";
 import { Icon } from "./Icon.tsx";
+import { Sprite } from "../pixel/Sprite.tsx";
+import { SPROUT } from "../pixel/data/scene.ts";
+import { PAPER_BAG, PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
+import { ThemeToggle } from "./ThemeToggle.tsx";
+import { LanguageToggle } from "./LanguageToggle.tsx";
+import { SoundToggle } from "./SoundToggle.tsx";
+import { useLang } from "../i18n/useLang.ts";
+import { useT } from "../i18n/t.ts";
+import { categoryLabel } from "../i18n/content.ts";
 
-const THEME_KEY = "serenity-theme";
-export type Theme = "light" | "dark";
-
-function initialTheme(): Theme {
-  try {
-    return window.localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
-}
+export type { Theme } from "./ThemeToggle.tsx";
 
 export function Header({ categories = [] }: { categories?: Pick<Category, "id" | "name">[] }) {
   const [count, setCount] = useState<number | null>(0);
-  const [theme, setTheme] = useState<Theme>(initialTheme);
   const [searchParams] = useSearchParams();
+  const [lang] = useLang();
+  const t = useT();
   const activeCategory = searchParams.get("category");
 
   useEffect(() => {
@@ -39,36 +40,25 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
     };
   }, []);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme === "dark" ? "dark" : "";
-    try {
-      window.localStorage.setItem(THEME_KEY, theme);
-    } catch {
-      // abaikan (mode privat)
-    }
-  }, [theme]);
-
   return (
     <header className="site-header">
-      <Link to="/" className="logo"><Icon name="leaf" /> Serenity</Link>
-      <nav aria-label="Kategori">
+      <Link to="/" className="logo"><Sprite sprite={SPROUT} /> <span className="logo-text">Serenity</span></Link>
+      <nav aria-label={t("shell.nav.categories")}>
         {categories.map((c) => (
-          <Link key={c.id} to={`/?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{c.name}</Link>
+          <Link key={c.id} to={`/?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{categoryLabel(c, lang)}</Link>
         ))}
       </nav>
-      <Link to="/riwayat" className="header-link">Riwayat</Link>
+      <Link to="/riwayat" className="header-link" aria-label={t("shell.nav.history")}>
+        <Icon name="receipt" className="link-icon" />
+        <span className="link-text" aria-hidden="true">{t("shell.nav.history")}</span>
+      </Link>
       <div className="header-actions">
-        <button
-          type="button"
-          className="theme-toggle"
-          aria-label={theme === "dark" ? "Ganti ke mode terang" : "Ganti ke mode gelap"}
-          aria-pressed={theme === "dark"}
-          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        >
-          <Icon name={theme === "dark" ? "sun" : "moon"} />
-        </button>
-        <Link to="/cart" className="header-cart" aria-label="Keranjang">
-          <Icon name="cart" />
+        <LanguageToggle />
+        <SoundToggle where="header" />
+        <ThemeToggle />
+        <Link to="/cart" className="header-cart" aria-label={t("shell.nav.cart")} data-cart-target>
+          <Sprite sprite={PAPER_BAG} className="bag bag--closed" />
+          <Sprite sprite={PAPER_BAG_OPEN} className="bag bag--open" />
           {count !== null ? <span className="cart-badge">{count}</span> : null}
         </Link>
       </div>
