@@ -156,6 +156,19 @@
 .admin-link { appearance: none; background: none; border: none; color: var(--primary-deep); font-weight: 500; cursor: pointer; padding: 0; font-size: 16px; text-align: left; }
 .admin-link:hover { text-decoration: underline; }
 
+/* Kartu pesanan (mobile/tablet <921px; tabel hanya desktop) */
+.order-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-md); }
+.order-card {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--sp-md);
+  border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sp-lg);
+  background: var(--canvas);
+}
+.order-card.is-selected { border-color: var(--primary); }
+.order-card-main { display: flex; flex-direction: column; gap: var(--sp-xs); min-width: 0; align-items: flex-start; }
+.order-card-total { font-size: 26px; font-weight: 500; letter-spacing: -0.4px; }
+.order-card-actions { grid-column: 1 / -1; display: flex; gap: var(--sp-sm); }
+.order-card-actions .admin-btn { flex: 1; }
+
 .admin-detail {
   border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sp-lg);
   background: var(--canvas); box-shadow: var(--shadow-1);

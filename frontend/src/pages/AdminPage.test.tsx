@@ -240,4 +240,20 @@ describe("AdminPage", () => {
     const preview = screen.getByLabelText("Pratinjau post");
     expect(preview).toHaveTextContent("Promo Spesial");
   });
+
+  it("mobile (matchMedia false) -> kartu pesanan, bukan tabel", async () => {
+    const order = { id: "HP-1", unique_code: "ORD-ABC", total_amount: 90000, status: "pending_payment", delivery_method: "delivery", created_at: "2026-10-02T00:00:00Z" };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    const { container } = render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByText("ORD-ABC");
+    expect(container.querySelector(".order-cards")).not.toBeNull();
+    expect(container.querySelector(".admin-table")).toBeNull();
+    expect(screen.getByText("Rp 90.000")).toBeInTheDocument();
+  });
 });
