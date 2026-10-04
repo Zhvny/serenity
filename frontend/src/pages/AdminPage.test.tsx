@@ -122,6 +122,19 @@ describe("AdminPage", () => {
     await vi.waitFor(() => expect(urls.some((u) => u.includes("status=underpaid"))).toBe(true));
   });
 
+  it("filter Dibatalkan -> fetch status=cancelled", async () => {
+    const user = userEvent.setup();
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      urls.push(String(url));
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByRole("button", { name: "Dibatalkan" });
+    await user.click(screen.getByRole("button", { name: "Dibatalkan" }));
+    await vi.waitFor(() => expect(urls.some((u) => u.includes("status=cancelled"))).toBe(true));
+  });
+
   it("detail underpaid -> Dibayar X dari Y + Lunaskan -> POST settle-parent", async () => {
     const user = userEvent.setup();
     const order = { id: "HP-2", unique_code: "ORD-U2", total_amount: 50000, paid_amount: 30000, parent_code: null, status: "underpaid", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
