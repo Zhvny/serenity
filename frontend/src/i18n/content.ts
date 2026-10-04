@@ -1,5 +1,5 @@
-// Isi data tetap dari basis data yang perlu dilokalkan (nama kategori & alergen yang dikenal).
-// Nama produk/deskripsi/tag berasal dari admin dan TIDAK diterjemahkan. Nama tak dikenal -> dipakai apa adanya.
+// Isi data tetap dari basis data yang perlu dilokalkan (nama kategori & alergen yang dikenal,
+// plus kolom *_en produk/post via pickContent; fallback Indonesia bila EN kosong).
 import type { Lang } from "./store.ts";
 
 const CATEGORY_EN: Readonly<Record<string, string>> = {
@@ -23,4 +23,9 @@ export function categoryLabel(c: { id: string; name: string }, lang: Lang): stri
 
 export function allergenLabel(name: string, lang: Lang): string {
   return lang === "en" ? (ALLERGEN_EN[name.toLowerCase()] ?? name) : name;
+}
+
+// Pilih teks sesuai bahasa; EN kosong/null -> fallback Indonesia.
+export function pickContent(lang: Lang, en: string | null | undefined, id: string): string {
+  return lang === "en" && en !== null && en !== undefined && en !== "" ? en : id;
 }

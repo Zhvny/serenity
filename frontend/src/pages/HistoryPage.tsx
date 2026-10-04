@@ -9,6 +9,7 @@ import { useT } from "../i18n/t.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
+import { pickContent } from "../i18n/content.ts";
 
 const FILTERS = ["semua", "pending_payment", "underpaid", "paid", "expired", "cancelled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -122,7 +123,7 @@ export function HistoryPage() {
                     {o.items.length > 0 ? (
                       <ul className="history-items">
                         {o.items.map((it) => (
-                          <li key={it.product_id}>{it.quantity}× {it.name}</li>
+                          <li key={it.product_id}>{it.quantity}× {pickContent(lang, it.name_en, it.name)}</li>
                         ))}
                       </ul>
                     ) : null}

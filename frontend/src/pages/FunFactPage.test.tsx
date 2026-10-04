@@ -56,4 +56,21 @@ describe("FunFactPage", () => {
     expect(screen.getByText("Why buy Serenity?")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/");
   });
+  it("lang en -> post DB pakai title_en/body_en; kosong -> fallback", async () => {
+    setLang("en");
+    const posts = [
+      { id: "a", title: "Promo", title_en: "Promo EN", body: "Isi.", body_en: "Content.", excerpt: null, excerpt_en: null, tag: "News", product_id: null, created_at: "2026-10-04T00:00:00Z" },
+      { id: "b", title: "Info", title_en: null, body: "Isi info.", body_en: null, excerpt: null, excerpt_en: null, tag: "News", product_id: null, created_at: "2026-10-04T00:00:00Z" },
+    ];
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: posts }))));
+    render(
+      <MemoryRouter initialEntries={["/funfact"]}>
+        <Routes><Route path="/funfact" element={<FunFactPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Promo EN")).toBeInTheDocument();
+    expect(screen.getByText("Content.")).toBeInTheDocument();
+    expect(screen.getByText("Info")).toBeInTheDocument();
+    expect(screen.getByText("Isi info.")).toBeInTheDocument();
+  });
 });

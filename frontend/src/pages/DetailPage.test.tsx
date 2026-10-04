@@ -7,7 +7,7 @@ import { MenuPage } from "./MenuPage.tsx";
 import { setLang } from "../i18n/store.ts";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
-const prod = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: ["vegan"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 100, protein_g: 10, carbs_g: 5, fat_g: 3, fiber_g: 2, sugar_g: 1 }, allergens: ["kacang"] };
+const prod = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: ["vegan"], image_url: null, description: "Segar.", description_en: "Fresh.", name_en: "Salad EN", is_active: true, nutrition: { calories_kcal: 100, protein_g: 10, carbs_g: 5, fat_g: 3, fiber_g: 2, sugar_g: 1 }, allergens: ["kacang"] };
 
 function renderId(id: string) {
   render(<MemoryRouter initialEntries={[`/products/${id}`]}><Routes><Route path="/products/:id" element={<DetailPage />} /></Routes></MemoryRouter>);
@@ -31,8 +31,7 @@ describe("DetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
     expect(await screen.findByText("Ditambahkan ke keranjang")).toBeInTheDocument();
   });
-  it("tambah keranjang gagal → pesan error tampil", async () => {
-    const user = userEvent.setup();
+  it("tambah keranjang gagal → pesan error tampil", async () => {    const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (String(url).includes("/cart/add")) {
         return new Response(JSON.stringify({ status: "error", code: "CART_FULL", message: "Keranjang penuh" }), { status: 500 });
@@ -43,6 +42,13 @@ describe("DetailPage", () => {
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
     expect(await screen.findByText("Keranjang penuh")).toBeInTheDocument();
+  });
+  it("lang en -> nama + deskripsi Inggris", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: prod }))));
+    renderId("p1");
+    expect(await screen.findByRole("heading", { name: "Salad EN" })).toBeInTheDocument();
+    expect(screen.getByText("Fresh.")).toBeInTheDocument();
   });
 });
 
@@ -55,7 +61,7 @@ describe("DetailPage (English)", () => {
       return new Response(JSON.stringify({ status: "success", data }));
     }));
     renderId("p1");
-    await screen.findByText("Salad");
+    await screen.findByText("Salad EN");
     expect(screen.getByRole("heading", { name: "Nutrition facts" })).toBeInTheDocument();
     expect(screen.getByText("Calories")).toBeInTheDocument();
     expect(screen.getByText("kcal")).toBeInTheDocument();

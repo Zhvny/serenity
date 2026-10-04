@@ -15,6 +15,7 @@ import { playSound } from "../fx/sound.ts";
 import { tNow, useT } from "../i18n/t.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
+import { pickContent } from "../i18n/content.ts";
 import { localeOf } from "../i18n/store.ts";
 import type { Lang } from "../i18n/store.ts";
 
@@ -35,6 +36,7 @@ function tomorrowISO(): string {
 
 function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: Product | undefined; onQty: (q: number) => void; onRemove: () => void }) {
   const t = useT();
+  const [lang] = useLang();
   const [draft, setDraft] = useState(String(item.quantity));
   const [pop, setPop] = useState(0); // naik setiap qty berubah -> animasi "pop" pada harga
   function changeQty(q: number): void {
@@ -65,29 +67,29 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
   return (
     <li className="cart-row">
       <ProductPhoto product={product} className="cart-thumb" />
-      <h3>{product.name}</h3>
+      <h3>{pickContent(lang, product.name_en, product.name)}</h3>
       <div className="qty-ctrl">
-        <button type="button" aria-label={t("shop.cart.row.dec", { name: product.name })} disabled={item.quantity <= 1} onClick={() => changeQty(item.quantity - 1)}>−</button>
+        <button type="button" aria-label={t("shop.cart.row.dec", { name: pickContent(lang, product.name_en, product.name) })} disabled={item.quantity <= 1} onClick={() => changeQty(item.quantity - 1)}>−</button>
         <input
           type="number"
           className="qty-input"
           min={1}
           max={10}
           inputMode="numeric"
-          aria-label={t("shop.cart.row.qty", { name: product.name })}
+          aria-label={t("shop.cart.row.qty", { name: pickContent(lang, product.name_en, product.name) })}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { commit((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).blur(); } }}
         />
-        <button type="button" aria-label={t("shop.cart.row.inc", { name: product.name })} disabled={item.quantity >= 10} onClick={() => changeQty(item.quantity + 1)}>+</button>
+        <button type="button" aria-label={t("shop.cart.row.inc", { name: pickContent(lang, product.name_en, product.name) })} disabled={item.quantity >= 10} onClick={() => changeQty(item.quantity + 1)}>+</button>
       </div>
       {item.note !== null && item.note.trim() !== "" ? <p className="cart-note">{item.note}</p> : null}
       <p key={pop} className={pop > 0 ? "cart-price fx-pop" : "cart-price"}>{rupiah(product.price * item.quantity)}</p>
       <button
         type="button"
         className="cart-remove"
-        aria-label={t("shop.cart.row.remove", { name: product.name })}
+        aria-label={t("shop.cart.row.remove", { name: pickContent(lang, product.name_en, product.name) })}
         onClick={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           burstAt(r.left + r.width / 2, r.top + r.height / 2, "crumbs");
