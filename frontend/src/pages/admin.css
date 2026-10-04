@@ -93,11 +93,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-lg);
+  gap: var(--sp-md) var(--sp-lg);
   padding: var(--sp-lg);
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
 }
+.admin-row-main { flex: 1 1 220px; min-width: 0; }
+.admin-row-top { display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap; }
+.admin-row-top h3 { margin: 0; }
+.admin-row-meta { display: flex; align-items: baseline; gap: var(--sp-sm); margin: var(--sp-xs) 0 0; }
 
 .admin-error {
   color: var(--error);
@@ -121,7 +125,7 @@
 }
 .admin-card h1 { margin: 0 0 var(--sp-lg); }
 
-.admin-row h3 { margin: 0; flex: 1 1 40%; min-width: 120px; }
+.admin-row h3 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .admin-id { font-family: var(--font-mono); font-size: 10px; color: var(--ink-mute); overflow-wrap: anywhere; }
 .admin-price { font-weight: 500; }
 .admin-row .admin-btn--danger { margin-left: auto; }
