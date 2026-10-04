@@ -77,7 +77,6 @@ export function AdminPage() {
   const [postBody, setPostBody] = useState("");
   const [postExcerpt, setPostExcerpt] = useState("");
   const [postTag, setPostTag] = useState("FunFact");
-  const [postProduct, setPostProduct] = useState("");
   const [postImage, setPostImage] = useState("");
   const [postPids, setPostPids] = useState<string[]>([]);
   const [postMsg, setPostMsg] = useState("");
@@ -208,11 +207,10 @@ export function AdminPage() {
       return;
     }
     try {
-      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
+      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), tag: postTag, product_id: null, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
       setPostTitle("");
       setPostBody("");
       setPostExcerpt("");
-      setPostProduct("");
       setPostImage("");
       setPostPids([]);
       setPostMsg("Post tersimpan.");
@@ -430,13 +428,6 @@ export function AdminPage() {
               <option value="FunFact">FunFact</option>
               <option value="News">News</option>
               <option value="Research">Research</option>
-            </select>
-            <label htmlFor="post-product">Produk terkait (opsional)</label>
-            <select id="post-product" value={postProduct} onChange={(e) => setPostProduct(e.target.value)}>
-              <option value="">— Tanpa produk —</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
             </select>
             <label htmlFor="post-image">URL gambar (opsional)</label>
             <input id="post-image" type="url" value={postImage} onChange={(e) => { setPostImage(e.target.value); setPostImgOk(true); }} maxLength={500} placeholder="https://…" />

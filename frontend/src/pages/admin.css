@@ -221,7 +221,7 @@
 }
 @media (min-width: 861px) { .post-preview { position: sticky; top: 76px; } }
 .post-preview h3 { margin-top: var(--sp-sm); }
-.post-preview .post-image { aspect-ratio: 16 / 9; object-fit: cover; width: 100%; margin-top: 0; }
+.post-preview .post-image { width: 100%; max-height: 320px; object-fit: contain; background: var(--canvas); margin-top: 0; }
 .post-preview .post-image { margin-top: 0; }
 .admin-detail-actions .admin-btn { width: 100%; }
 
