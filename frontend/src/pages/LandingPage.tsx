@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { getPosts, getTrending, recordPostView, getPreference, savePreference, getRecommendations } from "../services/api.ts";
+import { getTrending, recordPostView, getPreference, savePreference, getRecommendations } from "../services/api.ts";
 import type { Post, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 import { useT, type DictKey } from "../i18n/t.ts";
@@ -28,7 +28,6 @@ export function LandingPage() {
   const t = useT();
   const [shown, setShown] = useState(false);
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");
-  const [latest, setLatest] = useState<Post[]>([]);
   const [trending, setTrending] = useState<Post[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [needs, setNeeds] = useState<Need[] | null>(null);
@@ -46,9 +45,6 @@ export function LandingPage() {
 
   useEffect(() => {
     let alive = true;
-    getPosts()
-      .then((p) => { if (alive) setLatest(p.slice(0, 3)); })
-      .catch(() => { /* sembunyikan section bila gagal */ });
     getTrending()
       .then((p) => { if (alive) setTrending(p.slice(0, 3)); })
       .catch(() => { /* sembunyikan section bila gagal */ });
@@ -95,26 +91,6 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-        {latest.length > 0 ? (
-          <section className="section section--boxed" aria-label={t("landing.latest.title")}>
-            <div className="section-head">
-              <span className="eyebrow">{t("landing.latest.eyebrow")}</span>
-              <h2>{t("landing.latest.title")}</h2>
-            </div>
-            <div className="facts-grid">
-              {latest.map((p) => (
-                <Link key={p.id} className="fact-card fact-card--link" to={`/posts/${encodeURIComponent(p.id)}`} aria-label={p.title}>
-                  <span className="fact-tag">{p.tag}</span>
-                  <h3>{p.title}</h3>
-                  <p>{p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body}</p>
-                </Link>
-              ))}
-            </div>
-            <p className="section-more">
-              <Link className="btn-secondary" to="/funfact">{t("landing.latest.more")}</Link>
-            </p>
-          </section>
-        ) : null}
         {recs.length > 0 ? (
           <section className="section section--boxed" aria-label={t("landing.recs.title")}>
             <div className="section-head">
