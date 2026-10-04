@@ -18,10 +18,9 @@ export function CheckoutPage() {
   const [waitLeft, setWaitLeft] = useState(CONSENT_DELAY_S);
 
   useEffect(() => {
-    if (waitLeft <= 0) return;
-    const timer = setTimeout(() => setWaitLeft((s) => s - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [waitLeft]);
+    const t = setTimeout(() => setWaitLeft(0), CONSENT_DELAY_S * 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   async function handlePay(): Promise<void> {
     setState("sending");
