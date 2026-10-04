@@ -1,0 +1,144 @@
+/* Tata letak (lapisan TERAKHIR): cangkang halaman, header sticky satu/dua baris, kolom halaman bersama,
+   dan perbaikan ukuran untuk layar lebar / tablet / ponsel kecil. Hasil tinjauan penempatan. */
+
+/* ---------- Cangkang halaman: footer selalu di dasar, header ikut alur (sticky) ---------- */
+body { padding-top: 0; }
+#root > div { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+#root > div > main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
+#root > div > .site-footer { flex-shrink: 0; }
+html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky + awning */
+
+/* ---------- Header: satu baris di kolom halaman (>1100px) ---------- */
+.site-header {
+  position: sticky; top: 0; left: auto; right: auto; height: auto; min-height: 64px; margin-bottom: 21px; /* 21px = awning (18) + garis (3) */
+  display: flex; align-items: center; justify-content: flex-start; gap: 18px;
+  padding: 0 max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
+}
+.site-header .header-actions { position: static; right: auto; margin-left: auto; }
+.site-header nav a, .header-link { white-space: nowrap; }
+.header-link .link-icon { display: none; }
+
+/* ---------- Header: dua baris ringkas (<=1100px) ---------- */
+@media (max-width: 1100px) {
+  html { scroll-padding-top: 150px; }
+  .site-header { display: grid; grid-template-columns: 1fr auto auto; column-gap: 12px; row-gap: 0; padding: 8px var(--gutter); }
+  .site-header .logo { grid-area: 1 / 1; justify-self: start; }
+  .site-header .header-link { grid-area: 1 / 2; justify-self: end; margin: 0; }
+  .site-header .header-actions { grid-area: 1 / 3; margin-left: 0; }
+  .site-header nav {
+    grid-area: 2 / 1 / 3 / -1; margin: 6px -8px 0; padding: 8px; overflow-x: auto; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  }
+  .site-header nav::-webkit-scrollbar { display: none; }
+  .site-header nav:empty { display: none; }
+}
+@media (max-height: 500px) { .site-header { position: relative; } } /* ponsel landscape: jangan makan layar */
+
+/* ---------- Ponsel: Riwayat jadi ikon; header muat di 320px ---------- */
+@media (max-width: 640px) {
+  .site-header .header-link { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; }
+  .header-link .link-icon { display: inline-block; font-size: 26px; }
+  .header-link .link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 480px) {
+  .site-header { column-gap: 8px; }
+  .site-header .logo { font-size: 20px; gap: 6px; }
+  .site-header .logo .sprite { width: 28px; height: 28px; }
+  .site-header .header-actions { gap: 6px; }
+  .sound-toggle { width: 36px; height: 36px; font-size: 20px; }
+  .sound-toggle--header { display: none; } /* di ponsel tombol suara pindah ke footer */
+  .footer-sound { display: flex; justify-content: center; padding: 4px 0 14px; }
+  .footer-sound .sound-toggle { width: 44px; height: 44px; font-size: 24px; }
+  .lang-toggle { height: 32px; }
+  .lang-toggle button { min-width: 0; width: 23px; padding: 0; font-size: 16px; letter-spacing: 0; }
+  .daynight { --dn-w: 60px; --dn-h: 32px; --dn-thumb: 24px; --dn-pad: 4px; --bw: 2px; }
+  .dn-thumb { --bw: 2px; }
+  .dn-label { position: absolute; width: 1px; height: 1px; inset: auto; overflow: hidden; clip: rect(0 0 0 0); padding: 0; }
+  .dn-cloud { left: 34px; top: 8px; }
+  .site-header .header-link { width: 36px; }
+  .header-cart { width: 40px; }
+}
+@media (max-width: 380px) {
+  :root { --su: 2.5px; }
+  .site-header { padding-left: 10px; padding-right: 10px; column-gap: 6px; }
+}
+@media (max-width: 340px) {
+  .site-header .logo-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* ---------- Kolom halaman bersama untuk detail / keranjang / riwayat ---------- */
+.detail-grid, .cart-page, .history-page { box-sizing: border-box; width: 100%; max-width: var(--page-max); margin-left: auto; margin-right: auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+.cart-page > .state { margin-left: 0; }
+.cart-main { margin-top: 10px; }
+.detail-cta { margin-left: var(--bw); }
+.footer-col a { padding: 9px 0; }
+
+/* ---------- Hero ---------- */
+.hero { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 861px) {
+  .hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
+  .hero-visual { align-items: flex-end; }
+  .hero-card--board { margin: 30px calc((var(--su) * 112 - var(--bs) * 40) / 2 + 4px) 0 auto; }
+  .hero-copy h1 { font-size: clamp(44px, 5.4vw, 56px); }
+}
+@media (min-width: 641px) and (max-width: 860px) {
+  :root { --su: 4px; }
+  .hero-card--board { --bs: 9px; }
+}
+@media (max-width: 640px) { .hero-card--board { --bs: 7px; } }
+@media (max-width: 420px) {
+  .hero-actions { display: grid; grid-template-columns: 1fr; }
+  .hero-actions .btn-primary, .hero-actions .btn-secondary { justify-content: center; text-align: center; }
+}
+
+/* ---------- Adegan: kucing, gelembung, tumpukan ---------- */
+.bakery-scene { isolation: isolate; }
+.cat-mascot { left: calc(var(--su) * 56); }
+.cat-mascot:focus-visible { z-index: 8; }
+.cat-bubble {
+  left: calc(var(--su) * 72); top: auto; bottom: calc(var(--su) * 58 + 6px); translate: -50% 0;
+  width: max-content; max-width: calc(var(--su) * 64); white-space: normal;
+}
+.section-head h2::before, .section-head h2::after { display: none; }
+
+/* ---------- Kartu produk & grid ---------- */
+.grid-menu { grid-template-columns: repeat(auto-fill, minmax(max(250px, calc((100% - 72px) / 3)), 1fr)); }
+.product-card::after { left: -3px; right: -3px; }
+.price-tag-text { top: 54px; }
+@media (max-width: 640px) { .price-tag-text { top: 44px; } }
+
+/* ---------- Rak roti: tujuh roti selalu satu baris ---------- */
+.pastry-row { flex-wrap: nowrap; }
+@media (max-width: 760px) { .pastry .sprite { width: 56px; } .pastry { padding: 8px 6px 16px; } }
+@media (max-width: 560px) { .pastry .sprite { width: 40px; } .pastry { padding: 8px 3px 14px; } }
+@media (max-width: 340px) { .pastry .sprite { width: 36px; } .pastry { padding: 8px 2px 14px; } }
+
+/* ---------- Halaman pesanan ---------- */
+.pay-card, .pay-wrap { min-width: 0; }
+.pay-meta, .pay-meta strong { overflow-wrap: anywhere; word-break: break-all; }
+.pay-meta strong { display: inline-block; max-width: 100%; }
+@media (max-width: 640px) { .pay-meta strong { font-size: 15px; letter-spacing: 0; } }
+.pay-card .status-badge { margin-block: 14px 20px; }
+.cart-row h3 { flex: 1 1 calc(100% - 80px); min-width: 0; }
+.history-dot { margin-top: 10px; }
+.history-side { gap: 10px; }
+.history-page > .filter-bar { padding: 4px; margin: -4px -4px 0; }
+.pay-consent { display: block; position: relative; padding-left: 42px; text-align: left; }
+.pay-consent input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; margin: 0; border: 0; border-radius: 0;
+  background: var(--surface) center / 14px 14px no-repeat;
+  box-shadow: 0 -3px 0 0 var(--bc), 0 3px 0 0 var(--bc), -3px 0 0 0 var(--bc), 3px 0 0 0 var(--bc);
+}
+.pay-consent input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7' shape-rendering='crispEdges'%3E%3Cpath fill='%232f2019' d='M0 3h1v1H0zM1 4h1v1H1zM2 5h1v1H2zM3 4h1v1H3zM4 3h1v1H4zM5 2h1v1H5zM6 1h1v1H6z'/%3E%3C/svg%3E");
+}
+.pay-consent input[type="checkbox"]:disabled { opacity: 0.55; }
+
+/* ---------- Admin ---------- */
+.admin-table { width: 100%; }
+.admin-table td:nth-child(2), .admin-table td:nth-child(3) { white-space: nowrap; }
+.admin-btn { white-space: nowrap; }
+@media (max-width: 640px) {
+  .admin-table th:last-child, .admin-table td:last-child { position: sticky; right: 0; background: var(--canvas); }
+}
