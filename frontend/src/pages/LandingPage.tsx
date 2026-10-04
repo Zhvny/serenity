@@ -29,9 +29,13 @@ export function LandingPage() {
   const [latest, setLatest] = useState<Post[]>([]);
   const [trending, setTrending] = useState<Post[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [need, setNeed] = useState<Need | null>(null);
+  const [needs, setNeeds] = useState<Need[] | null>(null);
   const [showNeed, setShowNeed] = useState(false);
-  const [draft, setDraft] = useState<Need>("diet");
+  const [draft, setDraft] = useState<Need[]>([]);
+
+  function toggleDraft(n: Need): void {
+    setDraft((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setShown(true), 20);
@@ -50,7 +54,7 @@ export function LandingPage() {
       .then((p) => {
         if (!alive) return;
         if (p === null) setShowNeed(true);
-        else setNeed(p.need);
+        else setNeeds(p.needs);
       })
       .catch(() => { /* tanpa preferensi = tanpa popup, tanpa rekomendasi khusus */ });
     getRecommendations()
@@ -59,11 +63,11 @@ export function LandingPage() {
     return () => { alive = false; };
   }, []);
 
-  async function chooseNeed(n: Need): Promise<void> {
-    setNeed(n);
+  async function chooseNeed(ns: Need[]): Promise<void> {
+    setNeeds(ns);
     setShowNeed(false);
     try {
-      await savePreference(n);
+      await savePreference(ns);
       setRecs((await getRecommendations()).slice(0, 3));
     } catch { /* preferensi lokal tetap, rekomendasi lama tetap */ }
   }
@@ -89,21 +93,6 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-        {trending.length > 0 ? (
-          <section className="section section--boxed" aria-label="Trending">
-            <div className="section-head">
-              <span className="eyebrow">Trending</span>
-              <h2>Lagi dibaca</h2>
-            </div>
-            <div className="facts-grid">
-              {trending.map((p) => (
-                <div key={p.id} onClick={() => void recordPostView(p.id).catch(() => {})}>
-                  <LandingCard variant="post" id={p.id} title={p.title} tag={p.tag} excerpt={p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body} />
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
         {latest.length > 0 ? (
           <section className="section section--boxed" aria-label="Terbaru dari Serenity">
             <div className="section-head">
@@ -130,14 +119,24 @@ export function LandingPage() {
               <span className="eyebrow">Rekomendasi</span>
               <h2>Untuk kebutuhanmu</h2>
             </div>
-            <div className="admin-filters" role="group" aria-label="Pilih kebutuhan">
-              {NEEDS.map((n) => (
-                <button key={n.key} type="button" className={need === n.key ? "chip chip--active" : "chip"} aria-pressed={need === n.key} onClick={() => void chooseNeed(n.key)}>{n.label}</button>
-              ))}
-            </div>
             <div className="facts-grid">
               {recs.map((r) => (
                 <LandingCard key={r.id} variant="product" id={r.id} title={r.name} price={r.price} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+        {trending.length > 0 ? (
+          <section className="section section--boxed" aria-label="Bacaan pilihan">
+            <div className="section-head">
+              <span className="eyebrow">Untuk dibaca</span>
+              <h2>Bacaan pilihan</h2>
+            </div>
+            <div className="facts-grid">
+              {trending.map((p) => (
+                <div key={p.id} onClick={() => void recordPostView(p.id).catch(() => {})}>
+                  <LandingCard variant="post" id={p.id} title={p.title} tag={p.tag} excerpt={p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body} />
+                </div>
               ))}
             </div>
           </section>
@@ -147,17 +146,17 @@ export function LandingPage() {
         <div role="dialog" aria-label="Pilih kebutuhan" aria-modal="true" className="need-popup">
           <div className="need-popup-card">
           <h2>Apa kebutuhanmu?</h2>
-          <p>Pilih satu agar rekomendasi di landing sesuai denganmu.</p>
-          <div role="radiogroup" aria-label="Kebutuhan">
+          <p>Pilih satu atau lebih agar rekomendasi sesuai denganmu. Pilihan ini permanen untuk sesi ini.</p>
+          <div role="group" aria-label="Kebutuhan">
             {NEEDS.map((n) => (
               <label key={n.key}>
-                <input type="radio" name="need" value={n.key} checked={draft === n.key} onChange={() => setDraft(n.key)} />
+                <input type="checkbox" checked={draft.includes(n.key)} onChange={() => toggleDraft(n.key)} aria-label={n.label} />
                 {n.label}
               </label>
             ))}
           </div>
           <div className="need-popup-actions">
-            <button type="button" onClick={() => void chooseNeed(draft)}>Simpan</button>
+            <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>Simpan</button>
             <button type="button" onClick={() => setShowNeed(false)}>Lewati</button>
           </div>
           </div>
