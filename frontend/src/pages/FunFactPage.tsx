@@ -7,6 +7,7 @@ import type { Post } from "../services/api.ts";
 import { useT, type DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
+import { pickContent } from "../i18n/content.ts";
 
 const FALLBACK: Array<{ title: DictKey; body: DictKey; tag: DictKey }> = [
   { title: "funfact.fallback.title1", body: "funfact.fallback.body1", tag: "funfact.fallback.tag1" },
@@ -32,7 +33,14 @@ export function FunFactPage() {
     p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body;
   type CardPost = { id: string | null; title: string; body: string; excerpt: string | null; tag: string; created_at: string | null };
   const list: CardPost[] = posts.length > 0
-    ? posts.map((p) => ({ id: p.id, title: p.title, body: p.body, excerpt: p.excerpt, tag: p.tag, created_at: p.created_at }))
+    ? posts.map((p) => ({
+      id: p.id,
+      title: pickContent(lang, p.title_en, p.title),
+      body: pickContent(lang, p.body_en, p.body),
+      excerpt: lang === "en" ? (p.excerpt_en !== null && p.excerpt_en !== "" ? p.excerpt_en : p.excerpt) : p.excerpt,
+      tag: p.tag,
+      created_at: p.created_at,
+    }))
     : FALLBACK.map((f) => ({ ...f, title: t(f.title), body: t(f.body), tag: t(f.tag), id: null, excerpt: null, created_at: null }));
   const fmtDate = (iso: string | null) => {
     if (iso === null) return "";

@@ -7,6 +7,8 @@ import { getTrending, recordPostView, getPreference, savePreference, getRecommen
 import type { Post, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 import { useT, type DictKey } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { pickContent } from "../i18n/content.ts";
 
 const NEEDS: Array<{ key: Need; dict: DictKey }> = [
   { key: "diet", dict: "landing.need.diet" },
@@ -26,6 +28,7 @@ const HERO_QUOTES: readonly DictKey[] = [
 
 export function LandingPage() {
   const t = useT();
+  const [lang] = useLang();
   const [shown, setShown] = useState(false);
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");
   const [trending, setTrending] = useState<Post[]>([]);
@@ -99,7 +102,7 @@ export function LandingPage() {
             </div>
             <div className="facts-grid">
               {recs.map((r) => (
-                <LandingCard key={r.id} variant="product" id={r.id} title={r.name} price={r.price} />
+                <LandingCard key={r.id} variant="product" id={r.id} title={pickContent(lang, r.name_en, r.name)} price={r.price} />
               ))}
             </div>
           </section>
@@ -113,7 +116,7 @@ export function LandingPage() {
             <div className="facts-grid">
               {trending.map((p) => (
                 <div key={p.id} onClick={() => void recordPostView(p.id).catch(() => {})}>
-                  <LandingCard variant="post" id={p.id} title={p.title} tag={p.tag} excerpt={p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body} />
+                  <LandingCard variant="post" id={p.id} title={pickContent(lang, p.title_en, p.title)} tag={p.tag} excerpt={pickContent(lang, p.excerpt_en ?? p.excerpt, p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body)} />
                 </div>
               ))}
             </div>
