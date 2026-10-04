@@ -57,8 +57,10 @@ const ORDER_FILTERS: Array<{ key: string; label: string }> = [
   { key: "preparing", label: "Disiapkan" },
   { key: "ready", label: "Siap" },
   { key: "done", label: "Selesai" },
+  { key: "expired", label: "Kedaluwarsa" },
+  { key: "cancelled", label: "Dibatalkan" },
 ];
-const STATUS_LABEL: Record<string, string> = { pending_payment: "Menunggu pembayaran", underpaid: "Kurang bayar", paid: "Lunas", preparing: "Disiapkan", ready: "Siap diambil/antar", done: "Selesai" };
+const STATUS_LABEL: Record<string, string> = { pending_payment: "Menunggu pembayaran", underpaid: "Kurang bayar", paid: "Lunas", preparing: "Disiapkan", ready: "Siap diambil/antar", done: "Selesai", expired: "Kedaluwarsa", cancelled: "Dibatalkan" };
 const ADVANCE_LABEL: Record<string, string> = { paid: "Mulai Siapkan", preparing: "Tandai Siap", ready: "Tandai Selesai" };
 
 export function AdminPage() {
@@ -280,7 +282,7 @@ export function AdminPage() {
                           <button type="button" className="admin-btn" aria-label={`Periksa ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>Periksa</button>
                         ) : ADVANCE_LABEL[o.status] !== undefined ? (
                           <button type="button" className="admin-btn" aria-label={`Majukan ${o.unique_code}`} onClick={() => void handleAdvance(o.unique_code)}>{ADVANCE_LABEL[o.status]}</button>
-                        ) : <span className="status-badge status-badge--ok">Selesai</span>}
+                        ) : <span className="status-badge status-badge--ok">{STATUS_LABEL[o.status] ?? "Selesai"}</span>}
                       </td>
                     </tr>
                   ))}
