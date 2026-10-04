@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { LandingPage } from "./LandingPage.tsx";
 
@@ -54,5 +54,22 @@ describe("LandingPage", () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByText("Salad")).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: /kebutuhan/i })).toBeNull();
+  });
+
+  it("submit popup simpan via PUT /preferences", async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      const m = String(init?.method ?? "GET");
+      calls.push({ url: u, method: m });
+      if (u.includes("/preferences") && m !== "GET") return new Response(JSON.stringify({ status: "success", data: { need: "diet" } }));
+      return new Response(JSON.stringify({ status: "success", data: u.includes("/preferences") ? null : [] }));
+    }));
+    render(<MemoryRouter><LandingPage /></MemoryRouter>);
+    await screen.findByRole("dialog", { name: /kebutuhan/i });
+    fireEvent.click(screen.getByRole("button", { name: /^simpan$/i }));
+    await vi.waitFor(() => {
+      expect(calls.some((c) => c.url.includes("/preferences") && c.method === "PUT")).toBe(true);
+    });
   });
 });

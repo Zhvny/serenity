@@ -32,7 +32,6 @@ export function createApp(pool: Pool): Hono {
   app.route("/admin", adminRoutes(pool));
   app.route("/internal", internalRoutes(pool));
   app.route("/", postRoutes(pool));
-  app.route("/", recommendRoutes(pool));
   app.notFound((c) => c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404));
   app.onError((_e, c) => {
     console.error(JSON.stringify({ route: c.req.path, msg: "internal" }));

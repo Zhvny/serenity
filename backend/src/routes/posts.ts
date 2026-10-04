@@ -1,4 +1,7 @@
 import { Hono } from "hono";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
+import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 
 // Daftar post publik (FunFact/News/SoftSelling), terbaru dulu. Tanpa auth.
@@ -37,13 +40,22 @@ export function postRoutes(pool: Pool): Hono {
     return c.json({ status: "success", data: { ...post, products: prods } });
   });
   // Catat view per session; idempoten (refresh tak dobel-hitung).
-  r.post("/posts/:id/view", async (c) => {
-    const id = c.req.param("id");
+  // Param wajib UUID: id malformed → 404 langsung (pg bakal 500 bila lolos).
+  r.post("/posts/:id/view", zValidator("param", z.object({ id: z.string().uuid() }), (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
+  }), async (c) => {
+    const id = c.req.valid("param").id;
     const exists = await pool.query("SELECT 1 FROM posts WHERE id = $1", [id]);
     if ((exists.rowCount ?? 0) === 0) {
       return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
     }
-    const sid = c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1] ?? "anon";
+    // Terbitkan cart_id bila absen (pola cart/add): tanpa ini semua anonim
+    // runtuh jadi satu session "anon" dan distinct-count undercount permanen.
+    let sid = c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
+    if (sid === undefined) {
+      sid = randomUUID();
+      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=Lax; Path=/`);
+    }
     await pool.query(
       "INSERT INTO post_views (post_id, session_id) VALUES ($1, $2) ON CONFLICT (post_id, session_id) DO NOTHING",
       [id, sid],

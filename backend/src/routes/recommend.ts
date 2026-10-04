@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import { bestSellers, byNeed, type Need } from "../services/recommend.js";
+import { bestSellers, byNeed, NEEDS, type Need } from "../services/recommend.js";
 
 const needSchema = z.object({ need: z.enum(["diet", "muscle", "diabetes", "allergy_free", "low_sugar"]) });
 
@@ -38,10 +38,12 @@ export function recommendRoutes(pool: Pool): Hono {
   });
   r.get("/products/recommendations", async (c) => {
     const sid = cartIdOf(c);
+    // Nilai simpanan bisa basi bila CHECK berubah: validasi, fallback best-seller.
     let need: Need | null = null;
     if (sid !== undefined) {
       const { rows } = await pool.query<{ need: string }>("SELECT need FROM user_preferences WHERE session_id = $1", [sid]);
-      need = (rows[0]?.need as Need | undefined) ?? null;
+      const raw = rows[0]?.need;
+      need = raw !== undefined && (NEEDS as readonly string[]).includes(raw) ? (raw as Need) : null;
     }
     if (need === null) {
       return c.json({ status: "success", data: await bestSellers(pool, 3) });

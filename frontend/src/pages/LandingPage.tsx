@@ -4,7 +4,7 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { getPosts, getTrending, recordPostView, getPreference, savePreference, getRecommendations } from "../services/api.ts";
-import type { Post, Product, Need } from "../services/api.ts";
+import type { Post, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 
 const NEEDS: Array<{ key: Need; label: string }> = [
@@ -28,7 +28,7 @@ export function LandingPage() {
   const [quote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? HERO_QUOTES[0]);
   const [latest, setLatest] = useState<Post[]>([]);
   const [trending, setTrending] = useState<Post[]>([]);
-  const [recs, setRecs] = useState<Product[]>([]);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
   const [need, setNeed] = useState<Need | null>(null);
   const [showNeed, setShowNeed] = useState(false);
   const [draft, setDraft] = useState<Need>("diet");
@@ -145,6 +145,7 @@ export function LandingPage() {
       </main>
       {showNeed ? (
         <div role="dialog" aria-label="Pilih kebutuhan" aria-modal="true" className="need-popup">
+          <div className="need-popup-card">
           <h2>Apa kebutuhanmu?</h2>
           <p>Pilih satu agar rekomendasi di landing sesuai denganmu.</p>
           <div role="radiogroup" aria-label="Kebutuhan">
@@ -155,8 +156,11 @@ export function LandingPage() {
               </label>
             ))}
           </div>
-          <button type="button" onClick={() => void chooseNeed(draft)}>Simpan</button>
-          <button type="button" onClick={() => setShowNeed(false)}>Lewati</button>
+          <div className="need-popup-actions">
+            <button type="button" onClick={() => void chooseNeed(draft)}>Simpan</button>
+            <button type="button" onClick={() => setShowNeed(false)}>Lewati</button>
+          </div>
+          </div>
         </div>
       ) : null}
       <Footer />
