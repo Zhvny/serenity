@@ -9,14 +9,14 @@ export function postRoutes(pool: Pool): Hono {
   const r = new Hono();
   r.get("/posts", async (c) => {
     const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
-      "SELECT id, title, body, excerpt, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
+      "SELECT id, title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
     );
     return c.json({ status: "success", data: rows });
   });
   // Trending per-tag (1 post per tag, tertinggi views 30 hari + terbaru). Daftar SEBELUM /:id.
   r.get("/posts/trending", async (c) => {
-    const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
-      `SELECT p.id, p.title, p.body, p.excerpt, p.tag, p.product_id, p.image_url, p.product_ids, p.created_at
+    const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
+      `SELECT p.id, p.title, p.body, p.excerpt, p.title_en, p.body_en, p.excerpt_en, p.tag, p.product_id, p.image_url, p.product_ids, p.created_at
        FROM posts p LEFT JOIN post_views v ON v.post_id = p.id AND v.viewed_at > CURRENT_TIMESTAMP - INTERVAL '30 days'
        GROUP BY p.id ORDER BY COUNT(DISTINCT v.session_id) DESC, p.created_at DESC LIMIT 30`,
     );
@@ -27,7 +27,7 @@ export function postRoutes(pool: Pool): Hono {
   r.get("/posts/:id", async (c) => {
     const id = c.req.param("id");
     const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
-      "SELECT id, title, body, excerpt, tag, product_id, image_url, product_ids, created_at FROM posts WHERE id = $1",
+      "SELECT id, title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids, created_at FROM posts WHERE id = $1",
       [id],
     );
     const post = rows[0];
@@ -35,8 +35,8 @@ export function postRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
     }
     const ids = [...new Set([...(post.product_ids ?? []), ...(post.product_id === null ? [] : [post.product_id])])];
-    const prods = ids.length === 0 ? [] : (await pool.query<{ id: string; name: string; price: number; image_url: string | null }>(
-      "SELECT id, name, price, image_url FROM products WHERE id = ANY($1)", [ids])).rows;
+    const prods = ids.length === 0 ? [] : (await pool.query<{ id: string; name: string; name_en: string | null; price: number; image_url: string | null }>(
+      "SELECT id, name, name_en, price, image_url FROM products WHERE id = ANY($1)", [ids])).rows;
     return c.json({ status: "success", data: { ...post, products: prods } });
   });
   // Catat view per session; idempoten (refresh tak dobel-hitung).
