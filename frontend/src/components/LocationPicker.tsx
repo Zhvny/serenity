@@ -30,6 +30,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   const markerRef = useRef<LeafletMarker | null>(null);
   const [status, setStatus] = useState<"idle" | "locating" | "geo-error">("idle");
   const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [showConsent, setShowConsent] = useState(false);
 
   // Init map sekali — Leaflet di-import DINAMIS (runtime browser) agar tidak dieval di jsdom (OOM).
   useEffect(() => {
@@ -86,7 +87,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   return (
     <div className="map-picker">
       <div className="map-picker-bar">
-        <button type="button" className="btn-secondary map-locate" onClick={useMyLocation} disabled={status === "locating"}>
+        <button type="button" className="btn-secondary map-locate" onClick={() => setShowConsent(true)} disabled={status === "locating"}>
           <Icon name="spark" /> {status === "locating" ? t("shop.map.locating") : t("shop.map.locate")}
         </button>
         {value !== null ? <small className="map-coord">{value.lat.toFixed(5)}, {value.lng.toFixed(5)}</small> : <small className="map-coord">{t("shop.map.tap")}</small>}
@@ -100,6 +101,19 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
           : t("shop.map.hint")}
       </p>
       {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> {t("shop.map.geoerror")}</p> : null}
+      {showConsent ? (
+        <div role="dialog" aria-label={t("shop.map.consent.title")} aria-modal="true" className="need-popup">
+          <div className="need-popup-card">
+            <h2>{t("shop.map.consent.title")}</h2>
+            <p>{t("shop.map.consent.a")}</p>
+            <p>{t("shop.map.consent.b")}</p>
+            <div className="need-popup-actions">
+              <button type="button" onClick={() => { setShowConsent(false); useMyLocation(); }}>{t("shop.map.consent.agree")}</button>
+              <button type="button" onClick={() => setShowConsent(false)}>{t("shop.map.consent.cancel")}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
