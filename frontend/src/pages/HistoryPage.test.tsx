@@ -50,6 +50,13 @@ describe("HistoryPage", () => {
     expect(screen.getByText(/2× Salad/)).toBeInTheDocument();
     expect(screen.getByText("Donasi disetujui")).toBeInTheDocument();
   });
+  it("lang en -> nama item Inggris; null -> fallback", async () => {
+    setLang("en");
+    const en = { ...paid, items: [{ product_id: "p1", name: "Salad", name_en: "Salad EN", quantity: 2 }] };
+    mockList([en]);
+    renderRiwayat();
+    expect(await screen.findByText(/2× Salad EN/)).toBeInTheDocument();
+  });
   it("underpaid → Kurang Rp + Bayar sisa → topup → /thanks?ref=", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
