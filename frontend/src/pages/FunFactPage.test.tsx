@@ -2,8 +2,9 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { FunFactPage } from "./FunFactPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 describe("FunFactPage", () => {
   it("render di /funfact: judul + card + tag", async () => {
@@ -41,5 +42,18 @@ describe("FunFactPage", () => {
     );
     expect(await screen.findByText("Ringkasan riset.")).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(`B{120}`))).toBeNull();
+  });
+
+  it("lang en -> judul + fallback Inggris", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [] }))));
+    render(
+      <MemoryRouter initialEntries={["/funfact"]}>
+        <Routes><Route path="/funfact" element={<FunFactPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: /fun facts & news/i })).toBeInTheDocument();
+    expect(screen.getByText("Why buy Serenity?")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/");
   });
 });

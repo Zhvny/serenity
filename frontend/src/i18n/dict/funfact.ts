@@ -1,0 +1,33 @@
+// Kamus area "funfact". Kunci berawalan funfact.*. Indonesia = teks asli persis; Inggris = terjemahan alami.
+export const id = {
+  "funfact.loading": "Memuat fun fact",
+  "funfact.home": "← Beranda",
+  "funfact.eyebrow": "Serenity",
+  "funfact.title": "Fun Fact & News",
+  "funfact.subtitle": "Kenapa memilih Serenity? Ini cerita di balik dessert sehat kami.",
+  "funfact.fallback.title1": "Kenapa beli Serenity?",
+  "funfact.fallback.body1": "Kami memisahkan proses alergen/non-alergen secara higienis — tanpa catatan cross-contamination. Setiap porsi lengkap nutrisi: kalori, protein, karbo, lemak, serat, gula.",
+  "funfact.fallback.tag1": "Fun Fact",
+  "funfact.fallback.title2": "Dessert sehat bukan mitos",
+  "funfact.fallback.body2": "Serenity menggunakan bahan alami, tanpa pengawet berbahaya. Dessert sehat + minuman sehat — semua bisa dinikmati tanpa rasa bersalah.",
+  "funfact.fallback.tag2": "News",
+  "funfact.fallback.title3": "Pre-order = lebih segar",
+  "funfact.fallback.body3": "Karena dibuat berdasarkan pesanan (bukan stok), makanan lebih segar dan sesuai preferensi Anda — dari diet hingga atlet.",
+  "funfact.fallback.tag3": "Soft Selling",
+} as const;
+export const en = {
+  "funfact.loading": "Loading fun facts",
+  "funfact.home": "← Home",
+  "funfact.eyebrow": "Serenity",
+  "funfact.title": "Fun Facts & News",
+  "funfact.subtitle": "Why choose Serenity? Stories behind our healthy desserts.",
+  "funfact.fallback.title1": "Why buy Serenity?",
+  "funfact.fallback.body1": "We hygienically separate allergen/non-allergen processes — no cross-contamination notes. Every portion is nutritionally complete: calories, protein, carbs, fat, fiber, sugar.",
+  "funfact.fallback.tag1": "Fun Fact",
+  "funfact.fallback.title2": "Healthy dessert is not a myth",
+  "funfact.fallback.body2": "Serenity uses natural ingredients, no harmful preservatives. Healthy desserts + healthy drinks — all enjoyable, guilt-free.",
+  "funfact.fallback.tag2": "News",
+  "funfact.fallback.title3": "Pre-order = fresher",
+  "funfact.fallback.body3": "Because it's made to order (not stocked), food is fresher and matches your preferences — from diet to athletic.",
+  "funfact.fallback.tag3": "Soft Selling",
+} satisfies Record<keyof typeof id, string>;
