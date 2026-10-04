@@ -12,12 +12,16 @@ import { loginRoute, adminRoutes } from "./routes/admin.js";
 import { qrisRoutes } from "./routes/qris.js";
 import { internalRoutes } from "./routes/internal.js";
 import { postRoutes } from "./routes/posts.js";
+import { recommendRoutes } from "./routes/recommend.js";
 
 export function createApp(pool: Pool): Hono {
   const app = new Hono().basePath("/api/v1");
   app.use(corsMw(), loggerMw(), securityHeaders(), tieredRateLimit());
   app.get("/health", (c) => c.json({ status: "success", data: { ok: true } } satisfies ApiSuccess<{ ok: boolean }>));
   app.get("/csrf", (c) => c.json({ status: "success", data: { csrfToken: issueCsrf(c) } }));
+  // recommendRoutes sebelum menuRoutes: GET /products/recommendations statis
+  // harus menang atas GET /products/:id.
+  app.route("/", recommendRoutes(pool));
   app.route("/", menuRoutes(menuService(productRepo(pool))));
   app.route("/", cartRoutes(pool));
   app.route("/", orderRoutes(pool));
@@ -28,6 +32,7 @@ export function createApp(pool: Pool): Hono {
   app.route("/admin", adminRoutes(pool));
   app.route("/internal", internalRoutes(pool));
   app.route("/", postRoutes(pool));
+  app.route("/", recommendRoutes(pool));
   app.notFound((c) => c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404));
   app.onError((_e, c) => {
     console.error(JSON.stringify({ route: c.req.path, msg: "internal" }));
