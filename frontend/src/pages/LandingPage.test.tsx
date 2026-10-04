@@ -2,15 +2,16 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { LandingPage } from "./LandingPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 describe("LandingPage", () => {
   it("tanpa fetch menu: hero + CTA ke /menu", async () => {
     const spy = vi.fn(async (_url: string) => new Response(JSON.stringify({ status: "success", data: [] })));
     vi.stubGlobal("fetch", spy);
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
-    expect(await screen.findByRole("heading", { name: /sweet that loves/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /manis yang menyayangi/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu");
     expect(screen.getByRole("link", { name: /fun fact/i })).toHaveAttribute("href", "/funfact");
     expect(screen.queryByRole("link", { name: /jelajahi kategori/i })).toBeNull();
@@ -77,6 +78,20 @@ describe("LandingPage", () => {
       expect(put?.body).toContain('"diet"');
       expect(put?.body).toContain('"muscle"');
     });
+  });
+
+  it("lang en -> hero + section Inggris penuh", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/preferences")) return new Response(JSON.stringify({ status: "success", data: null }));
+      return new Response(JSON.stringify({ status: "success", data: [] }));
+    }));
+    render(<MemoryRouter><LandingPage /></MemoryRouter>);
+    expect(await screen.findByRole("heading", { name: /sweet that loves/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /see the menu/i })).toHaveAttribute("href", "/menu");
+    expect(await screen.findByRole("dialog", { name: /what do you need/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Build muscle" })).toBeInTheDocument();
   });
 
   it("section post di bawah rekomendasi pakai trending", async () => {

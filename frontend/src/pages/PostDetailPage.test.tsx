@@ -2,8 +2,9 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { PostDetailPage } from "./PostDetailPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 function resp(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -40,5 +41,17 @@ describe("PostDetailPage", () => {
     );
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /fun fact/i })).toBeInTheDocument();
+  });
+
+  it("lang en -> tidak ditemukan Inggris + produk saran Inggris", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: post })));
+    render(
+      <MemoryRouter initialEntries={["/posts/post-1"]}>
+        <Routes><Route path="/posts/:id" element={<PostDetailPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("region", { name: /suggested products/i })).toBeInTheDocument();
+    expect(screen.getByText(/serenity products/i)).toBeInTheDocument();
   });
 });
