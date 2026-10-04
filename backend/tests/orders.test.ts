@@ -233,6 +233,7 @@ describe("orders underpaid service", () => {
     assert.equal(found.items.length, 1);
     assert.equal(found.items[0]?.quantity, 2);
     assert.ok(typeof found.items[0]?.name === "string" && found.items[0]?.name.length > 0);
+    assert.equal(found.items[0]?.name_en, "Grilled Chicken Quinoa Salad");
   });
   it("listMine hanya milik sesi", async () => {
     await seedOrder(10000);

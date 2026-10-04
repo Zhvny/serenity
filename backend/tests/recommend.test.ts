@@ -66,6 +66,7 @@ describe("recommend", () => {
     for (const q of selects) {
       assert.match(q, /name/);
       assert.match(q, /price/);
+      assert.match(q, /name_en/);
     }
   });
   it("need simpanan tak dikenal → fallback best-seller", async () => {
