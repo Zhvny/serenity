@@ -115,20 +115,20 @@ export async function markPaid(pool: Pool, code: string, paidAmount: number): Pr
 }
 
 // Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
-export type MineItem = { product_id: string; name: string; quantity: number };
+export type MineItem = { product_id: string; name: string; name_en: string | null; quantity: number };
 export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address" | "items"> & { items: MineItem[] }>> {
   const cols = "id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, parent_code, donation_consent, created_at";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
   const ids = res.rows.map((o) => o.id);
-  const itemRows = ids.length === 0 ? [] : (await pool.query<{ order_id: string; product_id: string; name: string; quantity: number }>(
-    `SELECT oi.order_id, oi.product_id, p.name, oi.quantity FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ANY($1)`,
+  const itemRows = ids.length === 0 ? [] : (await pool.query<{ order_id: string; product_id: string; name: string; name_en: string | null; quantity: number }>(
+    `SELECT oi.order_id, oi.product_id, p.name, p.name_en, oi.quantity FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ANY($1)`,
     [ids])).rows;
   const byOrder = new Map<string, MineItem[]>();
   for (const it of itemRows) {
     const list = byOrder.get(it.order_id) ?? [];
-    list.push({ product_id: it.product_id, name: it.name, quantity: it.quantity });
+    list.push({ product_id: it.product_id, name: it.name, name_en: it.name_en, quantity: it.quantity });
     byOrder.set(it.order_id, list);
   }
   // delivery_address disengaja HILANG dari objek (konvensi PII tulis-saja, lih. admin list).

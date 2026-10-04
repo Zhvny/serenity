@@ -195,6 +195,9 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     title: z.string().min(1).max(200),
     body: z.string().min(1).max(10000),
     excerpt: z.string().max(300).nullish(),
+    title_en: z.string().max(200).nullish(),
+    body_en: z.string().nullish(),
+    excerpt_en: z.string().max(300).nullish(),
     tag: z.enum(["FunFact", "News", "Research"]),
     product_id: z.string().min(1).nullish(),
     image_url: z.string().max(500).nullish(),
@@ -218,8 +221,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       }
     }
     const ins = await pool.query<{ id: string }>(
-      "INSERT INTO posts (title, body, excerpt, tag, product_id, image_url, product_ids) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [body.title, body.body, body.excerpt ?? null, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
+      "INSERT INTO posts (title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+      [body.title, body.body, body.excerpt ?? null, body.title_en ?? null, body.body_en ?? null, body.excerpt_en ?? null, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
     );
     const id = ins.rows[0]?.id ?? "";
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_post", JSON.stringify({ id })]);
