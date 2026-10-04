@@ -217,12 +217,12 @@ export function recordPostView(id: string): Promise<{ recorded: boolean }> {
 
 export type Need = "diet" | "muscle" | "diabetes" | "allergy_free" | "low_sugar";
 
-export function getPreference(): Promise<{ need: Need } | null> {
-  return apiGet<{ need: Need } | null>("/preferences");
+export function getPreference(): Promise<{ needs: Need[] } | null> {
+  return apiGet<{ needs: Need[] } | null>("/preferences");
 }
 
-export function savePreference(need: Need): Promise<{ need: Need }> {
-  return apiPut<{ need: Need }>("/preferences", { need });
+export function savePreference(needs: Need[]): Promise<{ needs: Need[] }> {
+  return apiPut<{ needs: Need[] }>("/preferences", { needs });
 }
 
 export type Recommendation = { id: string; name: string; price: number; image_url: string | null };
