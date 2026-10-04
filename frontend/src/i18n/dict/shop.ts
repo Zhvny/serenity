@@ -76,6 +76,11 @@ export const id = {
   "shop.map.geoerror": "Tak bisa akses lokasi. Ketuk peta untuk menandai alamat.",
   "shop.map.zoomIn": "Perbesar",
   "shop.map.zoomOut": "Perkecil",
+  "shop.map.consent.title": "Izin lokasi",
+  "shop.map.consent.a": "Serenity memakai lokasimu untuk menentukan titik antar dan mengisi alamat otomatis.",
+  "shop.map.consent.b": "Koordinat dan alamat dikirim ke server hanya saat checkout. Browser tetap meminta izin sistem tersendiri.",
+  "shop.map.consent.agree": "Setuju & Lanjutkan",
+  "shop.map.consent.cancel": "Batal",
 } as const;
 
 export const en = {
@@ -154,4 +159,9 @@ export const en = {
   "shop.map.geoerror": "Couldn't access your location. Tap the map to mark your address.",
   "shop.map.zoomIn": "Zoom in",
   "shop.map.zoomOut": "Zoom out",
+  "shop.map.consent.title": "Location permission",
+  "shop.map.consent.a": "Serenity uses your location to set the delivery pin and fill in your address automatically.",
+  "shop.map.consent.b": "Coordinates and address are sent to our server only at checkout. Your browser will still ask for system permission separately.",
+  "shop.map.consent.agree": "Agree & Continue",
+  "shop.map.consent.cancel": "Cancel",
 } satisfies Record<keyof typeof id, string>;
