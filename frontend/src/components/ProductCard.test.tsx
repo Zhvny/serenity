@@ -16,11 +16,11 @@ describe("ProductCard", () => {
     expect(screen.getByText("Rp 45.000")).toBeInTheDocument();
     expect(screen.getByText("high-protein")).toBeInTheDocument();
   });
-  it("image null → placeholder \"No image for now\", bukan img rusak", () => {
+  it("image null → placeholder id/en, bukan img rusak", () => {
     const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
     expect(container.querySelector("img")).toBeNull();
     expect(container.querySelector(".product-photo--empty")).not.toBeNull();
-    expect(container.querySelector(".no-image")?.textContent).toBe("No image for now");
+    expect(container.querySelector(".no-image")?.textContent).toBe("Belum ada gambar");
   });
   it("bahasa Inggris → label placeholder tetap \"No image for now\", nama & tag tidak diterjemahkan", () => {
     setLang("en");

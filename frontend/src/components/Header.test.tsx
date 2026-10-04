@@ -85,7 +85,7 @@ describe("Header i18n + aksi", () => {
     render(<MemoryRouter><Header categories={cats} /></MemoryRouter>);
     await user.click(screen.getByRole("button", { name: "English" }));
     expect(screen.getByRole("navigation", { name: "Categories" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Orders" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cart" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sound off" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe("Header i18n + aksi", () => {
     emptyCart();
     setLang("en");
     render(<MemoryRouter><Header categories={cats} /></MemoryRouter>);
-    expect(screen.getByRole("link", { name: "Orders" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
   });
 });
 

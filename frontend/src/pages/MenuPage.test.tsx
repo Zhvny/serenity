@@ -86,7 +86,7 @@ describe("MenuPage", () => {
     mockOk();
     render(<MemoryRouter><MenuPage /></MemoryRouter>);
     await screen.findByRole("link", { name: "Salad" });
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Sweet that loves your body.");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Sweet treats that love you back.");
     expect(screen.getByRole("link", { name: "See the menu" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Browse categories" })).toBeInTheDocument();
     expect(screen.getByText("Today's picks")).toBeInTheDocument();

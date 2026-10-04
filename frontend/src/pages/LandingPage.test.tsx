@@ -56,7 +56,7 @@ describe("LandingPage", () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     await screen.findByRole("dialog", { name: /kebutuhan/i });
     fireEvent.click(screen.getByRole("checkbox", { name: "Diet" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Bentuk otot" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Bangun otot" }));
     fireEvent.click(screen.getByRole("button", { name: /^simpan$/i }));
     await vi.waitFor(() => {
       const put = calls.find((c) => c.url.includes("/preferences") && c.method === "PUT");
@@ -73,7 +73,7 @@ describe("LandingPage", () => {
       return new Response(JSON.stringify({ status: "success", data: [] }));
     }));
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
-    expect(await screen.findByRole("heading", { name: /sweet that loves/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /sweet treats that love/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /see the menu/i })).toHaveAttribute("href", "/menu");
     expect(await screen.findByRole("dialog", { name: /what do you need/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Build muscle" })).toBeInTheDocument();

@@ -26,7 +26,7 @@ export const id = {
   "menu.empty.title": "Belum ada menu",
   "menu.empty.hint": "Coba filter lain atau tampilkan semua menu.",
   "menu.empty.showAll": "Tampilkan semua",
-  "menu.photo.none": "No image for now",
+  "menu.photo.none": "Belum ada gambar",
   "menu.cat.label": "Elus kucing",
   "menu.cat.phrase1": "Meow~",
   "menu.cat.phrase2": "Roti hari ini enak!",
@@ -46,7 +46,7 @@ export const id = {
 } as const;
 export const en = {
   "menu.hero.eyebrow": "Pre-order healthy desserts & drinks",
-  "menu.hero.title": "Sweet that loves your body.",
+  "menu.hero.title": "Sweet treats that love you back.",
   "menu.hero.lead": "Low-sugar dessert & healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.",
   "menu.hero.cta": "See the menu",
   "menu.hero.browse": "Browse categories",
