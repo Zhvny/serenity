@@ -21,7 +21,7 @@ describe("FunFactPage", () => {
   });
 
   it("ada post DB -> tampil post DB (bukan fallback)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [{ id: "p1", title: "Promo Akhir Tahun", body: "Diskon.", tag: "News", product_id: null, created_at: "2026-10-03T00:00:00Z" }] }))));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [{ id: "p1", title: "Promo Akhir Tahun", body: "Diskon.", excerpt: null, tag: "News", product_id: null, created_at: "2026-10-03T00:00:00Z" }] }))));
     render(
       <MemoryRouter initialEntries={["/funfact"]}>
         <Routes><Route path="/funfact" element={<FunFactPage />} /></Routes>
@@ -29,5 +29,17 @@ describe("FunFactPage", () => {
     );
     expect(await screen.findByText("Promo Akhir Tahun")).toBeInTheDocument();
     expect(screen.queryByText("Dessert sehat bukan mitos")).toBeNull();
+  });
+
+  it("excerpt diutamakan di kartu (bukan potongan body)", async () => {
+    const longBody = "B".repeat(200);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [{ id: "p2", title: "Riset Gula", body: longBody, excerpt: "Ringkasan riset.", tag: "Research", product_id: null, created_at: "2026-10-03T00:00:00Z" }] }))));
+    render(
+      <MemoryRouter initialEntries={["/funfact"]}>
+        <Routes><Route path="/funfact" element={<FunFactPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Ringkasan riset.")).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(`B{120}`))).toBeNull();
   });
 });

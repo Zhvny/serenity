@@ -89,4 +89,13 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("013 excerpt + tag Research gantikan SoftSelling", () => {
+    const sql = readFileSync(new URL("../migrations/013_post_excerpt_research.sql", import.meta.url), "utf8");
+    assert.match(sql, /excerpt/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+    const check = ddl.split("\n").find((l) => l.includes("posts_tag_check") && l.includes("CHECK"));
+    assert.ok(check !== undefined && check.includes("Research") && !check.includes("SoftSelling"));
+  });
 });

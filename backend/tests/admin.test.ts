@@ -282,6 +282,8 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "X", body: "Y", tag: "Spam" }) });
     assert.equal(res.status, 400);
+    const legacy = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "X", body: "Y", tag: "SoftSelling" }) });
+    assert.equal(legacy.status, 400);
   });
 
   it("POST /admin/posts tanpa session -> 401", async () => {

@@ -64,7 +64,7 @@ export function LandingPage() {
                 <Link key={p.id} className="fact-card fact-card--link" to={`/posts/${encodeURIComponent(p.id)}`} aria-label={p.title}>
                   <span className="fact-tag">{p.tag}</span>
                   <h3>{p.title}</h3>
-                  <p>{p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body}</p>
+                  <p>{p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body}</p>
                 </Link>
               ))}
             </div>

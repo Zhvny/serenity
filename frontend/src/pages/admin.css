@@ -221,12 +221,24 @@
 }
 @media (min-width: 861px) { .post-preview { position: sticky; top: 76px; } }
 .post-preview h3 { margin-top: var(--sp-sm); }
+.post-preview .post-image { aspect-ratio: 16 / 9; object-fit: cover; width: 100%; margin-top: 0; }
 .post-preview .post-image { margin-top: 0; }
 .admin-detail-actions .admin-btn { width: 100%; }
 
 /* Chip tag yang sudah ada di form produk */
 .admin-tags { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; margin-top: var(--sp-xs); }
 .admin-tags--scroll { align-items: flex-start; align-content: flex-start; max-height: 190px; overflow-y: auto; padding: var(--sp-sm); border: 1px solid var(--hairline); border-radius: var(--r-md); }
+
+/* Daftar checkbox produk saran (baris penuh, anti-dempet) */
+.admin-checklist { display: flex; flex-direction: column; margin-top: var(--sp-xs); border: 1px solid var(--hairline); border-radius: var(--r-md); max-height: 220px; overflow-y: auto; }
+.admin-checklist > .admin-id { padding: var(--sp-sm) var(--sp-md) var(--sp-xs); }
+.check-row {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md); border-top: 1px solid var(--hairline-cool);
+  cursor: pointer; font-size: 16px;
+}
+.check-row input { width: 18px; height: 18px; flex: none; accent-color: var(--primary-deep); }
+.check-row span:first-of-type { flex: 1 1 auto; min-width: 0; }
 .admin-tags > .admin-id { flex-basis: 100%; margin-bottom: var(--sp-xs); }
 .admin-tags .chip { display: inline-flex; align-items: center; cursor: pointer; }
 .admin-tags .chip input {

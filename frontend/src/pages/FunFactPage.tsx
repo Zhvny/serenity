@@ -35,11 +35,12 @@ export function FunFactPage() {
     return () => { alive = false; };
   }, []);
 
-  type CardPost = { id: string | null; title: string; body: string; tag: string; created_at: string | null };
+  const excerptOf = (p: { body: string; excerpt: string | null }) =>
+    p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body;
+  type CardPost = { id: string | null; title: string; body: string; excerpt: string | null; tag: string; created_at: string | null };
   const list: CardPost[] = posts.length > 0
-    ? posts.map((p) => ({ id: p.id, title: p.title, body: p.body, tag: p.tag, created_at: p.created_at }))
-    : FALLBACK.map((f) => ({ ...f, id: null, created_at: null }));
-  const summary = (s: string) => (s.length > 120 ? `${s.slice(0, 120)}…` : s);
+    ? posts.map((p) => ({ id: p.id, title: p.title, body: p.body, excerpt: p.excerpt, tag: p.tag, created_at: p.created_at }))
+    : FALLBACK.map((f) => ({ ...f, id: null, excerpt: null, created_at: null }));
   const fmtDate = (iso: string | null) => {
     if (iso === null) return "";
     const d = new Date(iso);
@@ -74,7 +75,7 @@ export function FunFactPage() {
                   {date !== "" ? <time className="history-date">{date}</time> : null}
                 </div>
                 <h2>{f.title}</h2>
-                <p>{summary(f.body)}</p>
+                <p>{excerptOf(f)}</p>
               </>
             );
             return f.id === null ? (

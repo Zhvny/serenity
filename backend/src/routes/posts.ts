@@ -5,15 +5,15 @@ import type { Pool } from "pg";
 export function postRoutes(pool: Pool): Hono {
   const r = new Hono();
   r.get("/posts", async (c) => {
-    const { rows } = await pool.query<{ id: string; title: string; body: string; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
-      "SELECT id, title, body, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
+    const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
+      "SELECT id, title, body, excerpt, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
     );
     return c.json({ status: "success", data: rows });
   });
   r.get("/posts/:id", async (c) => {
     const id = c.req.param("id");
-    const { rows } = await pool.query<{ id: string; title: string; body: string; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
-      "SELECT id, title, body, tag, product_id, image_url, product_ids, created_at FROM posts WHERE id = $1",
+    const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
+      "SELECT id, title, body, excerpt, tag, product_id, image_url, product_ids, created_at FROM posts WHERE id = $1",
       [id],
     );
     const post = rows[0];

@@ -195,7 +195,7 @@ export function adminSettleParent(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
 }
 
-export type Post = { id: string; title: string; body: string; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
+export type Post = { id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
 
 export function getPosts(): Promise<Post[]> {
   return apiGet<Post[]>("/posts");
@@ -207,7 +207,7 @@ export function getPost(id: string): Promise<PostDetail> {
   return apiGet<PostDetail>(`/posts/${encodeURIComponent(id)}`);
 }
 
-export function adminCreatePost(input: { title: string; body: string; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
+export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/posts", "POST", input);
 }
 
