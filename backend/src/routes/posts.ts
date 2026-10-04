@@ -10,6 +10,17 @@ export function postRoutes(pool: Pool): Hono {
     );
     return c.json({ status: "success", data: rows });
   });
+  // Trending per-tag (1 post per tag, tertinggi views 30 hari + terbaru). Daftar SEBELUM /:id.
+  r.get("/posts/trending", async (c) => {
+    const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
+      `SELECT p.id, p.title, p.body, p.excerpt, p.tag, p.product_id, p.image_url, p.product_ids, p.created_at
+       FROM posts p LEFT JOIN post_views v ON v.post_id = p.id AND v.viewed_at > CURRENT_TIMESTAMP - INTERVAL '30 days'
+       GROUP BY p.id ORDER BY COUNT(DISTINCT v.session_id) DESC, p.created_at DESC LIMIT 30`,
+    );
+    const seen = new Set<string>();
+    const picked = rows.filter((p) => (seen.has(p.tag) ? false : (seen.add(p.tag), true))).slice(0, 3);
+    return c.json({ status: "success", data: picked });
+  });
   r.get("/posts/:id", async (c) => {
     const id = c.req.param("id");
     const { rows } = await pool.query<{ id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: Date }>(
@@ -24,6 +35,20 @@ export function postRoutes(pool: Pool): Hono {
     const prods = ids.length === 0 ? [] : (await pool.query<{ id: string; name: string; price: number; image_url: string | null }>(
       "SELECT id, name, price, image_url FROM products WHERE id = ANY($1)", [ids])).rows;
     return c.json({ status: "success", data: { ...post, products: prods } });
+  });
+  // Catat view per session; idempoten (refresh tak dobel-hitung).
+  r.post("/posts/:id/view", async (c) => {
+    const id = c.req.param("id");
+    const exists = await pool.query("SELECT 1 FROM posts WHERE id = $1", [id]);
+    if ((exists.rowCount ?? 0) === 0) {
+      return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
+    }
+    const sid = c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1] ?? "anon";
+    await pool.query(
+      "INSERT INTO post_views (post_id, session_id) VALUES ($1, $2) ON CONFLICT (post_id, session_id) DO NOTHING",
+      [id, sid],
+    );
+    return c.json({ status: "success", data: { recorded: true } });
   });
   return r;
 }
