@@ -1,0 +1,38 @@
+/* Pixelify Sans: angka "5" terbaca seperti "S"/"8" -> angka (0-9) diambil dari Silkscreen,
+   huruf tetap Pixelify. Dipakai lewat --font-body ("Serenity Digits" lebih dulu). */
+@font-face {
+  font-family: "Serenity Digits";
+  font-style: normal;
+  font-weight: 400 500;
+  src: url("../node_modules/@fontsource/silkscreen/files/silkscreen-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0030-0039;
+  size-adjust: 86%;
+}
+@font-face {
+  font-family: "Serenity Digits";
+  font-style: normal;
+  font-weight: 600 700;
+  src: url("../node_modules/@fontsource/silkscreen/files/silkscreen-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0030-0039;
+  size-adjust: 86%;
+}
+
+/* Jersey 15 = font pixel tebal untuk penekanan (harga, nama produk, label); kecil secara bawaan -> size-adjust. */
+@font-face {
+  font-family: "Serenity UI";
+  font-style: normal;
+  font-weight: 400 800;
+  src: url("../node_modules/@fontsource/jersey-15/files/jersey-15-latin-400-normal.woff2") format("woff2");
+  size-adjust: 128%;
+}
+
+/* Pixelify Sans: "5" mirip "S"/"8" -> semua angka teks bacaan diambil dari Silkscreen
+   (5, 6, 8 jelas berbeda pada ukuran kecil). */
+@font-face {
+  font-family: "Serenity Body Digits";
+  font-style: normal;
+  font-weight: 400 800;
+  src: url("../node_modules/@fontsource/silkscreen/files/silkscreen-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0030-0039;
+  size-adjust: 90%;
+}

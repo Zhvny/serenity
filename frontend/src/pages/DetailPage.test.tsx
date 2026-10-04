@@ -4,8 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router";
 import { DetailPage } from "./DetailPage.tsx";
 import { MenuPage } from "./MenuPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 const prod = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: ["vegan"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 100, protein_g: 10, carbs_g: 5, fat_g: 3, fiber_g: 2, sugar_g: 1 }, allergens: ["kacang"] };
 
 function renderId(id: string) {
@@ -42,6 +43,35 @@ describe("DetailPage", () => {
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
     expect(await screen.findByText("Keranjang penuh")).toBeInTheDocument();
+  });
+});
+
+describe("DetailPage (English)", () => {
+  it("label nutrisi, alergen, tombol & pesan sukses tampil dalam bahasa Inggris", async () => {
+    setLang("en");
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const data = String(url).includes("/cart/add") ? { item_id: "i1", product_id: "p1", quantity: 1, note: null } : prod;
+      return new Response(JSON.stringify({ status: "success", data }));
+    }));
+    renderId("p1");
+    await screen.findByText("Salad");
+    expect(screen.getByRole("heading", { name: "Nutrition facts" })).toBeInTheDocument();
+    expect(screen.getByText("Calories")).toBeInTheDocument();
+    expect(screen.getByText("kcal")).toBeInTheDocument();
+    expect(screen.getByText("Carbs")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Allergens" })).toBeInTheDocument();
+    expect(screen.getByText("Peanuts")).toBeInTheDocument();
+    expect(screen.queryByText("Informasi nutrisi")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Add to cart" }));
+    expect(await screen.findByText("Added to cart")).toBeInTheDocument();
+  });
+  it("id unknown -> pesan tidak-ketemu dalam bahasa Inggris", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "error", code: "PRODUCT_NOT_FOUND", message: "x" }), { status: 404 })));
+    renderId("nope");
+    expect(await screen.findByText("Product not found")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Menu" })).toBeInTheDocument();
   });
 });
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ApiError, getCategories, getProducts } from "../services/api.ts";
 import type { Category, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
@@ -8,17 +8,22 @@ import { FilterBar } from "../components/FilterBar.tsx";
 import type { Filter } from "../components/FilterBar.tsx";
 import { ProductCard } from "../components/ProductCard.tsx";
 import { Icon } from "../components/Icon.tsx";
+import { HeroScene } from "../pixel/HeroScene.tsx";
+import { Bunting } from "../pixel/Bunting.tsx";
+import { PastryRow } from "../pixel/PastryRow.tsx";
+import { Sprite } from "../pixel/Sprite.tsx";
+import { CAT_HEAD } from "../pixel/data/mascot.ts";
+import { CHALKBOARD } from "../pixel/data/signs.ts";
+import { OVEN, OVEN_GLOW } from "../pixel/data/bakeryB.ts";
 import { rupiah } from "../utils/format.ts";
+import { useT } from "../i18n/t.ts";
+import type { DictKey } from "../i18n/t.ts";
 
-const HERO_QUOTES = [
-  "Sweeten your day, the wholesome way.",
-  "Dessert can be kind to your body too.",
-  "Good things, lightly sweetened.",
-  "Treats that love you back.",
-  "Sip sweet, stay light.",
-];
+// Kunci kutipan; dipilih sekali, diterjemahkan saat render.
+const HERO_QUOTES: readonly DictKey[] = ["menu.hero.quote1", "menu.hero.quote2", "menu.hero.quote3", "menu.hero.quote4", "menu.hero.quote5"];
 
 export function MenuPage() {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() => {
     const c = searchParams.get("category");
@@ -27,14 +32,14 @@ export function MenuPage() {
   const [cats, setCats] = useState<Category[]>([]);
   const [prods, setProds] = useState<Product[]>([]);
   const [state, setState] = useState<"loading" | "error" | "done">("loading");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [shown, setShown] = useState(false);
-  const [quote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? HERO_QUOTES[0]);
+  const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "menu.hero.quote1");
 
   useEffect(() => {
-    const t = setTimeout(() => setShown(true), 20);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShown(true), 20);
+    return () => clearTimeout(timer);
   }, []);
 
   // ponytail: URL (?category=) sumber filter kategori; tag tetap state lokal
@@ -79,7 +84,7 @@ export function MenuPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setErrorMsg(e instanceof ApiError ? e.message : "Terjadi kesalahan");
+        setErrorMsg(e instanceof ApiError ? e.message : null);
         setState("error");
       });
     return () => {
@@ -92,68 +97,77 @@ export function MenuPage() {
     <div>
       <Header categories={cats} />
       <main>
+        <Bunting />
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
-            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order healty desserts &amp; drinks</span>
-            <h1>Sweet that loves your body.</h1>
-            <p className="lead">Low-sugar dessert &amp; healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.</p>
+            <span className="hero-eyebrow"><Icon name="leaf" /> {t("menu.hero.eyebrow")}</span>
+            <h1>{t("menu.hero.title")}</h1>
+            <p className="lead">{t("menu.hero.lead")}</p>
             <div className="hero-actions">
-              <a className="btn-primary" href="#menu">Lihat Menu <Icon name="arrow-right" /></a>
-              <a className="btn-secondary" href="#menu">Jelajahi kategori</a>
+              <a className="btn-primary" href="#menu">{t("menu.hero.cta")} <Icon name="arrow-right" /></a>
+              <a className="btn-secondary" href="#menu">{t("menu.hero.browse")}</a>
             </div>
           </div>
           <div className="hero-visual">
+            <HeroScene />
             {featured !== null ? (
-              <article className="hero-card">
-                {featured.image_url === null ? (
-                  <div className="product-photo product-photo--empty" aria-hidden="true" />
-                ) : (
-                  <img className="product-photo" src={featured.image_url} alt={featured.name} loading="lazy" />
-                )}
-                <div className="hero-card-body">
+              <Link to={`/products/${featured.id}`} className="hero-card hero-card--board" aria-label={t("menu.board.label", { name: featured.name })}>
+                <Sprite sprite={CHALKBOARD} className="board-frame" />
+                <div className="board-text">
+                  <p className="board-kicker">{t("menu.board.kicker")}</p>
                   <h3>{featured.name}</h3>
                   <p className="price">{rupiah(featured.price)}</p>
-                  <div className="hero-card-stats">
-                    <span><b>{featured.nutrition.calories_kcal}</b> kkal</span>
-                    <span><b>{featured.nutrition.protein_g} g</b> protein</span>
-                  </div>
+                  <p className="board-stats">{t("menu.board.stats", { kcal: featured.nutrition.calories_kcal, protein: featured.nutrition.protein_g })}</p>
                 </div>
-              </article>
+              </Link>
             ) : (
               <div className="hero-card hero-card--quote" aria-hidden="true">
                 <div className="product-photo product-photo--empty" />
-                <div className="hero-card-body"><h3 className="hero-quote">{quote}</h3></div>
+                <div className="hero-card-body"><h3 className="hero-quote">{t(quoteKey)}</h3></div>
               </div>
             )}
           </div>
         </section>
 
+        <PastryRow />
+
         <section className="section" id="menu">
           <div className="section-head">
-            <span className="eyebrow">Menu</span>
-            <h2>Pilihan hari ini</h2>
+            <span className="eyebrow">{t("menu.section.eyebrow")}</span>
+            <h2>{t("menu.section.title")}</h2>
           </div>
           <FilterBar categories={cats} value={filter} onChange={handleChange} />
           {state === "loading" ? (
-            <div className="grid-menu" aria-label="Memuat menu">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="skeleton" aria-hidden="true" />
-              ))}
-            </div>
+            <>
+              <div className="baking" aria-hidden="true">
+                <span className="baking-oven">
+                  <Sprite sprite={OVEN} />
+                  <Sprite sprite={OVEN_GLOW} className="baking-glow" />
+                </span>
+                <p>{t("menu.loading")}</p>
+              </div>
+              <div className="grid-menu" aria-label={t("menu.loading.label")}>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="skeleton" aria-hidden="true" />
+                ))}
+              </div>
+            </>
           ) : state === "error" ? (
             <div className="state" role="alert">
-              <h2>Menu gagal dimuat</h2>
-              <p>{errorMsg}</p>
+              <Sprite sprite={CAT_HEAD} />
+              <h2>{t("menu.error.title")}</h2>
+              <p>{errorMsg ?? t("menu.error.generic")}</p>
               <button type="button" className="btn-primary" onClick={() => setReloadKey((k) => k + 1)}>
-                Coba lagi
+                {t("menu.error.retry")}
               </button>
             </div>
           ) : prods.length === 0 ? (
             <div className="state" role="status">
-              <h2>Belum ada menu</h2>
-              <p>Coba filter lain atau tampilkan semua menu.</p>
+              <Sprite sprite={CAT_HEAD} />
+              <h2>{t("menu.empty.title")}</h2>
+              <p>{t("menu.empty.hint")}</p>
               <button type="button" className="btn-secondary" onClick={() => handleChange({ kind: "all" })}>
-                Tampilkan semua
+                {t("menu.empty.showAll")}
               </button>
             </div>
           ) : (
