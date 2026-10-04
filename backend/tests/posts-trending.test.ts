@@ -12,6 +12,11 @@ const posts = [
 const pool = { query: async (text: string) => ({ rows: String(text).includes("FROM posts") ? posts : [], rowCount: 1 }) } as unknown as Pool;
 
 describe("posts trending", () => {
+  it("POST /posts/:id/view tanpa cookie → terbitkan cart_id", async () => {
+    const res = await createApp(pool).request("/api/v1/posts/00000000-0000-0000-0000-000000000001/view", { method: "POST", headers: { "x-forwarded-for": "trend-view-cookie" } });
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("set-cookie") ?? "", /cart_id=/);
+  });
   it("POST /posts/:id/view 200 + idempoten per session", async () => {
     const app = createApp(pool);
     // IP unik per test: isolasi dari bucket rate-limit test lain.
@@ -28,5 +33,12 @@ describe("posts trending", () => {
     const empty = { query: async () => ({ rows: [], rowCount: 0 }) } as unknown as Pool;
     const res = await createApp(empty).request("/api/v1/posts/xxx/view", { method: "POST", headers: { "x-forwarded-for": "trend-view-404" } });
     assert.equal(res.status, 404);
+  });
+  it("POST /posts/bukan-uuid!/view → 404 tanpa sentuh DB", async () => {
+    let called = 0;
+    const spy = { query: async () => { called += 1; return { rows: [{ "1": 1 }], rowCount: 1 }; } } as unknown as Pool;
+    const res = await createApp(spy).request("/api/v1/posts/bukan-uuid!/view", { method: "POST", headers: { "x-forwarded-for": "trend-view-bad" } });
+    assert.equal(res.status, 404);
+    assert.equal(called, 0);
   });
 });

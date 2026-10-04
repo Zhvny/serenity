@@ -222,11 +222,13 @@ export function getPreference(): Promise<{ need: Need } | null> {
 }
 
 export function savePreference(need: Need): Promise<{ need: Need }> {
-  return apiPost<{ need: Need }>("/preferences", { need });
+  return apiPut<{ need: Need }>("/preferences", { need });
 }
 
-export function getRecommendations(): Promise<Product[]> {
-  return apiGet<Product[]>("/products/recommendations");
+export type Recommendation = { id: string; name: string; price: number; image_url: string | null };
+
+export function getRecommendations(): Promise<Recommendation[]> {
+  return apiGet<Recommendation[]>("/products/recommendations");
 }
 
 export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
