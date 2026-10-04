@@ -16,7 +16,7 @@ describe("CheckoutPage", () => {
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
     expect(screen.getByRole("button", { name: /bayar/i })).toBeDisabled();
     expect(screen.getByRole("checkbox")).toBeDisabled();
-    await act(async () => { vi.advanceTimersByTime(5000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
     expect(screen.getByRole("checkbox")).toBeEnabled();
     expect(screen.getByRole("button", { name: /bayar/i })).toBeDisabled();
   });
