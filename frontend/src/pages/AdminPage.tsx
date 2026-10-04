@@ -392,10 +392,13 @@ export function AdminPage() {
             <h2 className="admin-subhead">Daftar produk</h2>            <ul className="admin-list">
               {products.map((p) => (
                 <li key={p.id} className="admin-row">
-                  <h3>{p.name}</h3>
-                  <span className="admin-id">{p.id}</span>
-                  <span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span>
-                  <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
+                  <div className="admin-row-main">
+                    <div className="admin-row-top">
+                      <h3>{p.name}</h3>
+                      <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
+                    </div>
+                    <p className="admin-row-meta"><span className="admin-id">{p.id}</span><span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span></p>
+                  </div>
                   <div className="admin-row-actions">
                     <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}>Edit</button>
                     {p.is_active ? (
