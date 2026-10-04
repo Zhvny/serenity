@@ -15,6 +15,8 @@ const createSchema = z.object({
   tags: z.array(z.string()).optional(),
   image_url: z.string().nullish(),
   description: z.string().nullish(),
+  name_en: z.string().max(200).nullish(),
+  description_en: z.string().nullish(),
 });
 const updateSchema = z.object({
   name: z.string().min(1),
@@ -23,6 +25,8 @@ const updateSchema = z.object({
   tags: z.array(z.string()).optional(),
   image_url: z.string().nullish(),
   description: z.string().nullish(),
+  name_en: z.string().max(200).nullish(),
+  description_en: z.string().nullish(),
 });
 
 export function loginRoute(pool: Pool): Hono {
@@ -75,7 +79,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
-    const created = await repo.create({ id: body.id, name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null });
+    const created = await repo.create({ id: body.id, name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null, name_en: body.name_en ?? null, description_en: body.description_en ?? null });
     // audit_logs.order_id khusus order; aksi produk catat id di detail JSON.
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_product", JSON.stringify({ id: created.id })]);
     return c.json({ status: "success", data: created });
@@ -100,7 +104,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   }), async (c) => {
     const id = c.req.param("id");
     const body = c.req.valid("json");
-    const ok = await repo.update(id, { name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null });
+    const ok = await repo.update(id, { name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null, name_en: body.name_en ?? null, description_en: body.description_en ?? null });
     if (!ok) return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "update_product", JSON.stringify({ id })]);
     return c.json({ status: "success", data: { id } });
