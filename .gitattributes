@@ -1,0 +1,4 @@
+# Normalisasi line-ending agar checksum migrasi stabil di semua OS.
+# File .sql dibaca byte-per-byte oleh scripts/migrate.js untuk checksum;
+# CRLF Windows merusak checksum (kasus 011/012/013, Okt 2026).
+*.sql text eol=lf
