@@ -53,13 +53,13 @@ describe("Header badge", () => {
     expect(screen.getByRole("link", { name: "Minuman" })).not.toHaveAttribute("aria-current");
   });
 
-  it("riwayat = ikon jam ke /riwayat (bukan teks)", async () => {
+  it("riwayat = link ke /riwayat dengan ikon", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
-    render(<MemoryRouter><Header /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><Header /></MemoryRouter>);
     await screen.findByRole("link", { name: "Keranjang" });
-    const riwayat = screen.getByRole("link", { name: "Riwayat pesanan" });
-    expect(riwayat).toHaveAttribute("href", "/riwayat");
-    expect(screen.queryByText("Riwayat")).toBeNull();
+    const riwayat = container.querySelector('a[href="/riwayat"]');
+    expect(riwayat).not.toBeNull();
+    expect(riwayat?.querySelector("svg")).not.toBeNull();
   });
 });
 

@@ -27,9 +27,10 @@ type Tab = "orders" | "products" | "posts";
 
 function useDesktop(): boolean {
   const [desktop, setDesktop] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(min-width: 921px)").matches,
+    typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(min-width: 921px)").matches,
   );
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(min-width: 921px)");
     const fn = () => setDesktop(mq.matches);
     mq.addEventListener("change", fn);
@@ -165,7 +166,9 @@ export function AdminPage() {
   function cancelEdit(): void { setEditingId(null); setForm(EMPTY); }
 
   useEffect(() => {
-    if (editingId !== null) formRef.current?.scrollIntoView({ block: "nearest" });
+    if (editingId !== null && typeof formRef.current?.scrollIntoView === "function") {
+      formRef.current?.scrollIntoView({ block: "nearest" });
+    }
   }, [editingId]);
 
   const knownTags = [...new Set(products.flatMap((p) => p.tags))];
