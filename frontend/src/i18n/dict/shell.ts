@@ -23,7 +23,7 @@ export const id = {
 
 export const en = {
   "shell.nav.categories": "Categories",
-  "shell.nav.history": "Orders",
+  "shell.nav.history": "History",
   "shell.nav.cart": "Cart",
   "shell.theme.toDark": "Switch to dark mode",
   "shell.theme.toLight": "Switch to light mode",
