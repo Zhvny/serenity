@@ -75,6 +75,7 @@ export function AdminPage() {
   const [paidInput, setPaidInput] = useState("");
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
+  const [postExcerpt, setPostExcerpt] = useState("");
   const [postTag, setPostTag] = useState("FunFact");
   const [postProduct, setPostProduct] = useState("");
   const [postImage, setPostImage] = useState("");
@@ -207,9 +208,10 @@ export function AdminPage() {
       return;
     }
     try {
-      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
+      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), tag: postTag, product_id: postProduct === "" ? null : postProduct, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
       setPostTitle("");
       setPostBody("");
+      setPostExcerpt("");
       setPostProduct("");
       setPostImage("");
       setPostPids([]);
@@ -419,13 +421,15 @@ export function AdminPage() {
           <form className="admin-form" onSubmit={(e) => void handlePostSubmit(e)}>
             <label htmlFor="post-title">Judul</label>
             <input id="post-title" type="text" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} required aria-required="true" maxLength={200} />
+            <label htmlFor="post-excerpt">Ringkasan untuk kartu (opsional, maks 300)</label>
+            <input id="post-excerpt" type="text" value={postExcerpt} onChange={(e) => setPostExcerpt(e.target.value)} maxLength={300} placeholder="Satu-dua kalimat…" />
             <label htmlFor="post-body">Isi</label>
-            <textarea id="post-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} required aria-required="true" maxLength={2000} rows={4} />
+            <textarea id="post-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} required aria-required="true" maxLength={10000} rows={8} />
             <label htmlFor="post-tag">Tag</label>
             <select id="post-tag" value={postTag} onChange={(e) => setPostTag(e.target.value)}>
               <option value="FunFact">FunFact</option>
               <option value="News">News</option>
-              <option value="SoftSelling">SoftSelling</option>
+              <option value="Research">Research</option>
             </select>
             <label htmlFor="post-product">Produk terkait (opsional)</label>
             <select id="post-product" value={postProduct} onChange={(e) => setPostProduct(e.target.value)}>
@@ -437,11 +441,13 @@ export function AdminPage() {
             <label htmlFor="post-image">URL gambar (opsional)</label>
             <input id="post-image" type="url" value={postImage} onChange={(e) => { setPostImage(e.target.value); setPostImgOk(true); }} maxLength={500} placeholder="https://…" />
             {products.length > 0 ? (
-              <div className="admin-tags admin-tags--scroll" role="group" aria-label="Produk yang disarankan">
+              <div className="admin-checklist" role="group" aria-label="Produk yang disarankan">
                 <span className="admin-id">Produk yang disarankan:</span>
                 {products.map((p) => (
-                  <label key={p.id} className="chip">
-                    <input type="checkbox" checked={postPids.includes(p.id)} onChange={() => togglePid(p.id)} aria-label={p.name} /> {p.name}
+                  <label key={p.id} className="check-row">
+                    <input type="checkbox" checked={postPids.includes(p.id)} onChange={() => togglePid(p.id)} aria-label={p.name} />
+                    <span>{p.name}</span>
+                    <span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span>
                   </label>
                 ))}
               </div>
