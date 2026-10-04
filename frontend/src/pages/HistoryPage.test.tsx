@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { HistoryPage } from "./HistoryPage.tsx";
+import { setLang } from "../i18n/store.ts";
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); window.localStorage.clear(); });
 
 const paid = { id: "HP-1", unique_code: "ORD-1", total_amount: 50000, paid_amount: 50000, status: "paid", parent_code: null, donation_consent: true, created_at: "2026-10-02T10:00:00Z", items: [{ product_id: "p1", name: "Salad", quantity: 2 }] };
 const under = { id: "HP-2", unique_code: "ORD-2", total_amount: 50000, paid_amount: 30000, status: "underpaid", parent_code: null, donation_consent: false, created_at: "2026-10-02T11:00:00Z", items: [] };
@@ -63,5 +64,29 @@ describe("HistoryPage", () => {
     expect(screen.getByText(/Kurang Rp/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Bayar sisa" }));
     expect(await screen.findByText("THANKS")).toBeInTheDocument();
+  });
+  it("bahasa Inggris -> judul, chip, label baris, tanggal en-US", async () => {
+    setLang("en");
+    mockList([paid, under]);
+    renderRiwayat();
+    expect(screen.getByRole("heading", { level: 1, name: "Order History" })).toBeInTheDocument();
+    const filters = screen.getByRole("group", { name: "Filter by status" });
+    expect(within(filters).getByRole("button", { name: "All" })).toBeInTheDocument();
+    expect(within(filters).getByRole("button", { name: "Waiting for payment" })).toBeInTheDocument();
+    expect(await screen.findByText("ORD-1")).toBeInTheDocument();
+    expect(screen.getByText("Donation approved")).toBeInTheDocument();
+    expect(screen.getAllByText(/Paid Rp/)).toHaveLength(2);
+    expect(screen.getByText(/Rp.*short/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pay the rest" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Track" })).toHaveLength(2);
+    expect(screen.getAllByText(/Oct \d+, 2026/).length).toBe(2);
+    expect(screen.queryByText("Lacak")).toBeNull();
+  });
+  it("bahasa Inggris -> keadaan kosong", async () => {
+    setLang("en");
+    mockList([]);
+    renderRiwayat();
+    expect(await screen.findByRole("status")).toHaveTextContent("No orders yet");
+    expect(screen.getByRole("link", { name: "View menu" })).toHaveAttribute("href", "/");
   });
 });
