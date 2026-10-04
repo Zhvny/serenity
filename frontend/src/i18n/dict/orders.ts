@@ -4,7 +4,7 @@ export const id = {
   "orders.status.pending": "Menunggu pembayaran",
   "orders.status.underpaid": "Kurang bayar",
   "orders.status.paid": "Lunas",
-  "orders.status.paidFull": "Dibayar (Lunas)",
+  "orders.status.paidFull": "Dibayar lunas",
   "orders.status.expired": "Kedaluwarsa",
   "orders.status.cancelled": "Dibatalkan",
 
@@ -33,7 +33,7 @@ export const id = {
   "orders.thanks.step2b": "persis {amount}",
   "orders.thanks.step2c": ". Nominal yang berbeda membuat pesanan sulit dikonfirmasi.",
   "orders.thanks.step3a": "Selesaikan pembayaran, lalu tunggu — status berubah jadi",
-  "orders.thanks.step3b": "setelah transaksi terverifikasi (max. 5-30 menit).",
+  "orders.thanks.step3b": "setelah transaksi terverifikasi (sekitar 5–30 menit).",
   "orders.thanks.saveNote": "Simpan halaman ini atau catat kode pesanan untuk konfirmasi.",
 
   // StatusPage
@@ -90,7 +90,7 @@ export const en = {
   "orders.thanks.codeLabel": "Order code:",
   "orders.thanks.payExactly": "Pay exactly",
   "orders.thanks.thanksNote": "Thank you! We're getting your order ready.",
-  "orders.thanks.received": "Received {paid} of {total} — {rest} short",
+  "orders.thanks.received": "Received {paid} of {total} — {rest} remaining",
   "orders.thanks.contactAdmin": "Or contact the admin for help.",
   "orders.thanks.qrAlt": "Serenity QRIS payment code",
   "orders.thanks.step1": "Scan the QRIS code above with your e-wallet or mobile banking app (GoPay, OVO, DANA, your bank, etc.).",
@@ -98,7 +98,7 @@ export const en = {
   "orders.thanks.step2b": "exactly {amount}",
   "orders.thanks.step2c": ". A different amount makes your order hard to confirm.",
   "orders.thanks.step3a": "Finish paying, then wait. The status changes to",
-  "orders.thanks.step3b": "once the transaction is verified (up to 5-30 minutes).",
+  "orders.thanks.step3b": "once the transaction is verified (about 5–30 minutes).",
   "orders.thanks.saveNote": "Keep this page open or note down your order code to confirm later.",
 
   "orders.status.loading": "Loading status",

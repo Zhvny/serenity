@@ -29,7 +29,7 @@ describe("DetailPage", () => {
     renderId("p1");
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
-    expect(await screen.findByText("Ditambahkan")).toBeInTheDocument();
+    expect(await screen.findByText("Ditambahkan ke keranjang")).toBeInTheDocument();
   });
   it("tambah keranjang gagal → pesan error tampil", async () => {
     const user = userEvent.setup();
