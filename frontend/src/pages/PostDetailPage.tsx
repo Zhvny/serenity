@@ -5,8 +5,13 @@ import type { PostDetail } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
+import { useT } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { localeOf } from "../i18n/store.ts";
 
 export function PostDetailPage() {
+  const t = useT();
+  const [lang] = useLang();
   const { id } = useParams();
   const ref = id ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
@@ -29,7 +34,7 @@ export function PostDetailPage() {
     return (
       <div>
         <Header />
-        <main className="content"><div className="skeleton" aria-label="Memuat post" /></main>
+        <main className="content"><div className="skeleton" aria-label={t("post.loading")} /></main>
         <Footer />
       </div>
     );
@@ -40,8 +45,8 @@ export function PostDetailPage() {
         <Header />
         <main className="content">
           <div className="state" role="alert">
-            <h1>Post tidak ditemukan</h1>
-            <Link className="btn-secondary" to="/funfact">Kembali ke Fun Fact</Link>
+            <h1>{t("post.notfound.title")}</h1>
+            <Link className="btn-secondary" to="/funfact">{t("post.notfound.back")}</Link>
           </div>
         </main>
         <Footer />
@@ -50,13 +55,13 @@ export function PostDetailPage() {
   }
   const fmtDate = (iso: string) => {
     const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(localeOf(lang), { day: "numeric", month: "short", year: "numeric" });
   };
   return (
     <div>
       <Header />
       <main className="content">
-        <p><Link className="btn-link" to="/funfact">← Fun Fact</Link></p>
+        <p><Link className="btn-link" to="/funfact">{t("post.back")}</Link></p>
         <div className="detail-grid">
           <div>
             {post.image_url !== null && post.image_url !== "" ? (
@@ -75,10 +80,10 @@ export function PostDetailPage() {
           </div>
         </div>
         {post.products.length > 0 ? (
-          <section aria-label="Produk yang disarankan">
+          <section aria-label={t("post.suggested.label")}>
             <div className="section-head">
-              <span className="eyebrow">Disarankan</span>
-              <h2>Produk Serenity</h2>
+              <span className="eyebrow">{t("post.suggested.eyebrow")}</span>
+              <h2>{t("post.suggested.title")}</h2>
             </div>
             <div className="mini-grid">
               {post.products.map((p) => (

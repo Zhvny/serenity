@@ -6,26 +6,28 @@ import { Icon } from "../components/Icon.tsx";
 import { getPosts, getTrending, recordPostView, getPreference, savePreference, getRecommendations } from "../services/api.ts";
 import type { Post, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
+import { useT, type DictKey } from "../i18n/t.ts";
 
-const NEEDS: Array<{ key: Need; label: string }> = [
-  { key: "diet", label: "Diet" },
-  { key: "muscle", label: "Bentuk otot" },
-  { key: "diabetes", label: "Diabetes" },
-  { key: "allergy_free", label: "Bebas alergi" },
-  { key: "low_sugar", label: "Rendah gula" },
+const NEEDS: Array<{ key: Need; dict: DictKey }> = [
+  { key: "diet", dict: "landing.need.diet" },
+  { key: "muscle", dict: "landing.need.muscle" },
+  { key: "diabetes", dict: "landing.need.diabetes" },
+  { key: "allergy_free", dict: "landing.need.allergy_free" },
+  { key: "low_sugar", dict: "landing.need.low_sugar" },
 ];
 
-const HERO_QUOTES = [
-  "Sweeten your day, the wholesome way.",
-  "Dessert can be kind to your body too.",
-  "Good things, lightly sweetened.",
-  "Treats that love you back.",
-  "Sip sweet, stay light.",
+const HERO_QUOTES: readonly DictKey[] = [
+  "landing.hero.quote1",
+  "landing.hero.quote2",
+  "landing.hero.quote3",
+  "landing.hero.quote4",
+  "landing.hero.quote5",
 ];
 
 export function LandingPage() {
+  const t = useT();
   const [shown, setShown] = useState(false);
-  const [quote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? HERO_QUOTES[0]);
+  const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");
   const [latest, setLatest] = useState<Post[]>([]);
   const [trending, setTrending] = useState<Post[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -78,26 +80,26 @@ export function LandingPage() {
       <main>
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
-            <span className="hero-eyebrow"><Icon name="leaf" /> Pre-order healty desserts &amp; drinks</span>
-            <h1>Sweet that loves your body.</h1>
-            <p className="lead">Low-sugar dessert &amp; healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.</p>
+            <span className="hero-eyebrow"><Icon name="leaf" /> {t("landing.hero.eyebrow")}</span>
+            <h1>{t("landing.hero.title")}</h1>
+            <p className="lead">{t("landing.hero.lead")}</p>
             <div className="hero-actions">
-              <Link className="btn-primary" to="/menu">Lihat Menu <Icon name="arrow-right" /></Link>
-              <Link className="btn-secondary" to="/funfact">Fun Fact</Link>
+              <Link className="btn-primary" to="/menu">{t("landing.hero.cta")} <Icon name="arrow-right" /></Link>
+              <Link className="btn-secondary" to="/funfact">{t("landing.hero.browse")}</Link>
             </div>
           </div>
           <div className="hero-visual">
             <div className="hero-card hero-card--quote" aria-hidden="true">
               <div className="product-photo product-photo--empty" />
-              <div className="hero-card-body"><h3 className="hero-quote">{quote}</h3></div>
+              <div className="hero-card-body"><h3 className="hero-quote">{t(quoteKey)}</h3></div>
             </div>
           </div>
         </section>
         {latest.length > 0 ? (
-          <section className="section section--boxed" aria-label="Terbaru dari Serenity">
+          <section className="section section--boxed" aria-label={t("landing.latest.title")}>
             <div className="section-head">
-              <span className="eyebrow">Terbaru</span>
-              <h2>Dari Serenity</h2>
+              <span className="eyebrow">{t("landing.latest.eyebrow")}</span>
+              <h2>{t("landing.latest.title")}</h2>
             </div>
             <div className="facts-grid">
               {latest.map((p) => (
@@ -109,15 +111,15 @@ export function LandingPage() {
               ))}
             </div>
             <p className="section-more">
-              <Link className="btn-secondary" to="/funfact">Lihat semua post</Link>
+              <Link className="btn-secondary" to="/funfact">{t("landing.latest.more")}</Link>
             </p>
           </section>
         ) : null}
         {recs.length > 0 ? (
-          <section className="section section--boxed" aria-label="Rekomendasi untukmu">
+          <section className="section section--boxed" aria-label={t("landing.recs.title")}>
             <div className="section-head">
-              <span className="eyebrow">Rekomendasi</span>
-              <h2>Untuk kebutuhanmu</h2>
+              <span className="eyebrow">{t("landing.recs.eyebrow")}</span>
+              <h2>{t("landing.recs.title")}</h2>
             </div>
             <div className="facts-grid">
               {recs.map((r) => (
@@ -127,10 +129,10 @@ export function LandingPage() {
           </section>
         ) : null}
         {trending.length > 0 ? (
-          <section className="section section--boxed" aria-label="Bacaan pilihan">
+          <section className="section section--boxed" aria-label={t("landing.reading.title")}>
             <div className="section-head">
-              <span className="eyebrow">Untuk dibaca</span>
-              <h2>Bacaan pilihan</h2>
+              <span className="eyebrow">{t("landing.reading.eyebrow")}</span>
+              <h2>{t("landing.reading.title")}</h2>
             </div>
             <div className="facts-grid">
               {trending.map((p) => (
@@ -143,21 +145,21 @@ export function LandingPage() {
         ) : null}
       </main>
       {showNeed ? (
-        <div role="dialog" aria-label="Pilih kebutuhan" aria-modal="true" className="need-popup">
+        <div role="dialog" aria-label={t("landing.need.title")} aria-modal="true" className="need-popup">
           <div className="need-popup-card">
-          <h2>Apa kebutuhanmu?</h2>
-          <p>Pilih satu atau lebih agar rekomendasi sesuai denganmu. Pilihan ini permanen untuk sesi ini.</p>
-          <div role="group" aria-label="Kebutuhan">
+          <h2>{t("landing.need.title")}</h2>
+          <p>{t("landing.need.intro")}</p>
+          <div role="group" aria-label={t("landing.need.title")}>
             {NEEDS.map((n) => (
               <label key={n.key}>
-                <input type="checkbox" checked={draft.includes(n.key)} onChange={() => toggleDraft(n.key)} aria-label={n.label} />
-                {n.label}
+                <input type="checkbox" checked={draft.includes(n.key)} onChange={() => toggleDraft(n.key)} aria-label={t(n.dict)} />
+                {t(n.dict)}
               </label>
             ))}
           </div>
           <div className="need-popup-actions">
-            <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>Simpan</button>
-            <button type="button" onClick={() => setShowNeed(false)}>Lewati</button>
+            <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>{t("landing.need.simpan")}</button>
+            <button type="button" onClick={() => setShowNeed(false)}>{t("landing.need.lewati")}</button>
           </div>
           </div>
         </div>

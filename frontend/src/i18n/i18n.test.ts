@@ -6,6 +6,9 @@ import * as shell from "./dict/shell.ts";
 import * as menu from "./dict/menu.ts";
 import * as shop from "./dict/shop.ts";
 import * as orders from "./dict/orders.ts";
+import * as landing from "./dict/landing.ts";
+import * as funfact from "./dict/funfact.ts";
+import * as post from "./dict/post.ts";
 import { allergenLabel, categoryLabel } from "./content.ts";
 
 afterEach(() => {
@@ -39,7 +42,7 @@ describe("bahasa aktif", () => {
 });
 
 describe("kamus", () => {
-  const areas = { shell, menu, shop, orders };
+  const areas = { shell, menu, shop, orders, landing, funfact, post };
 
   it("tiap area: kunci EN = kunci ID, tak ada teks kosong, placeholder {x} sama", () => {
     for (const [name, mod] of Object.entries(areas)) {
