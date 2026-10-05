@@ -915,10 +915,11 @@ code { font-family: var(--font-mono); font-size: 16px; }
   transition: box-shadow 150ms ease;
 }
 .mini-card:hover { box-shadow: var(--shadow-1); }
-.mini-photo { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: var(--canvas-soft); }
-.mini-photo--empty { background: var(--canvas-soft); }
-.mini-card h3 { font-size: 16px; font-weight: 500; margin: var(--sp-sm) var(--sp-md) 0; }
-.mini-card .price { margin: var(--sp-xs) var(--sp-md) var(--sp-md); font-size: 16px; }
+.mini-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--canvas-soft); }
+.mini-photo--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-xs); background: var(--canvas-soft); color: var(--ink-mute); font-size: 14px; }
+.mini-card-body { padding: var(--sp-sm) var(--sp-md) var(--sp-md); display: grid; gap: var(--sp-xs); }
+.mini-card h3 { font-size: 16px; font-weight: 500; margin: 0; }
+.mini-card .price { margin: 0; font-size: 16px; }
 .fact-card h2 { font-size: 16px; font-weight: 500; margin: var(--sp-sm) 0 var(--sp-xs); }
 .fact-card p { font-size: 16px; color: var(--ink-mute); margin: 0; }
 .fact-tag {
