@@ -21,8 +21,8 @@ import {
 import { rupiah } from "../utils/format.ts";
 import "./admin.css";
 
-type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string };
-const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "" };
+type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string; nameEn: string };
+const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "", nameEn: "" };
 type Tab = "orders" | "products" | "posts";
 
 function useDesktop(): boolean {
@@ -79,6 +79,9 @@ export function AdminPage() {
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postExcerpt, setPostExcerpt] = useState("");
+  const [postTitleEn, setPostTitleEn] = useState("");
+  const [postBodyEn, setPostBodyEn] = useState("");
+  const [postExcerptEn, setPostExcerptEn] = useState("");
   const [postTag, setPostTag] = useState("FunFact");
   const [postImage, setPostImage] = useState("");
   const [postPids, setPostPids] = useState<string[]>([]);
@@ -146,10 +149,11 @@ export function AdminPage() {
     setError("");
     const tags = form.tagsInput.split(",").map((t) => t.trim()).filter((t) => t !== "");
     try {
+      const en = form.nameEn.trim() === "" ? undefined : form.nameEn.trim();
       if (editingId !== null) {
-        await adminUpdateProduct(editingId, { name: form.name, category_id: form.category_id, price: form.price, tags });
+        await adminUpdateProduct(editingId, { name: form.name, category_id: form.category_id, price: form.price, tags, name_en: en });
       } else {
-        await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags });
+        await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags, name_en: en });
       }
       setForm(EMPTY);
       setEditingId(null);
@@ -161,7 +165,7 @@ export function AdminPage() {
 
   function startEdit(p: Product): void {
     setEditingId(p.id);
-    setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", ") });
+    setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", "), nameEn: p.name_en ?? "" });
     setError("");
     setTab("products");
   }
@@ -212,10 +216,14 @@ export function AdminPage() {
       return;
     }
     try {
-      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), tag: postTag, product_id: null, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
+      const opt = (v: string): string | null => (v.trim() === "" ? null : v.trim());
+      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), title_en: opt(postTitleEn), body_en: opt(postBodyEn), excerpt_en: opt(postExcerptEn), tag: postTag, product_id: null, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
       setPostTitle("");
       setPostBody("");
       setPostExcerpt("");
+      setPostTitleEn("");
+      setPostBodyEn("");
+      setPostExcerptEn("");
       setPostImage("");
       setPostPids([]);
       setPostMsg("Post tersimpan.");
@@ -368,6 +376,8 @@ export function AdminPage() {
               <input id="prod-id" type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} required disabled={editingId !== null} />
               <label htmlFor="prod-name">Nama</label>
               <input id="prod-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <label htmlFor="prod-name-en">Nama Inggris (opsional — kosong = tampil Indonesia)</label>
+              <input id="prod-name-en" type="text" value={form.nameEn} onChange={(e) => setForm({ ...form, nameEn: e.target.value })} maxLength={200} />
               <label htmlFor="prod-cat">Kategori</label>
               <select id="prod-cat" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
                 <option value="cat_food">Food</option>
@@ -426,6 +436,12 @@ export function AdminPage() {
             <input id="post-title" type="text" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} required aria-required="true" maxLength={200} />
             <label htmlFor="post-excerpt">Ringkasan untuk kartu (opsional, maks 300)</label>
             <input id="post-excerpt" type="text" value={postExcerpt} onChange={(e) => setPostExcerpt(e.target.value)} maxLength={300} placeholder="Satu-dua kalimat…" />
+            <label htmlFor="post-title-en">Judul Inggris (opsional — kosong = tampil Indonesia)</label>
+            <input id="post-title-en" type="text" value={postTitleEn} onChange={(e) => setPostTitleEn(e.target.value)} maxLength={200} />
+            <label htmlFor="post-body-en">Isi Inggris (opsional)</label>
+            <textarea id="post-body-en" value={postBodyEn} onChange={(e) => setPostBodyEn(e.target.value)} maxLength={10000} rows={4} />
+            <label htmlFor="post-excerpt-en">Ringkasan Inggris (opsional, maks 300)</label>
+            <input id="post-excerpt-en" type="text" value={postExcerptEn} onChange={(e) => setPostExcerptEn(e.target.value)} maxLength={300} />
             <label htmlFor="post-body">Isi</label>
             <textarea id="post-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} required aria-required="true" maxLength={10000} rows={8} />
             <label htmlFor="post-tag">Tag</label>
