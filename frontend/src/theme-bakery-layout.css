@@ -184,3 +184,35 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 .need-popup-actions > button:hover:not(:disabled) { transform: translateY(-2px); }
 .need-popup-actions > button:active:not(:disabled) { transform: translateY(3px); }
 .need-popup-actions > button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- Kartu Fun Fact / Rekomendasi / Produk saran: gaya pixel + grid rapi ---------- */
+.section--boxed > .facts-grid, .section--boxed > .section-more {
+  box-sizing: border-box; width: 100%; max-width: var(--page-max); margin-left: auto; margin-right: auto;
+  padding-left: var(--gutter); padding-right: var(--gutter);
+}
+.facts-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 28px; padding-top: 4px; padding-bottom: 12px; }
+.mini-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 28px; padding: 4px 0 12px; }
+
+.fact-card, .mini-card {
+  box-sizing: border-box; margin: var(--bw); border: 0; border-radius: 0; overflow: visible;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc), calc(2 * var(--bw)) calc(2 * var(--bw)) 0 0 var(--drop);
+  transition: transform 90ms steps(2);
+}
+.fact-card { padding: 18px 20px 20px; }
+.fact-card--link:hover, .fact-card--link:focus-visible, .mini-card:hover, .mini-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc), calc(2 * var(--bw)) calc(3 * var(--bw)) 0 0 var(--drop);
+}
+.fact-card h2, .fact-card h3 { font-family: var(--font-ui); font-weight: 400; font-size: 21px; line-height: 1.2; letter-spacing: 0.02em; margin: 10px 0 6px; color: var(--ink); }
+.fact-card p { font-size: 17px; line-height: 1.5; color: var(--ink-mute); }
+.fact-card .price, .mini-card .price { font-family: var(--font-ui); font-size: 20px; color: var(--primary-deep); }
+.fact-card .price { margin-top: 6px; }
+.mini-card { display: block; }
+.mini-card h3 { font-family: var(--font-ui); font-weight: 400; font-size: 19px; margin: 10px 14px 0; color: var(--ink); }
+.mini-card .price { margin: 4px 14px 14px; }
+.mini-photo { border-bottom: var(--bw) solid var(--outline); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fact-card--link:hover, .fact-card--link:focus-visible, .mini-card:hover, .mini-card:focus-visible { transform: none; }
+}
