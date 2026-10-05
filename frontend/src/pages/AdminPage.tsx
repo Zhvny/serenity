@@ -21,8 +21,8 @@ import {
 import { rupiah } from "../utils/format.ts";
 import "./admin.css";
 
-type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string; nameEn: string };
-const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "", nameEn: "" };
+type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string; nameEn: string; descEn: string };
+const EMPTY: Form = { id: "", name: "", category_id: "cat_food", price: 0, tagsInput: "", nameEn: "", descEn: "" };
 type Tab = "orders" | "products" | "posts";
 
 function useDesktop(): boolean {
@@ -149,11 +149,11 @@ export function AdminPage() {
     setError("");
     const tags = form.tagsInput.split(",").map((t) => t.trim()).filter((t) => t !== "");
     try {
-      const en = form.nameEn.trim() === "" ? undefined : form.nameEn.trim();
+      const opt = (v: string): string | undefined => (v.trim() === "" ? undefined : v.trim());
       if (editingId !== null) {
-        await adminUpdateProduct(editingId, { name: form.name, category_id: form.category_id, price: form.price, tags, name_en: en });
+        await adminUpdateProduct(editingId, { name: form.name, category_id: form.category_id, price: form.price, tags, name_en: opt(form.nameEn), description_en: opt(form.descEn) });
       } else {
-        await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags, name_en: en });
+        await adminCreateProduct({ id: form.id, name: form.name, category_id: form.category_id, price: form.price, tags, name_en: opt(form.nameEn), description_en: opt(form.descEn) });
       }
       setForm(EMPTY);
       setEditingId(null);
@@ -165,7 +165,7 @@ export function AdminPage() {
 
   function startEdit(p: Product): void {
     setEditingId(p.id);
-    setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", "), nameEn: p.name_en ?? "" });
+    setForm({ id: p.id, name: p.name, category_id: p.category_id, price: p.price, tagsInput: p.tags.join(", "), nameEn: p.name_en ?? "", descEn: p.description_en ?? "" });
     setError("");
     setTab("products");
   }
@@ -378,6 +378,8 @@ export function AdminPage() {
               <input id="prod-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <label htmlFor="prod-name-en">Nama Inggris (opsional — kosong = tampil Indonesia)</label>
               <input id="prod-name-en" type="text" value={form.nameEn} onChange={(e) => setForm({ ...form, nameEn: e.target.value })} maxLength={200} />
+              <label htmlFor="prod-desc-en">Deskripsi Inggris (opsional — kosong = tampil Indonesia)</label>
+              <input id="prod-desc-en" type="text" value={form.descEn} onChange={(e) => setForm({ ...form, descEn: e.target.value })} />
               <label htmlFor="prod-cat">Kategori</label>
               <select id="prod-cat" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
                 <option value="cat_food">Food</option>
