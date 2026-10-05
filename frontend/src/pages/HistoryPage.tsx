@@ -80,6 +80,18 @@ export function HistoryPage() {
       const child = await topupOrder(code);
       navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
     } catch (e: unknown) {
+      // 409 = anak berjalan ada tapi tak terlihat (filter/stale): muat ulang penuh lalu lanjutkan.
+      if (e instanceof ApiError && e.code === "INVALID_TOPUP") {
+        try {
+          const full = await getMyOrders();
+          const retry = full.find((o) => o.parent_code === code && o.status === "pending_payment");
+          if (retry !== undefined) {
+            setOrders(full);
+            navigate(`/thanks?ref=${encodeURIComponent(retry.unique_code)}`);
+            return;
+          }
+        } catch { /* jatuh ke pesan di bawah */ }
+      }
       setTopupMsg(e instanceof ApiError ? "orders.common.topupUnavailable" : "orders.common.topupFailed");
     } finally {
       setTopupBusy(false);
