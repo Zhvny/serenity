@@ -41,7 +41,7 @@ describe("HistoryPage", () => {
     mockList([]);
     renderRiwayat();
     expect(await screen.findByRole("status")).toHaveTextContent("Belum ada pesanan");
-    expect(screen.getByRole("link", { name: "Lihat menu" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Lihat menu" })).toHaveAttribute("href", "/menu");
   });
   it("isi → kartu nominal + item + badge donasi", async () => {
     mockList([paid]);
@@ -87,6 +87,6 @@ describe("HistoryPage", () => {
     mockList([]);
     renderRiwayat();
     expect(await screen.findByRole("status")).toHaveTextContent("No orders yet");
-    expect(screen.getByRole("link", { name: "View menu" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "View menu" })).toHaveAttribute("href", "/menu");
   });
 });

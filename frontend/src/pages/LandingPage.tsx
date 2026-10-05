@@ -7,6 +7,10 @@ import { getTrending, recordPostView, getPreference, savePreference, getRecommen
 import type { Post, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 import { useT, type DictKey } from "../i18n/t.ts";
+import { HeroScene } from "../pixel/HeroScene.tsx";
+import { Bunting } from "../pixel/Bunting.tsx";
+import { Sprite } from "../pixel/Sprite.tsx";
+import { CHALKBOARD } from "../pixel/data/signs.ts";
 
 const NEEDS: Array<{ key: Need; dict: DictKey }> = [
   { key: "diet", dict: "landing.need.diet" },
@@ -30,7 +34,7 @@ export function LandingPage() {
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");
   const [trending, setTrending] = useState<Post[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [needs, setNeeds] = useState<Need[] | null>(null);
+  const [, setNeeds] = useState<Need[] | null>(null);
   const [showNeed, setShowNeed] = useState(false);
   const [draft, setDraft] = useState<Need[]>([]);
 
@@ -74,6 +78,7 @@ export function LandingPage() {
     <div>
       <Header />
       <main>
+        <Bunting />
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
             <span className="hero-eyebrow"><Icon name="leaf" /> {t("landing.hero.eyebrow")}</span>
@@ -85,9 +90,10 @@ export function LandingPage() {
             </div>
           </div>
           <div className="hero-visual">
-            <div className="hero-card hero-card--quote" aria-hidden="true">
-              <div className="product-photo product-photo--empty" />
-              <div className="hero-card-body"><h3 className="hero-quote">{t(quoteKey)}</h3></div>
+            <HeroScene />
+            <div className="hero-card hero-card--board hero-card--quote" aria-hidden="true">
+              <Sprite sprite={CHALKBOARD} className="board-frame" />
+              <div className="board-text"><h3 className="hero-quote">{t(quoteKey)}</h3></div>
             </div>
           </div>
         </section>

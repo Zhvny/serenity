@@ -5,6 +5,7 @@ import type { PostDetail } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
+import { SafeImage } from "../components/SafeImage.tsx";
 import { useT } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
@@ -64,11 +65,7 @@ export function PostDetailPage() {
         <p><Link className="btn-link" to="/funfact">{t("post.back")}</Link></p>
         <div className="detail-grid">
           <div>
-            {post.image_url !== null && post.image_url !== "" ? (
-              <img className="product-photo post-photo" src={post.image_url} alt={post.title} loading="lazy" />
-            ) : (
-              <div className="product-photo product-photo--empty" aria-hidden="true" />
-            )}
+            <SafeImage src={post.image_url} alt={post.title} className="product-photo post-photo" label />
           </div>
           <div>
             <p className="post-meta">
@@ -88,11 +85,7 @@ export function PostDetailPage() {
             <div className="mini-grid">
               {post.products.map((p) => (
                 <Link key={p.id} className="mini-card" to={`/products/${encodeURIComponent(p.id)}`} aria-label={p.name}>
-                  {p.image_url !== null && p.image_url !== "" ? (
-                    <img className="mini-photo" src={p.image_url} alt="" loading="lazy" />
-                  ) : (
-                    <div className="mini-photo mini-photo--empty" aria-hidden="true" />
-                  )}
+                  <SafeImage src={p.image_url} alt="" className="mini-photo" emptyClassName="mini-photo mini-photo--empty" />
                   <h3>{p.name}</h3>
                   <p className="price">{rupiah(p.price)}</p>
                 </Link>

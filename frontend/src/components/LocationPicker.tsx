@@ -65,7 +65,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init sekali; onChange stabil dari pemanggil
   }, []);
 
-  function useMyLocation(): void {
+  function requestMyLocation(): void {
     if (!("geolocation" in navigator)) { setStatus("geo-error"); return; }
     setStatus("locating");
     navigator.geolocation.getCurrentPosition(
@@ -108,7 +108,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
             <p>{t("shop.map.consent.a")}</p>
             <p>{t("shop.map.consent.b")}</p>
             <div className="need-popup-actions">
-              <button type="button" onClick={() => { setShowConsent(false); useMyLocation(); }}>{t("shop.map.consent.agree")}</button>
+              <button type="button" onClick={() => { setShowConsent(false); requestMyLocation(); }}>{t("shop.map.consent.agree")}</button>
               <button type="button" onClick={() => setShowConsent(false)}>{t("shop.map.consent.cancel")}</button>
             </div>
           </div>

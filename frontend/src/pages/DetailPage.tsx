@@ -82,7 +82,7 @@ export function DetailPage() {
           <div className="state" role="alert">
             <h2>{t("shop.detail.notfound.title")}</h2>
             <p>{t("shop.detail.notfound.body")}</p>
-            <Link className="btn-secondary" to="/">{t("shop.detail.notfound.back")}</Link>
+            <Link className="btn-secondary" to="/menu">{t("shop.detail.notfound.back")}</Link>
           </div>
         ) : state === "error" ? (
           <div className="state" role="alert">
