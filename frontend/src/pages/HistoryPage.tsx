@@ -67,6 +67,13 @@ export function HistoryPage() {
   }, [filter, reloadKey]);
 
   async function handleTopup(code: string): Promise<void> {
+    // Idempoten sisi klien: anak pending yang berjalan dilanjutkan (kasus back),
+    // bukan dicetak ulang. Backend tetap menolak duplikat sebagai pengaman.
+    const open = orders.find((o) => o.parent_code === code && o.status === "pending_payment");
+    if (open !== undefined) {
+      navigate(`/thanks?ref=${encodeURIComponent(open.unique_code)}`);
+      return;
+    }
     setTopupBusy(true);
     setTopupMsg("");
     try {
