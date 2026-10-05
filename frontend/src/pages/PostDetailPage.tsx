@@ -4,6 +4,7 @@ import { getPost } from "../services/api.ts";
 import type { PostDetail } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
@@ -92,10 +93,12 @@ export function PostDetailPage() {
                   {p.image_url !== null && p.image_url !== "" ? (
                     <img className="mini-photo" src={p.image_url} alt="" loading="lazy" />
                   ) : (
-                    <div className="mini-photo mini-photo--empty" aria-hidden="true" />
+                    <div className="mini-photo mini-photo--empty" aria-hidden="true"><Icon name="leaf" /><span>{t("menu.photo.none")}</span></div>
                   )}
-                  <h3>{pickContent(lang, p.name_en, p.name)}</h3>
-                  <p className="price">{rupiah(p.price)}</p>
+                  <div className="mini-card-body">
+                    <h3>{pickContent(lang, p.name_en, p.name)}</h3>
+                    <p className="price">{rupiah(p.price)}</p>
+                  </div>
                 </Link>
               ))}
             </div>
