@@ -358,7 +358,18 @@ export function AdminPage() {
                     )}
                   </>
                 ) : detail.status === "underpaid" ? (
-                  <button type="button" className="admin-btn" aria-label={`Lunaskan ${detail.unique_code}`} onClick={() => void handleSettle(detail.unique_code)}>Lunaskan</button>
+                  (() => {
+                    const si = detail.settle_info ?? null;
+                    return si !== null && !si.bisa ? (
+                      <>
+                        <p className="admin-detail-row"><span>Kurang</span><strong>{rupiah(si.sisa)} (anak lunas {rupiah(si.anak_lunas)})</strong></p>
+                        <button type="button" className="admin-btn" disabled aria-disabled="true" aria-label={`Lunaskan ${detail.unique_code}`}>Lunaskan</button>
+                        <p className="admin-id">Butuh anak top-up lunas menutup sisa dulu.</p>
+                      </>
+                    ) : (
+                      <button type="button" className="admin-btn" aria-label={`Lunaskan ${detail.unique_code}`} onClick={() => void handleSettle(detail.unique_code)}>Lunaskan</button>
+                    );
+                  })()
                 ) : ADVANCE_LABEL[detail.status] !== undefined ? (
                   <button type="button" className="admin-btn" onClick={() => void handleAdvance(detail.unique_code)}>{ADVANCE_LABEL[detail.status]}</button>
                 ) : <span className="status-badge status-badge--ok">Pesanan selesai</span>}

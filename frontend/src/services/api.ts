@@ -177,6 +177,7 @@ export type OrderDetail = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string;
   scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
+  settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
 
 export function adminOrderDetail(code: string): Promise<OrderDetail> {

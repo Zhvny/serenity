@@ -166,7 +166,16 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       `SELECT oi.product_id, p.name, oi.quantity, oi.note, oi.price_at_order FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = $1`,
       [order.id],
     );
-    return c.json({ status: "success", data: { ...order, items: items.rows } });
+    // Info kelayakan Lunaskan: sisa vs total anak top-up yang sudah lunas.
+    let settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null = null;
+    if (order.status === "underpaid" && order.paid_amount !== null) {
+      const sisa = order.total_amount - order.paid_amount;
+      const sum = await pool.query<{ s: string }>(
+        "SELECT COALESCE(SUM(paid_amount), 0) AS s FROM orders WHERE parent_code = $1 AND status = 'paid'", [code]);
+      const anak = Number(sum.rows[0]?.s ?? 0);
+      settle_info = { sisa, anak_lunas: anak, bisa: anak >= sisa };
+    }
+    return c.json({ status: "success", data: { ...order, items: items.rows, settle_info } });
   });
 
   // Mark-paid QRIS: catat nominal aktual; kurang -> underpaid, cukup/lebih -> paid.
