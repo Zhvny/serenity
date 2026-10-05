@@ -67,6 +67,7 @@ describe("recommend", () => {
       assert.match(q, /name/);
       assert.match(q, /price/);
       assert.match(q, /name_en/);
+      assert.match(q, /category_id/);
     }
   });
   it("need simpanan tak dikenal → fallback best-seller", async () => {

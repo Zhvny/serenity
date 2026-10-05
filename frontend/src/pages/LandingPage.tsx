@@ -102,7 +102,7 @@ export function LandingPage() {
             </div>
             <div className="facts-grid">
               {recs.map((r) => (
-                <LandingCard key={r.id} variant="product" id={r.id} title={pickContent(lang, r.name_en, r.name)} price={r.price} />
+                <LandingCard key={r.id} variant="product" id={r.id} title={pickContent(lang, r.name_en, r.name)} price={r.price} image_url={r.image_url} category_id={r.category_id} />
               ))}
             </div>
           </section>
@@ -116,7 +116,7 @@ export function LandingPage() {
             <div className="facts-grid">
               {trending.map((p) => (
                 <div key={p.id} onClick={() => void recordPostView(p.id).catch(() => {})}>
-                  <LandingCard variant="post" id={p.id} title={pickContent(lang, p.title_en, p.title)} tag={p.tag} excerpt={pickContent(lang, p.excerpt_en ?? p.excerpt, p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body)} />
+                  <LandingCard variant="post" id={p.id} title={pickContent(lang, p.title_en, p.title)} tag={p.tag} image_url={p.image_url} excerpt={pickContent(lang, p.excerpt_en ?? p.excerpt, p.excerpt !== null && p.excerpt !== "" ? p.excerpt : p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body)} />
                 </div>
               ))}
             </div>

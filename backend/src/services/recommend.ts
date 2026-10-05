@@ -2,7 +2,7 @@ import type { Pool } from "pg";
 
 export type Need = "diet" | "muscle" | "diabetes" | "allergy_free" | "low_sugar";
 
-export type RecProduct = { id: string; name: string; price: number; image_url: string | null; name_en: string | null };
+export type RecProduct = { id: string; name: string; category_id: string; price: number; image_url: string | null; name_en: string | null };
 
 export const NEEDS: readonly Need[] = ["diet", "muscle", "diabetes", "allergy_free", "low_sugar"];
 
@@ -16,11 +16,11 @@ const ORDER: Record<Need, string> = {
 
 export async function bestSellers(pool: Pool, limit: number): Promise<RecProduct[]> {
   const { rows } = await pool.query(
-    `SELECT p.id, p.name, p.name_en, p.price, p.image_url FROM order_items oi
+    `SELECT p.id, p.name, p.name_en, p.category_id, p.price, p.image_url FROM order_items oi
      JOIN orders o ON o.id = oi.order_id
      JOIN products p ON p.id = oi.product_id
      WHERE o.status = 'done' AND p.is_active = TRUE
-     GROUP BY p.id, p.name, p.name_en, p.price, p.image_url ORDER BY SUM(oi.quantity) DESC LIMIT $1`,
+     GROUP BY p.id, p.name, p.name_en, p.category_id, p.price, p.image_url ORDER BY SUM(oi.quantity) DESC LIMIT $1`,
     [limit],
   );
   return rows;
@@ -29,7 +29,7 @@ export async function bestSellers(pool: Pool, limit: number): Promise<RecProduct
 export async function byNeed(pool: Pool, need: Need, limit: number): Promise<RecProduct[]> {
   const allergy = need === "allergy_free" ? "AND NOT EXISTS (SELECT 1 FROM product_allergens pa WHERE pa.product_id = p.id)" : "";
   const { rows } = await pool.query(
-    `SELECT p.id, p.name, p.name_en, p.price, p.image_url FROM products p JOIN nutrition_info n ON n.product_id = p.id
+    `SELECT p.id, p.name, p.name_en, p.category_id, p.price, p.image_url FROM products p JOIN nutrition_info n ON n.product_id = p.id
      WHERE p.is_active = TRUE ${allergy} ORDER BY ${ORDER[need]} LIMIT $1`,
     [limit],
   );
