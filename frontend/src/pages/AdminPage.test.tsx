@@ -199,6 +199,24 @@ describe("AdminPage", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-U2/settle-parent"))).toBe(true);
   });
 
+  it("detail underpaid belum bisa settle -> Lunaskan disabled + syarat", async () => {
+    const user = userEvent.setup();
+    const order = { id: "HP-4", unique_code: "ORD-U4", total_amount: 50000, paid_amount: 30000, parent_code: null, status: "underpaid", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...order, mode: "instant", scheduled_at: null, delivery_address: null, delivery_lat: null, delivery_lng: null, items: [], settle_info: { sisa: 20000, anak_lunas: 0, bisa: false } };
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-U4") && method === "GET") return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: /detail ORD-U4/i }));
+    expect(await screen.findByText(/butuh anak top-up/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /lunaskan ORD-U4/i })).toBeDisabled();
+  });
+
   it("detail pending -> nominal kurang -> Catat Kurang Bayar + pindah filter", async () => {
     const user = userEvent.setup();
     const order = { id: "HP-3", unique_code: "ORD-U3", total_amount: 50000, status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
