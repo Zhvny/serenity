@@ -150,7 +150,7 @@ export function adminListProducts(): Promise<Product[]> {
   return apiGet<Product[]>("/admin/products");
 }
 
-export function adminCreateProduct(product: { id: string; name: string; category_id: string; price: number; tags: string[]; image_url?: string | null }): Promise<{ id: string }> {
+export function adminCreateProduct(product: { id: string; name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; name_en?: string | null }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/products", "POST", product);
 }
 
@@ -162,7 +162,7 @@ export function adminReactivateProduct(id: string): Promise<{ reactivated: boole
   return adminMutate<{ reactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/reactivate`, "POST");
 }
 
-export function adminUpdateProduct(id: string, product: { name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; description?: string | null }): Promise<{ id: string }> {
+export function adminUpdateProduct(id: string, product: { name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; description?: string | null; name_en?: string | null }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
@@ -231,7 +231,7 @@ export function getRecommendations(): Promise<Recommendation[]> {
   return apiGet<Recommendation[]>("/products/recommendations");
 }
 
-export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
+export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; title_en?: string | null; body_en?: string | null; excerpt_en?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/posts", "POST", input);
 }
 
