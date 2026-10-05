@@ -880,6 +880,8 @@ code { font-family: var(--font-mono); font-size: 16px; }
 }
 .fact-card:hover { box-shadow: var(--shadow-1); }
 .fact-card--link { color: inherit; text-decoration: none; display: block; }
+.fact-photo { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; border-radius: var(--r-md); background: var(--canvas-soft); }
+.fact-photo--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-xs); color: var(--ink-mute); font-size: 14px; }
 
 /* Popup kebutuhan landing: overlay + kartu tengah. */
 .need-popup {

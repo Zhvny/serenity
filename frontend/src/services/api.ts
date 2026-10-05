@@ -225,7 +225,7 @@ export function savePreference(needs: Need[]): Promise<{ needs: Need[] }> {
   return apiPut<{ needs: Need[] }>("/preferences", { needs });
 }
 
-export type Recommendation = { id: string; name: string; name_en: string | null; price: number; image_url: string | null };
+export type Recommendation = { id: string; name: string; name_en: string | null; category_id: string; price: number; image_url: string | null };
 
 export function getRecommendations(): Promise<Recommendation[]> {
   return apiGet<Recommendation[]>("/products/recommendations");
