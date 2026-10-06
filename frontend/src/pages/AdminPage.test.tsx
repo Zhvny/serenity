@@ -304,6 +304,34 @@ describe("AdminPage", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-PAID9/advance"))).toBe(true);
   });
 
+  it("tab Post -> daftar + edit isi form PUT + hapus DELETE 2-klik", async () => {
+    const user = userEvent.setup();
+    const calls: Array<{ url: string; method: string }> = [];
+    const rows = [{ id: "post-9", title: "Lama", body: "Isi lama.", excerpt: null, title_en: null, body_en: null, excerpt_en: null, tag: "News", product_id: null, image_url: null, product_ids: [], created_at: "2026-10-04T00:00:00Z" }];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push(`${method} ${u}`);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/posts/post-9") && method === "PUT") return resp({ status: "success", data: { id: "post-9" } });
+      if (u.includes("/admin/posts/post-9") && method === "DELETE") return resp({ status: "success", data: { id: "post-9" } });
+      if (u.includes("/admin/posts") && method === "GET") return resp({ status: "success", data: rows });
+      if (u.includes("/admin/posts")) return resp({ status: "success", data: { id: "post-9" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Post" }));
+    expect(await screen.findByText("Lama")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /edit lama/i }));
+    expect((screen.getByLabelText("Judul") as HTMLInputElement).value).toBe("Lama");
+    await user.type(screen.getByLabelText("Judul"), " Baru");
+    await user.click(screen.getByRole("button", { name: /simpan perubahan/i }));
+    expect(calls.some((c) => c.startsWith("PUT") && c.includes("/admin/posts/post-9"))).toBe(true);
+    await user.click(screen.getByRole("button", { name: /hapus lama/i }));
+    await user.click(screen.getByRole("button", { name: /yakin hapus/i }));
+    expect(calls.some((c) => c.startsWith("DELETE") && c.includes("/admin/posts/post-9"))).toBe(true);
+  });
   it("tab Post -> isi form -> submit kirim POST /admin/posts", async () => {
     const user = userEvent.setup();
     const calls: Array<{ url: string; method: string; body: string | undefined }> = [];
@@ -311,6 +339,7 @@ describe("AdminPage", () => {
       const u = String(url); const method = init?.method ?? "GET";
       calls.push({ url: u, method, body: init?.body as string | undefined });
       if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/posts") && method === "GET") return resp({ status: "success", data: [] });
       if (u.includes("/admin/posts")) return resp({ status: "success", data: { id: "post-1" } });
       if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
       if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
