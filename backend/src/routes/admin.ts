@@ -205,7 +205,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     body: z.string().min(1).max(10000),
     excerpt: z.string().max(300).nullish(),
     title_en: z.string().max(200).nullish(),
-    body_en: z.string().nullish(),
+    body_en: z.string().max(2000).nullish(),
     excerpt_en: z.string().max(300).nullish(),
     tag: z.enum(["FunFact", "News", "Research"]),
     product_id: z.string().min(1).nullish(),
