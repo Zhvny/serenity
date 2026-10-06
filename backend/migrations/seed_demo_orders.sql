@@ -22,20 +22,20 @@ ON CONFLICT (id) DO NOTHING;
 UPDATE orders SET parent_code = 'ORD-DEMO-UNDER' WHERE id = 'HP-DEMO-0004';
 
 INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES
-  ('HP-DEMO-0001', 'prod_001', 2, NULL, 45000),
-  ('HP-DEMO-0002', 'prod_001', 2, NULL, 45000),
-  ('HP-DEMO-0003', 'prod_002', 1, NULL, 35000),
-  ('HP-DEMO-0003', 'prod_003', 1, NULL, 25000),
-  ('HP-DEMO-0004', 'prod_005', 1, NULL, 30000),
-  ('HP-DEMO-0005', 'prod_004', 1, NULL, 40000),
-  ('HP-DEMO-0006', 'prod_004', 1, NULL, 40000),
-  ('HP-DEMO-0007', 'prod_005', 2, NULL, 30000),
-  ('HP-DEMO-0007', 'prod_002', 1, NULL, 35000),
-  ('HP-DEMO-0008', 'prod_005', 2, NULL, 30000),
-  ('HP-DEMO-0008', 'prod_002', 1, NULL, 35000),
-  ('HP-DEMO-0009', 'prod_001', 1, NULL, 45000),
-  ('HP-DEMO-0009', 'prod_003', 1, NULL, 25000),
-  ('HP-DEMO-0010', 'prod_004', 1, NULL, 40000),
-  ('HP-DEMO-0014', 'prod_003', 2, NULL, 25000);
+  ('HP-DEMO-0001', 'samp_001', 2, NULL, 45000),
+  ('HP-DEMO-0002', 'samp_001', 2, NULL, 45000),
+  ('HP-DEMO-0003', 'samp_002', 1, NULL, 35000),
+  ('HP-DEMO-0003', 'samp_003', 1, NULL, 25000),
+  ('HP-DEMO-0004', 'samp_005', 1, NULL, 30000),
+  ('HP-DEMO-0005', 'samp_004', 1, NULL, 40000),
+  ('HP-DEMO-0006', 'samp_004', 1, NULL, 40000),
+  ('HP-DEMO-0007', 'samp_005', 2, NULL, 30000),
+  ('HP-DEMO-0007', 'samp_002', 1, NULL, 35000),
+  ('HP-DEMO-0008', 'samp_005', 2, NULL, 30000),
+  ('HP-DEMO-0008', 'samp_002', 1, NULL, 35000),
+  ('HP-DEMO-0009', 'samp_001', 1, NULL, 45000),
+  ('HP-DEMO-0009', 'samp_003', 1, NULL, 25000),
+  ('HP-DEMO-0010', 'samp_004', 1, NULL, 40000),
+  ('HP-DEMO-0014', 'samp_003', 2, NULL, 25000);
 -- Catatan: order_items tanpa ON CONFLICT (tak ada unique constraint yang cocok).
 -- File ini jalan sekali per reset DB; untuk ulang, reset dulu (DROP SCHEMA).

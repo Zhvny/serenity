@@ -6,7 +6,7 @@ import { createPool } from "../src/db/pool.js";
 import { closeRedis } from "../src/db/redis.js";
 import { markPaid, listMine, expireStale } from "../src/services/orders.js";
 
-// DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed prod_001.
+// DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed samp_001.
 const pool = createPool();
 const XFF = `orders-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi dari file lain
 const future = new Date(Date.now() + 25 * 3600 * 1000).toISOString();
@@ -28,11 +28,11 @@ after(async () => {
 
 describe("orders", () => {
   it("POST /orders scheduled <24 jam → 400 INVALID_SCHEDULE", async () => {
-    const res = await postOrder({ items: [{ product_id: "prod_001", quantity: 1 }], mode: "scheduled", scheduled_at: new Date(Date.now() + 3600 * 1000).toISOString() });
+    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "scheduled", scheduled_at: new Date(Date.now() + 3600 * 1000).toISOString() });
     assert.equal(res.status, 400);
   });
   it("POST /orders instant + scheduled_at → 400 INVALID_SCHEDULE", async () => {
-    const res = await postOrder({ items: [{ product_id: "prod_001", quantity: 1 }], mode: "instant", scheduled_at: future });
+    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant", scheduled_at: future });
     assert.equal(res.status, 400);
   });
   it("PUT /orders/:id/status tanpa internal key → 403", async () => {
@@ -40,13 +40,13 @@ describe("orders", () => {
     assert.equal(res.status, 403);
   });
   it("POST /orders qty 11 → 400 VALIDATION_ERROR", async () => {
-    const res = await postOrder({ items: [{ product_id: "prod_001", quantity: 11 }], mode: "instant" });
+    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 11 }], mode: "instant" });
     assert.equal(res.status, 400);
   });
 });
 
 describe("orders delivery", () => {
-  const base = { items: [{ product_id: "prod_001", quantity: 1 }], mode: "instant" };
+  const base = { items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" };
 
   it("delivery tanpa address → 400 INVALID_ADDRESS", async () => {
     const res = await postOrder({ ...base, delivery_method: "delivery" });
@@ -226,7 +226,7 @@ describe("orders underpaid service", () => {
   });
   it("listMine sertakan ringkas item (nama produk)", async () => {
     const { id } = await seedOrder(90000);
-    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1, 'prod_001', 2, NULL, 45000)", [id]);
+    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1, 'samp_001', 2, NULL, 45000)", [id]);
     const mine = await listMine(pool, sess);
     const found = mine.find((o) => o.order_id === id);
     assert.ok(found !== undefined);

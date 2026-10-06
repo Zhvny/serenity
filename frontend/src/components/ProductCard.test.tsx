@@ -7,7 +7,7 @@ import { setLang } from "../i18n/store.ts";
 
 afterEach(() => { cleanup(); setLang("id"); });
 
-const product: Product = { id: "prod_001", name: "Salad Quinoa", category_id: "cat_food", price: 45000, tags: ["high-protein"], image_url: null, description: null, name_en: null, description_en: null, source: "seed_dev", is_active: true, nutrition: { calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4 }, allergens: [] };
+const product: Product = { id: "samp_001", name: "Salad Quinoa", category_id: "cat_food", price: 45000, tags: ["high-protein"], image_url: null, description: null, name_en: null, description_en: null, source: "seed_dev", is_active: true, nutrition: { calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4 }, allergens: [] };
 
 describe("ProductCard", () => {
   it("tampilkan nama, harga Rp, tag", () => {

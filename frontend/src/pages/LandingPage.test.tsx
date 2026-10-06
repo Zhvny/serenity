@@ -30,7 +30,7 @@ describe("LandingPage", () => {
   });
 
   it("preferensi ada -> popup tak muncul + rekomendasi tampil", async () => {
-    const recs = [{ id: "prod_001", name: "Salad", category_id: "cat_food", price: 45000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4 }, allergens: [] }];
+    const recs = [{ id: "samp_001", name: "Salad", category_id: "cat_food", price: 45000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4 }, allergens: [] }];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);
       if (u.includes("/preferences")) return new Response(JSON.stringify({ status: "success", data: { needs: ["diet"] } }));
@@ -80,7 +80,7 @@ describe("LandingPage", () => {
   });
   it("lang en -> rekomendasi + bacaan pakai teks Inggris", async () => {
     setLang("en");
-    const recs = [{ id: "prod_001", name: "Salad", name_en: "Salad EN", price: 45000, image_url: null }];
+    const recs = [{ id: "samp_001", name: "Salad", name_en: "Salad EN", price: 45000, image_url: null }];
     const posts = [{ id: "t1", title: "Tren", title_en: "Trend EN", body: "Isi.", body_en: "Content.", excerpt: "", excerpt_en: "", tag: "FunFact", product_id: null, created_at: "2026-10-04T00:00:00Z" }];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);

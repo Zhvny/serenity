@@ -65,7 +65,7 @@ describe("E2E alur publik (health -> menu -> cart) semua 200, bukan 500", () => 
     assert.equal(r.status, 200);
     const { data } = (await r.json()) as { data: Array<{ id: string }> };
     assert.ok(Array.isArray(data) && data.length >= 1, "products kosong/500");
-    assert.ok(data.some((p) => p.id === "prod_001"), "seed prod_001 tak ada");
+    assert.ok(data.some((p) => p.id === "samp_001"), "seed samp_001 tak ada");
   });
 
   it("cart kosong (tanpa cookie) 200 -> []", async () => {
@@ -78,7 +78,7 @@ describe("E2E alur publik (health -> menu -> cart) semua 200, bukan 500", () => 
 describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
   it("cart/add issue cookie; generate-code; thanks owner; admin lunasi; thanks jadi paid", async () => {
     // 1) Tambah ke cart (tanpa cookie -> server set cart_id)
-    const add = await app.request("/api/v1/cart/add", { method: "POST", headers: json(), body: JSON.stringify({ product_id: "prod_001", quantity: 2 }) });
+    const add = await app.request("/api/v1/cart/add", { method: "POST", headers: json(), body: JSON.stringify({ product_id: "samp_001", quantity: 2 }) });
     assert.equal(add.status, 200);
     const setCookie = add.headers.get("set-cookie") ?? "";
     const cartId = setCookie.match(/cart_id=([^;]+)/)?.[1];
