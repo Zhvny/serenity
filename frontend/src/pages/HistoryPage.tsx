@@ -9,6 +9,7 @@ import { useT } from "../i18n/t.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
+import { pickContent } from "../i18n/content.ts";
 
 const FILTERS = ["semua", "pending_payment", "underpaid", "paid", "expired", "cancelled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -66,12 +67,31 @@ export function HistoryPage() {
   }, [filter, reloadKey]);
 
   async function handleTopup(code: string): Promise<void> {
+    // Idempoten sisi klien: anak pending yang berjalan dilanjutkan (kasus back),
+    // bukan dicetak ulang. Backend tetap menolak duplikat sebagai pengaman.
+    const open = orders.find((o) => o.parent_code === code && o.status === "pending_payment");
+    if (open !== undefined) {
+      navigate(`/thanks?ref=${encodeURIComponent(open.unique_code)}`);
+      return;
+    }
     setTopupBusy(true);
     setTopupMsg("");
     try {
       const child = await topupOrder(code);
       navigate(`/thanks?ref=${encodeURIComponent(child.unique_code)}`);
     } catch (e: unknown) {
+      // 409 = anak berjalan ada tapi tak terlihat (filter/stale): muat ulang penuh lalu lanjutkan.
+      if (e instanceof ApiError && e.code === "INVALID_TOPUP") {
+        try {
+          const full = await getMyOrders();
+          const retry = full.find((o) => o.parent_code === code && o.status === "pending_payment");
+          if (retry !== undefined) {
+            setOrders(full);
+            navigate(`/thanks?ref=${encodeURIComponent(retry.unique_code)}`);
+            return;
+          }
+        } catch { /* jatuh ke pesan di bawah */ }
+      }
       setTopupMsg(e instanceof ApiError ? "orders.common.topupUnavailable" : "orders.common.topupFailed");
     } finally {
       setTopupBusy(false);
@@ -122,7 +142,7 @@ export function HistoryPage() {
                     {o.items.length > 0 ? (
                       <ul className="history-items">
                         {o.items.map((it) => (
-                          <li key={it.product_id}>{it.quantity}× {it.name}</li>
+                          <li key={it.product_id}>{it.quantity}× {pickContent(lang, it.name_en, it.name)}</li>
                         ))}
                       </ul>
                     ) : null}

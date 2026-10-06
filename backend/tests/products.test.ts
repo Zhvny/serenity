@@ -38,4 +38,11 @@ describe("productRepo create/deactivate/listAll", () => {
     assert.match(seen[0] ?? "", /ORDER BY p\.name/);
     assert.doesNotMatch(seen[0] ?? "", /is_active = TRUE/);
   });
+
+  it("mapper sertakan name_en/description_en (null aman)", async () => {
+    const rows = [{ id: "p1", name: "A", category_id: "c", price: 1, tags: [], image_url: null, description: "D", is_active: true, name_en: "A en", description_en: null, calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1, allergens: [] }];
+    const list = await productRepo(mockPool(rows)).listAll();
+    assert.equal(list[0]?.name_en, "A en");
+    assert.equal(list[0]?.description_en, null);
+  });
 });

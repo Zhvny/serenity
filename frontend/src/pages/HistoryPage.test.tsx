@@ -50,6 +50,64 @@ describe("HistoryPage", () => {
     expect(screen.getByText(/2× Salad/)).toBeInTheDocument();
     expect(screen.getByText("Donasi disetujui")).toBeInTheDocument();
   });
+  it("lang en -> nama item Inggris; null -> fallback", async () => {
+    setLang("en");
+    const en = { ...paid, items: [{ product_id: "p1", name: "Salad", name_en: "Salad EN", quantity: 2 }] };
+    mockList([en]);
+    renderRiwayat();
+    expect(await screen.findByText(/2× Salad EN/)).toBeInTheDocument();
+  });
+  it("underpaid filter aktif -> 409 lalu anak ketemu di list penuh -> lanjut thanks", async () => {
+    const user = userEvent.setup();
+    const parent = { id: "HP-7", unique_code: "ORD-7", total_amount: 50000, paid_amount: 30000, parent_code: null, status: "underpaid", delivery_method: "pickup", created_at: "2026-10-02T12:00:00Z", items: [] };
+    const child = { id: "HP-8", unique_code: "ORD-8", total_amount: 20000, paid_amount: null, parent_code: "ORD-7", status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T13:00:00Z", items: [] };
+    const posts: string[] = [];
+    let mines = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const m = init?.method ?? "GET";
+      posts.push(`${m} ${u}`);
+      if (u.includes("/topup")) return new Response(JSON.stringify({ status: "error", code: "INVALID_TOPUP", message: "x" }), { status: 409 });
+      if (u.includes("/orders/mine")) {
+        mines += 1;
+        return new Response(JSON.stringify({ status: "success", data: mines === 1 ? [parent] : [parent, child] }));
+      }
+      return new Response(JSON.stringify({ status: "error", code: "X", message: "x" }), { status: 500 });
+    }));
+    render(
+      <MemoryRouter initialEntries={["/riwayat"]}>
+        <Routes>
+          <Route path="/riwayat" element={<HistoryPage />} />
+          <Route path="/thanks" element={<div>THANKS</div>} />
+          <Route path="/" element={<div>HOME</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(await screen.findByRole("button", { name: /bayar sisa/i }));
+    expect(await screen.findByText("THANKS")).toBeInTheDocument();
+  });
+  it("underpaid ada anak pending -> Bayar sisa lanjut ke thanks anak tanpa POST baru", async () => {
+    const user = userEvent.setup();
+    const parent = { id: "HP-5", unique_code: "ORD-5", total_amount: 50000, paid_amount: 30000, parent_code: null, status: "underpaid", delivery_method: "pickup", created_at: "2026-10-02T12:00:00Z", items: [] };
+    const child = { id: "HP-6", unique_code: "ORD-6", total_amount: 20000, paid_amount: null, parent_code: "ORD-5", status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T13:00:00Z", items: [] };
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method ?? "GET"} ${url}`);
+      if (String(url).includes("/topup")) return new Response(JSON.stringify({ status: "error", code: "INVALID_TOPUP", message: "x" }), { status: 409 });
+      return new Response(JSON.stringify({ status: "success", data: [parent, child] }));
+    }));
+    render(
+      <MemoryRouter initialEntries={["/riwayat"]}>
+        <Routes>
+          <Route path="/riwayat" element={<HistoryPage />} />
+          <Route path="/thanks" element={<div>THANKS</div>} />
+          <Route path="/" element={<div>HOME</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(await screen.findByRole("button", { name: /bayar sisa/i }));
+    expect(await screen.findByText("THANKS")).toBeInTheDocument();
+    expect(calls.some((c) => c.includes("/topup"))).toBe(false);
+  });
   it("underpaid → Kurang Rp + Bayar sisa → topup → /thanks?ref=", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {

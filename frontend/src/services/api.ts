@@ -7,7 +7,7 @@ export class ApiError extends Error {
 }
 
 export type Nutrition = { calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number; fiber_g: number; sugar_g: number };
-export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; is_active: boolean; nutrition: Nutrition; allergens: string[] };
+export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; name_en: string | null; description_en: string | null; is_active: boolean; nutrition: Nutrition; allergens: string[] };
 export type Category = { id: string; name: string; description: string | null };
 export type CartItem = { item_id: string; product_id: string; quantity: number; note: string | null };
 
@@ -150,7 +150,7 @@ export function adminListProducts(): Promise<Product[]> {
   return apiGet<Product[]>("/admin/products");
 }
 
-export function adminCreateProduct(product: { id: string; name: string; category_id: string; price: number; tags: string[]; image_url?: string | null }): Promise<{ id: string }> {
+export function adminCreateProduct(product: { id: string; name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; name_en?: string | null; description_en?: string | null }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/products", "POST", product);
 }
 
@@ -162,7 +162,7 @@ export function adminReactivateProduct(id: string): Promise<{ reactivated: boole
   return adminMutate<{ reactivated: boolean }>(`/admin/products/${encodeURIComponent(id)}/reactivate`, "POST");
 }
 
-export function adminUpdateProduct(id: string, product: { name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; description?: string | null }): Promise<{ id: string }> {
+export function adminUpdateProduct(id: string, product: { name: string; category_id: string; price: number; tags: string[]; image_url?: string | null; description?: string | null; name_en?: string | null; description_en?: string | null }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
@@ -177,6 +177,7 @@ export type OrderDetail = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string;
   scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
+  settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
 
 export function adminOrderDetail(code: string): Promise<OrderDetail> {
@@ -195,13 +196,13 @@ export function adminSettleParent(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
 }
 
-export type Post = { id: string; title: string; body: string; excerpt: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
+export type Post = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
 
 export function getPosts(): Promise<Post[]> {
   return apiGet<Post[]>("/posts");
 }
 
-export type PostDetail = Post & { products: Array<{ id: string; name: string; price: number; image_url: string | null }> };
+export type PostDetail = Post & { products: Array<{ id: string; name: string; name_en: string | null; price: number; image_url: string | null }> };
 
 export function getPost(id: string): Promise<PostDetail> {
   return apiGet<PostDetail>(`/posts/${encodeURIComponent(id)}`);
@@ -225,13 +226,13 @@ export function savePreference(needs: Need[]): Promise<{ needs: Need[] }> {
   return apiPut<{ needs: Need[] }>("/preferences", { needs });
 }
 
-export type Recommendation = { id: string; name: string; price: number; image_url: string | null };
+export type Recommendation = { id: string; name: string; name_en: string | null; category_id: string; price: number; image_url: string | null };
 
 export function getRecommendations(): Promise<Recommendation[]> {
   return apiGet<Recommendation[]>("/products/recommendations");
 }
 
-export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
+export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; title_en?: string | null; body_en?: string | null; excerpt_en?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/posts", "POST", input);
 }
 
@@ -250,7 +251,7 @@ export function getThanks(ref: string): Promise<ThanksData> {
 export type HistoryOrder = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null;
   status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
-  items: Array<{ product_id: string; name: string; quantity: number }>;
+  items: Array<{ product_id: string; name: string; name_en: string | null; quantity: number }>;
 };
 
 export function getMyOrders(status?: string): Promise<HistoryOrder[]> {

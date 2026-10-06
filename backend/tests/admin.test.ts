@@ -26,7 +26,11 @@ before(() => {
 });
 after(async () => {
   for (const u of createdUsers) await pool.query("DELETE FROM login_attempts WHERE username = $1", [u]);
-  for (const id of createdOrders) await pool.query("DELETE FROM orders WHERE id = $1", [id]);
+  // Anak dulu (parent_code FK): urutan balik dari pembuatan.
+  for (const id of [...createdOrders].reverse()) {
+    await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [id]);
+  }
   for (const id of createdProducts) await pool.query("DELETE FROM products WHERE id = $1", [id]);
   await pool.query("DELETE FROM admin_sessions WHERE username = $1", ["admin"]);
   try {
@@ -91,6 +95,16 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const sid = sc.match(/admin_session=([^;]+)/)?.[1] ?? "";
     const list = await app.request("/api/v1/admin/products", { headers: { cookie: `admin_session=${sid}` } });
     assert.equal(list.status, 200);
+  });
+
+  it("admin create name_en non-string -> 400 VALIDATION_ERROR", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/products", { method: "POST", headers: h, body: JSON.stringify({ id: "px", name: "X", category_id: "cat_food", price: 100, name_en: 123 }) });
+    assert.equal(res.status, 400);
+    assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
   });
 
   it("mark-paid idempoten: changed true lalu false; status paid; satu audit", async () => {
@@ -255,6 +269,22 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const data = ((await res.json()) as { data: Record<string, unknown> }).data;
     assert.equal(data["paid_amount"], 30000);
     assert.ok("parent_code" in data);
+  });
+
+  it("GET /admin/orders/:code underpaid -> settle_info sisa/anak/bisa", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-SET-${Date.now()}`;
+    const id = `HP-SET-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, paid_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',50000,30000,'underpaid','pickup','set-sess',$2)", [id, code]);
+    const get = async () => ((await (await app.request(`/api/v1/admin/orders/${code}`, { headers: { cookie: `admin_session=${sid}` } })).json()) as { data: { settle_info: { sisa: number; anak_lunas: number; bisa: boolean } } }).data.settle_info;
+    assert.deepEqual(await get(), { sisa: 20000, anak_lunas: 0, bisa: false });
+    const childId = `HP-SETC-${Date.now()}`;
+    createdOrders.push(childId);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, paid_amount, status, delivery_method, session_id, unique_code, parent_code) VALUES ($1,'instant',20000,20000,'paid','pickup','set-sess',$2,$3)", [childId, `ORD-SETC-${Date.now()}`, code]);
+    assert.deepEqual(await get(), { sisa: 20000, anak_lunas: 20000, bisa: true });
   });
 
   it("GET /admin/orders/:code tanpa session -> 401", async () => {

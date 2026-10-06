@@ -17,9 +17,11 @@ export function CheckoutPage() {
   const [consent, setConsent] = useState(false);
   const [waitLeft, setWaitLeft] = useState(CONSENT_DELAY_S);
 
+  // Interval tunggal (bukan timeout berantai): tiap detik kurang 1 hingga 0.
+  // Interval tak bergantung effect re-run sehingga aman di fake-timer.
   useEffect(() => {
-    const t = setTimeout(() => setWaitLeft(0), CONSENT_DELAY_S * 1000);
-    return () => clearTimeout(t);
+    const timer = setInterval(() => setWaitLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   async function handlePay(): Promise<void> {
