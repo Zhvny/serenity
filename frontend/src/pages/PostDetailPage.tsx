@@ -9,6 +9,7 @@ import { SafeImage } from "../components/SafeImage.tsx";
 import { useT } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
+import { pickContent } from "../i18n/content.ts";
 
 export function PostDetailPage() {
   const t = useT();
@@ -72,8 +73,8 @@ export function PostDetailPage() {
               <span className="fact-tag">{post.tag}</span>
               <time className="history-date">{fmtDate(post.created_at)}</time>
             </p>
-            <h1 className="post-title">{post.title}</h1>
-            <p className="post-body">{post.body}</p>
+            <h1 className="post-title">{pickContent(lang, post.title_en, post.title)}</h1>
+            <p className="post-body">{pickContent(lang, post.body_en, post.body)}</p>
           </div>
         </div>
         {post.products.length > 0 ? (
@@ -84,10 +85,12 @@ export function PostDetailPage() {
             </div>
             <div className="mini-grid">
               {post.products.map((p) => (
-                <Link key={p.id} className="mini-card" to={`/products/${encodeURIComponent(p.id)}`} aria-label={p.name}>
+                <Link key={p.id} className="mini-card" to={`/products/${encodeURIComponent(p.id)}`} aria-label={pickContent(lang, p.name_en, p.name)}>
                   <SafeImage src={p.image_url} alt="" className="mini-photo" emptyClassName="mini-photo mini-photo--empty" />
-                  <h3>{p.name}</h3>
-                  <p className="price">{rupiah(p.price)}</p>
+                  <div className="mini-card-body">
+                    <h3>{pickContent(lang, p.name_en, p.name)}</h3>
+                    <p className="price">{rupiah(p.price)}</p>
+                  </div>
                 </Link>
               ))}
             </div>

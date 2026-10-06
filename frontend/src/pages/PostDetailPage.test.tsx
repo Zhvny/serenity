@@ -54,4 +54,17 @@ describe("PostDetailPage", () => {
     expect(await screen.findByRole("region", { name: /suggested products/i })).toBeInTheDocument();
     expect(screen.getByText(/serenity products/i)).toBeInTheDocument();
   });
+  it("lang en -> judul/isi/posting Inggris + nama produk Inggris", async () => {
+    setLang("en");
+    const enPost = { ...post, title_en: "Promo EN", body_en: "Full content.", excerpt_en: null, products: [{ id: "prod_001", name: "Choco Lava", name_en: "Choco Lava EN", price: 30000, image_url: null }] };
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: enPost })));
+    render(
+      <MemoryRouter initialEntries={["/posts/post-1"]}>
+        <Routes><Route path="/posts/:id" element={<PostDetailPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: "Promo EN" })).toBeInTheDocument();
+    expect(screen.getByText("Full content.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Choco Lava EN" })).toBeInTheDocument();
+  });
 });

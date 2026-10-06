@@ -78,6 +78,22 @@ describe("LandingPage", () => {
     expect(await screen.findByRole("dialog", { name: /what do you need/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Build muscle" })).toBeInTheDocument();
   });
+  it("lang en -> rekomendasi + bacaan pakai teks Inggris", async () => {
+    setLang("en");
+    const recs = [{ id: "prod_001", name: "Salad", name_en: "Salad EN", price: 45000, image_url: null }];
+    const posts = [{ id: "t1", title: "Tren", title_en: "Trend EN", body: "Isi.", body_en: "Content.", excerpt: "", excerpt_en: "", tag: "FunFact", product_id: null, created_at: "2026-10-04T00:00:00Z" }];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/trending")) return new Response(JSON.stringify({ status: "success", data: posts }));
+      if (u.includes("/recommendations")) return new Response(JSON.stringify({ status: "success", data: recs }));
+      if (u.includes("/preferences")) return new Response(JSON.stringify({ status: "success", data: { needs: ["diet"] } }));
+      return new Response(JSON.stringify({ status: "success", data: [] }));
+    }));
+    render(<MemoryRouter><LandingPage /></MemoryRouter>);
+    expect(await screen.findByText("Salad EN")).toBeInTheDocument();
+    expect(await screen.findByText("Trend EN")).toBeInTheDocument();
+    expect(screen.getByText("Isi.")).toBeInTheDocument();
+  });
 
   it("section post di bawah rekomendasi pakai trending", async () => {
     const posts = [1, 2, 3].map((n) => ({ id: `t${n}`, title: `Tren ${n}`, body: "Isi.", excerpt: "", tag: "FunFact", product_id: null, created_at: "2026-10-04T00:00:00Z" }));

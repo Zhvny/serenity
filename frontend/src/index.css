@@ -856,7 +856,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
 .pay-note { font-size: 10px; color: var(--ink-mute); margin: var(--sp-sm) auto 0; max-width: 40ch; }
 .pay-consent {
   display: flex; align-items: flex-start; gap: var(--sp-sm);
-  font-size: 10px; color: var(--ink-mute); text-align: left;
+  font-size: 14px; line-height: 1.5; color: var(--ink); text-align: left;
   margin: 0 auto var(--sp-lg); max-width: 40ch; cursor: pointer;
 }
 .pay-consent input { width: 18px; height: 18px; flex: none; margin-top: 1px; accent-color: var(--primary-deep); }
@@ -880,6 +880,8 @@ code { font-family: var(--font-mono); font-size: 16px; }
 }
 .fact-card:hover { box-shadow: var(--shadow-1); }
 .fact-card--link { color: inherit; text-decoration: none; display: block; }
+.fact-photo { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; border-radius: var(--r-md); background: var(--canvas-soft); }
+.fact-photo--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-xs); color: var(--ink-mute); font-size: 14px; }
 
 /* Popup kebutuhan landing: overlay + kartu tengah. */
 .need-popup {
@@ -915,10 +917,11 @@ code { font-family: var(--font-mono); font-size: 16px; }
   transition: box-shadow 150ms ease;
 }
 .mini-card:hover { box-shadow: var(--shadow-1); }
-.mini-photo { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: var(--canvas-soft); }
-.mini-photo--empty { background: var(--canvas-soft); }
-.mini-card h3 { font-size: 16px; font-weight: 500; margin: var(--sp-sm) var(--sp-md) 0; }
-.mini-card .price { margin: var(--sp-xs) var(--sp-md) var(--sp-md); font-size: 16px; }
+.mini-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--canvas-soft); }
+.mini-photo--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-xs); background: var(--canvas-soft); color: var(--ink-mute); font-size: 14px; }
+.mini-card-body { padding: var(--sp-sm) var(--sp-md) var(--sp-md); display: grid; gap: var(--sp-xs); }
+.mini-card h3 { font-size: 16px; font-weight: 500; margin: 0; }
+.mini-card .price { margin: 0; font-size: 16px; }
 .fact-card h2 { font-size: 16px; font-weight: 500; margin: var(--sp-sm) 0 var(--sp-xs); }
 .fact-card p { font-size: 16px; color: var(--ink-mute); margin: 0; }
 .fact-tag {

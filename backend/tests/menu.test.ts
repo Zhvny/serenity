@@ -48,4 +48,11 @@ describe("menu", () => {
     assert.equal(body.data[0]?.title, "T");
     assert.equal(body.data[0]?.tag, "FunFact");
   });
+  it("GET /posts SELECT sertakan title_en/body_en/excerpt_en", async () => {
+    const seen: string[] = [];
+    const mock = { query: async (text: string) => { seen.push(String(text)); return { rows: [] }; } } as unknown as Pool;
+    const res = await createApp(mock).request("/api/v1/posts");
+    assert.equal(res.status, 200);
+    assert.ok(seen.some((t) => /title_en/.test(t) && /body_en/.test(t) && /excerpt_en/.test(t)));
+  });
 });

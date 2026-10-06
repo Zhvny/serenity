@@ -15,6 +15,8 @@ const createSchema = z.object({
   tags: z.array(z.string()).optional(),
   image_url: z.string().nullish(),
   description: z.string().nullish(),
+  name_en: z.string().max(200).nullish(),
+  description_en: z.string().nullish(),
 });
 const updateSchema = z.object({
   name: z.string().min(1),
@@ -23,6 +25,8 @@ const updateSchema = z.object({
   tags: z.array(z.string()).optional(),
   image_url: z.string().nullish(),
   description: z.string().nullish(),
+  name_en: z.string().max(200).nullish(),
+  description_en: z.string().nullish(),
 });
 
 export function loginRoute(pool: Pool): Hono {
@@ -75,7 +79,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
-    const created = await repo.create({ id: body.id, name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null });
+    const created = await repo.create({ id: body.id, name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null, name_en: body.name_en ?? null, description_en: body.description_en ?? null });
     // audit_logs.order_id khusus order; aksi produk catat id di detail JSON.
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_product", JSON.stringify({ id: created.id })]);
     return c.json({ status: "success", data: created });
@@ -100,7 +104,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   }), async (c) => {
     const id = c.req.param("id");
     const body = c.req.valid("json");
-    const ok = await repo.update(id, { name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null });
+    const ok = await repo.update(id, { name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null, name_en: body.name_en ?? null, description_en: body.description_en ?? null });
     if (!ok) return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "update_product", JSON.stringify({ id })]);
     return c.json({ status: "success", data: { id } });
@@ -162,7 +166,16 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       `SELECT oi.product_id, p.name, oi.quantity, oi.note, oi.price_at_order FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = $1`,
       [order.id],
     );
-    return c.json({ status: "success", data: { ...order, items: items.rows } });
+    // Info kelayakan Lunaskan: sisa vs total anak top-up yang sudah lunas.
+    let settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null = null;
+    if (order.status === "underpaid" && order.paid_amount !== null) {
+      const sisa = order.total_amount - order.paid_amount;
+      const sum = await pool.query<{ s: string }>(
+        "SELECT COALESCE(SUM(paid_amount), 0) AS s FROM orders WHERE parent_code = $1 AND status = 'paid'", [code]);
+      const anak = Number(sum.rows[0]?.s ?? 0);
+      settle_info = { sisa, anak_lunas: anak, bisa: anak >= sisa };
+    }
+    return c.json({ status: "success", data: { ...order, items: items.rows, settle_info } });
   });
 
   // Mark-paid QRIS: catat nominal aktual; kurang -> underpaid, cukup/lebih -> paid.
@@ -191,6 +204,9 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     title: z.string().min(1).max(200),
     body: z.string().min(1).max(10000),
     excerpt: z.string().max(300).nullish(),
+    title_en: z.string().max(200).nullish(),
+    body_en: z.string().nullish(),
+    excerpt_en: z.string().max(300).nullish(),
     tag: z.enum(["FunFact", "News", "Research"]),
     product_id: z.string().min(1).nullish(),
     image_url: z.string().max(500).nullish(),
@@ -214,8 +230,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       }
     }
     const ins = await pool.query<{ id: string }>(
-      "INSERT INTO posts (title, body, excerpt, tag, product_id, image_url, product_ids) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [body.title, body.body, body.excerpt ?? null, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
+      "INSERT INTO posts (title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+      [body.title, body.body, body.excerpt ?? null, body.title_en ?? null, body.body_en ?? null, body.excerpt_en ?? null, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
     );
     const id = ins.rows[0]?.id ?? "";
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "create_post", JSON.stringify({ id })]);

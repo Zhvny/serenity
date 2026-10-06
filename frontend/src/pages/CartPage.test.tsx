@@ -41,6 +41,20 @@ describe("CartPage", () => {
     expect(screen.getByText("Jus")).toBeInTheDocument();
     expect(screen.getAllByText("Rp 40.000")).toHaveLength(2);
   });
+  it("lang en -> nama item Inggris; null -> fallback", async () => {
+    setLang("en");
+    const en1 = { ...p1, name_en: "Salad EN" };
+    const en2 = { ...p2, name_en: null };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/products")) return new Response(JSON.stringify({ status: "success", data: [en1, en2] }));
+      if (u.includes("/cart")) return new Response(JSON.stringify({ status: "success", data: items }));
+      return new Response(JSON.stringify({ status: "error", code: "X", message: "unknown" }), { status: 500 });
+    }));
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    expect(await screen.findByText("Salad EN")).toBeInTheDocument();
+    expect(screen.getByText("Jus")).toBeInTheDocument();
+  });
   it("klik + → PUT terkirim + qty naik", async () => {
     const user = userEvent.setup();
     const calls = stubCart();
