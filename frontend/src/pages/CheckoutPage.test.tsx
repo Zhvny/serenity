@@ -11,6 +11,16 @@ function resp(body: unknown, status = 200): Response {
 }
 
 describe("CheckoutPage", () => {
+  it("angka detik berdetak tiap detik sampai checkbox aktif", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
+    render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
+    expect(screen.getByText(/\(mohon baca dulu… 5\)/)).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(screen.getByText(/\(mohon baca dulu… 4\)/)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).toBeDisabled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
+    expect(screen.getByRole("checkbox")).toBeEnabled();
+  });
   it("bayar + checkbox terkunci sampai jeda baca selesai", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: [] })));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);

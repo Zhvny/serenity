@@ -8,7 +8,7 @@ import { Icon } from "../components/Icon.tsx";
 import { ProductPhoto } from "../components/ProductPhoto.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useLang } from "../i18n/useLang.ts";
-import { allergenLabel } from "../i18n/content.ts";
+import { allergenLabel, pickContent } from "../i18n/content.ts";
 import { tNow, useT } from "../i18n/t.ts";
 import { burstAt, flyToCart } from "../fx/fx.ts";
 import { playSound } from "../fx/sound.ts";
@@ -103,9 +103,9 @@ export function DetailPage() {
                   <span key={tag} className="tag">{tag}</span>
                 ))}
               </div>
-              <h1>{prod.name}</h1>
+              <h1>{pickContent(lang, prod.name_en, prod.name)}</h1>
               <p className="detail-price">{rupiah(prod.price)}</p>
-              {prod.description !== null ? <p className="detail-desc">{prod.description}</p> : null}
+              {pickContent(lang, prod.description_en, prod.description ?? "") !== "" ? <p className="detail-desc">{pickContent(lang, prod.description_en, prod.description ?? "")}</p> : null}
 
               <h2 className="detail-subhead">{t("shop.detail.nutrition")}</h2>
               <dl className="stat-grid" aria-label={t("shop.detail.nutrition")}>
