@@ -47,7 +47,8 @@ az containerapp create -g "$RG" -n "$CA" --environment "$CAENV" \
 #   --image "$ACR.azurecr.io/serenity-be:latest" \
 #   --secrets db-url="<DB_MIGRATE_URL dari Key Vault>" \
 #   --env-vars DATABASE_URL=secretref:db-url ENV=production \
-#   --command node scripts/migrate.js
+#   --command "node scripts/migrate.js && node scripts/seed.js"
+# seed.js hanya menjalankan seed_dev.sql (idempoten) — katalog wajib ada tiap deploy.
 
 # PII TTL (opsional): job harian jalankan infra/pii-ttl.sql (psql) atau script node terjadwal.
 
