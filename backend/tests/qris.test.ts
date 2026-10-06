@@ -29,7 +29,7 @@ async function seedCart(): Promise<string> {
   const cartId = `qris-cart-${randomUUID()}`;
   createdCarts.push(cartId);
   await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
-  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_001', 2, NULL)", [randomUUID(), cartId]);
+  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_001', 2, NULL)", [randomUUID(), cartId]);
   return cartId;
 }
 
@@ -46,7 +46,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     createdOrders.push(data.order_id);
     assert.match(data.unique_code, /^ORD-[0-9A-F]{12,}$/);
     assert.equal(data.qr_url.includes("qr.example"), true);
-    assert.equal(data.nominal, 90000); // prod_001 45000 x 2
+    assert.equal(data.nominal, 90000); // samp_001 45000 x 2
     // Detail pesanan: cart item tersalin ke order_items.
     const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.n;
     assert.equal(Number(n), 1);

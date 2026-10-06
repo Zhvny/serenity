@@ -12,9 +12,9 @@ function resp(body: unknown, status = 200): Response {
 
 const post = {
   id: "post-1", title: "Promo", body: "Isi promo lengkap.", tag: "News",
-  product_id: null, image_url: "https://img/x.jpg", product_ids: ["prod_001"],
+  product_id: null, image_url: "https://img/x.jpg", product_ids: ["samp_001"],
   created_at: "2026-10-03T00:00:00Z",
-  products: [{ id: "prod_001", name: "Choco Lava", price: 30000, image_url: null }],
+  products: [{ id: "samp_001", name: "Choco Lava", price: 30000, image_url: null }],
 };
 
 describe("PostDetailPage", () => {
@@ -29,7 +29,7 @@ describe("PostDetailPage", () => {
     expect(screen.getByRole("img", { name: "Promo" })).toHaveAttribute("src", "https://img/x.jpg");
     expect(screen.getByText("Isi promo lengkap.")).toBeInTheDocument();
     const link = screen.getByRole("link", { name: "Choco Lava" });
-    expect(link).toHaveAttribute("href", "/products/prod_001");
+    expect(link).toHaveAttribute("href", "/products/samp_001");
   });
 
   it("unknown -> tidak ditemukan + kembali", async () => {
@@ -56,7 +56,7 @@ describe("PostDetailPage", () => {
   });
   it("lang en -> judul/isi/posting Inggris + nama produk Inggris", async () => {
     setLang("en");
-    const enPost = { ...post, title_en: "Promo EN", body_en: "Full content.", excerpt_en: null, products: [{ id: "prod_001", name: "Choco Lava", name_en: "Choco Lava EN", price: 30000, image_url: null }] };
+    const enPost = { ...post, title_en: "Promo EN", body_en: "Full content.", excerpt_en: null, products: [{ id: "samp_001", name: "Choco Lava", name_en: "Choco Lava EN", price: 30000, image_url: null }] };
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: enPost })));
     render(
       <MemoryRouter initialEntries={["/posts/post-1"]}>

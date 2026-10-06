@@ -56,7 +56,7 @@ describe("recommend", () => {
       query: async (text: string) => {
         seen.push(String(text));
         if (String(text).includes("FROM user_preferences")) return { rows: [{ needs: ["diet"] }], rowCount: 1 };
-        return { rows: [{ id: "prod_001", name: "Salad", price: 45000, image_url: null }], rowCount: 1 };
+        return { rows: [{ id: "samp_001", name: "Salad", price: 45000, image_url: null }], rowCount: 1 };
       },
     } as unknown as Pool;
     const res = await createApp(shaped).request("/api/v1/products/recommendations", { headers: { cookie: "cart_id=sess-1" } });

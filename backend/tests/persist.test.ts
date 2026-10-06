@@ -19,8 +19,8 @@ after(async () => {
 
 describe("persistensi cart", () => {
   it("addItem lalu getCart (panggilan baru) → item tetap ada di DB", async () => {
-    const added = await addItem(pool, cartId, "prod_001", 2, "tanpa es");
-    assert.equal(added.product_id, "prod_001");
+    const added = await addItem(pool, cartId, "samp_001", 2, "tanpa es");
+    assert.equal(added.product_id, "samp_001");
     const items = await getCart(pool, cartId);
     const found = items.find((i) => i.item_id === added.item_id);
     assert.ok(found, "item tidak ditemukan setelah re-read DB");
@@ -39,7 +39,7 @@ describe("persistensi order + order-id sequence", () => {
     assert.equal(nb, na + 1);
   });
   it("createOrder lalu getOrder (panggilan baru) → order tetap ada", async () => {
-    const order = await createOrder(pool, [{ product_id: "prod_001", quantity: 1 }], "instant", null, 45000, "pickup", null);
+    const order = await createOrder(pool, [{ product_id: "samp_001", quantity: 1 }], "instant", null, 45000, "pickup", null);
     const again = await getOrder(pool, order.order_id);
     assert.ok(again, "order tidak ditemukan setelah re-read DB");
     assert.equal(again?.order_id, order.order_id);
