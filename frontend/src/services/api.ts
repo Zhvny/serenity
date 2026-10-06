@@ -7,7 +7,7 @@ export class ApiError extends Error {
 }
 
 export type Nutrition = { calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number; fiber_g: number; sugar_g: number };
-export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; name_en: string | null; description_en: string | null; is_active: boolean; nutrition: Nutrition; allergens: string[] };
+export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; name_en: string | null; description_en: string | null; source: string; is_active: boolean; nutrition: Nutrition; allergens: string[] };
 export type Category = { id: string; name: string; description: string | null };
 export type CartItem = { item_id: string; product_id: string; quantity: number; note: string | null };
 

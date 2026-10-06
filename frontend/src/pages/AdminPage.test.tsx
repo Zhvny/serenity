@@ -111,6 +111,22 @@ describe("AdminPage", () => {
     expect(put?.body).toContain("Choco Lava");
   });
 
+  it("daftar produk: baris seed tampil badge Seed, buatan admin tidak", async () => {
+    const user = userEvent.setup();
+    const seedProd = { id: "prod_001", name: "Salad", category_id: "cat_food", price: 10000, tags: [], image_url: null, description: null, name_en: null, description_en: null, source: "seed_dev", is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
+    const adminProd = { ...seedProd, id: "prod_x", name: "Buatan Admin", source: "admin" };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [seedProd, adminProd] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Produk" }));
+    expect(await screen.findByText("Salad")).toBeInTheDocument();
+    const badges = screen.getAllByText("Seed");
+    expect(badges).toHaveLength(1);
+  });
   it("tag produk tampil sebagai chip; klik chip mengisi input", async () => {
     const user = userEvent.setup();
     const prod = { id: "prod_001", name: "Choco Lava", category_id: "cat_dessert", price: 30000, tags: ["low-sugar", "vegan"], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
