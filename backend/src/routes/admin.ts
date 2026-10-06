@@ -241,7 +241,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Daftar post untuk kelola (read-only fields + EN presence dihitung frontend).
   r.get("/posts", async (c) => {
     const { rows } = await pool.query(
-      "SELECT id, title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
+      "SELECT id, title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids, deleted_at, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
     );
     return c.json({ status: "success", data: rows });
   });
@@ -276,14 +276,29 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { id } });
   });
 
-  // Hapus post (post_views ikut CASCADE).
+  // Arsip lunak: hapus = set deleted_at (baris + views tetap; publik anggap tak ada).
   r.delete("/posts/:id", async (c) => {
     const id = c.req.param("id");
-    const del = await pool.query("DELETE FROM posts WHERE id = $1 RETURNING id", [id]);
+    const del = await pool.query("UPDATE posts SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL RETURNING id", [id]);
     if ((del.rowCount ?? 0) === 0) {
+      const exists = await pool.query("SELECT 1 FROM posts WHERE id = $1", [id]);
+      if ((exists.rowCount ?? 0) === 0) {
+        return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
+      }
+      return c.json({ status: "success", data: { id, archived: true } });
+    }
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "archive_post", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { id } });
+  });
+
+  // Kembalikan post terarsip.
+  r.post("/posts/:id/restore", async (c) => {
+    const id = c.req.param("id");
+    const upd = await pool.query("UPDATE posts SET deleted_at = NULL WHERE id = $1 AND deleted_at IS NOT NULL RETURNING id", [id]);
+    if ((upd.rowCount ?? 0) === 0) {
       return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
     }
-    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "delete_post", JSON.stringify({ id })]);
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "restore_post", JSON.stringify({ id })]);
     return c.json({ status: "success", data: { id } });
   });
 

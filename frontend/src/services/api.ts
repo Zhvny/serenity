@@ -236,7 +236,7 @@ export function adminCreatePost(input: { title: string; body: string; excerpt?: 
   return adminMutate<{ id: string }>("/admin/posts", "POST", input);
 }
 
-export type AdminPost = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
+export type AdminPost = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; deleted_at: string | null; created_at: string };
 
 export function adminListPosts(): Promise<AdminPost[]> {
   return apiGet<AdminPost[]>("/admin/posts");
@@ -248,6 +248,10 @@ export function adminUpdatePost(id: string, input: { title: string; body: string
 
 export function adminDeletePost(id: string): Promise<{ id: string }> {
   return adminMutate<{ id: string }>(`/admin/posts/${encodeURIComponent(id)}`, "DELETE");
+}
+
+export function adminRestorePost(id: string): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>(`/admin/posts/${encodeURIComponent(id)}/restore`, "POST");
 }
 
 // --- QRIS (public cart flow) ---
