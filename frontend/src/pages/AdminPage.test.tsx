@@ -304,10 +304,30 @@ describe("AdminPage", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-PAID9/advance"))).toBe(true);
   });
 
+  it("tab Post -> arsip tampil + Kembalikan kirim POST restore", async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    const rows = [{ id: "post-a", title: "Arsipan", body: "Isi.", excerpt: null, title_en: null, body_en: null, excerpt_en: null, tag: "News", product_id: null, image_url: null, product_ids: [], deleted_at: "2026-10-05T00:00:00Z", created_at: "2026-10-04T00:00:00Z" }];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push(`${method} ${u}`);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/restore") && method === "POST") return resp({ status: "success", data: { id: "post-a" } });
+      if (u.includes("/admin/posts") && method === "GET") return resp({ status: "success", data: rows });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Post" }));
+    expect(await screen.findByRole("region", { name: /arsip post/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /kembalikan arsipan/i }));
+    await vi.waitFor(() => expect(calls.some((c) => c.startsWith("POST") && c.includes("/admin/posts/post-a/restore"))).toBe(true));
+  });
   it("tab Post -> daftar + edit isi form PUT + hapus DELETE 2-klik", async () => {
     const user = userEvent.setup();
     const calls: Array<{ url: string; method: string }> = [];
-    const rows = [{ id: "post-9", title: "Lama", body: "Isi lama.", excerpt: null, title_en: null, body_en: null, excerpt_en: null, tag: "News", product_id: null, image_url: null, product_ids: [], created_at: "2026-10-04T00:00:00Z" }];
+    const rows = [{ id: "post-9", title: "Lama", body: "Isi lama.", excerpt: null, title_en: null, body_en: null, excerpt_en: null, tag: "News", product_id: null, image_url: null, product_ids: [], deleted_at: null, created_at: "2026-10-04T00:00:00Z" }];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url); const method = init?.method ?? "GET";
       calls.push(`${method} ${u}`);

@@ -17,6 +17,7 @@ import {
   adminListPosts,
   adminUpdatePost,
   adminDeletePost,
+  adminRestorePost,
   type Product,
   type AdminPost,
   type PendingOrder,
@@ -278,9 +279,19 @@ export function AdminPage() {
       if (editingPostId === id) resetPostForm();
       setConfirmDeleteId(null);
       await refreshPosts();
-      setPostMsg("Post dihapus.");
+      setPostMsg("Post diarsipkan.");
     } catch (err: unknown) {
-      onError(err, "Gagal menghapus post");
+      onError(err, "Gagal mengarsipkan post");
+    }
+  }
+  async function handlePostRestore(id: string): Promise<void> {
+    setPostMsg("");
+    try {
+      await adminRestorePost(id);
+      await refreshPosts();
+      setPostMsg("Post dikembalikan.");
+    } catch (err: unknown) {
+      onError(err, "Gagal mengembalikan post");
     }
   }
   async function handleAdvance(code: string): Promise<void> {
@@ -498,11 +509,11 @@ export function AdminPage() {
         <div className="admin-orders">
           <section className="admin-section">
             <h2 className="admin-subhead">Daftar post</h2>
-            {posts.length === 0 ? (
+            {posts.filter((p) => p.deleted_at === null).length === 0 ? (
               <p className="admin-empty">Belum ada post.</p>
             ) : (
               <ul className="admin-list">
-                {posts.map((p) => (
+                {posts.filter((p) => p.deleted_at === null).map((p) => (
                   <li key={p.id} className="admin-row">
                     <div className="admin-row-main">
                       <div className="admin-row-top">
@@ -525,6 +536,27 @@ export function AdminPage() {
               </ul>
             )}
           </section>
+          {posts.some((p) => p.deleted_at !== null) ? (
+            <section className="admin-section" aria-label="Arsip post">
+              <h2 className="admin-subhead">Arsip</h2>
+              <ul className="admin-list">
+                {posts.filter((p) => p.deleted_at !== null).map((p) => (
+                  <li key={p.id} className="admin-row">
+                    <div className="admin-row-main">
+                      <div className="admin-row-top">
+                        <h3>{p.title}</h3>
+                        <span className="status-badge">Diarsipkan</span>
+                      </div>
+                      <p className="admin-row-meta"><span className="admin-id">{p.id}</span></p>
+                    </div>
+                    <div className="admin-row-actions">
+                      <button type="button" className="admin-btn" aria-label={`Kembalikan ${p.title}`} onClick={() => void handlePostRestore(p.id)}>Kembalikan</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         <section className="admin-section" aria-label="Form post">
           <h2 className="admin-subhead">{editingPostId !== null ? "Edit post" : "Tambah Post (FunFact / News / Research)"}</h2>
           <div className="post-editor">

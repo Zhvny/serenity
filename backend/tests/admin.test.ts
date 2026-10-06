@@ -300,6 +300,30 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(res.status, 401);
   });
 
+  it("admin posts arsip: DELETE set deleted_at (baris tetap) -> publik 404 -> restore", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const created = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "Arsip T", body: "Isi.", tag: "News" }) });
+    assert.equal(created.status, 200);
+    const pid = ((await created.json()) as { data: { id: string } }).data.id;
+    try {
+      const del = await app.request(`/api/v1/admin/posts/${encodeURIComponent(pid)}`, { method: "DELETE", headers: h });
+      assert.equal(del.status, 200);
+      const row = await pool.query<{ deleted_at: Date | null }>("SELECT deleted_at FROM posts WHERE id = $1", [pid]);
+      assert.ok(row.rows[0]?.deleted_at !== null);
+      const pub = await createApp(pool).request(`/api/v1/posts/${encodeURIComponent(pid)}`);
+      assert.equal(pub.status, 404);
+      const res = await app.request(`/api/v1/admin/posts/${encodeURIComponent(pid)}/restore`, { method: "POST", headers: h });
+      assert.equal(res.status, 200);
+      const row2 = await pool.query<{ deleted_at: Date | null }>("SELECT deleted_at FROM posts WHERE id = $1", [pid]);
+      assert.equal(row2.rows[0]?.deleted_at, null);
+    } finally {
+      await pool.query("DELETE FROM post_views WHERE post_id = $1", [pid]);
+      await pool.query("DELETE FROM posts WHERE id = $1", [pid]);
+    }
+  });
   it("admin posts CRUD: list -> update EN -> delete", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
@@ -318,8 +342,8 @@ describe("admin login + guard (DB-backed, serenity)", () => {
       const del = await app.request(`/api/v1/admin/posts/${encodeURIComponent(pid)}`, { method: "DELETE", headers: h });
       assert.equal(del.status, 200);
       const gone = await app.request(`/api/v1/admin/posts`, { headers: { cookie: `admin_session=${sid}` } });
-      const rows2 = ((await gone.json()) as { data: Array<{ id: string }> }).data;
-      assert.ok(!rows2.some((r) => r.id === pid));
+      const rows2 = ((await gone.json()) as { data: Array<{ id: string; deleted_at: string | null }> }).data;
+      assert.ok(rows2.some((r) => r.id === pid && r.deleted_at !== null));
     } finally {
       await pool.query("DELETE FROM post_views WHERE post_id = $1", [pid]);
       await pool.query("DELETE FROM posts WHERE id = $1", [pid]);
