@@ -186,7 +186,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
   });
 
   it("PUT /admin/products/:id tanpa session -> 401 UNAUTH", async () => {
-    const res = await createApp(pool).request("/api/v1/admin/products/prod_001", { method: "PUT", headers: csrf(), body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
+    const res = await createApp(pool).request("/api/v1/admin/products/samp_001", { method: "PUT", headers: csrf(), body: JSON.stringify({ name: "X", category_id: "cat_food", price: 1000 }) });
     assert.equal(res.status, 401);
     assert.equal(((await res.json()) as { code: string }).code, "UNAUTH");
   });
@@ -245,7 +245,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const id = `HP-DET-${Date.now()}`;
     createdOrders.push(id);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, delivery_address, session_id, unique_code) VALUES ($1,'instant',45000,'paid','delivery','Jl. Detail No.3','det-sess',$2)", [id, code]);
-    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1,'prod_001',2,'tanpa gula',22500)", [id]);
+    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1,'samp_001',2,'tanpa gula',22500)", [id]);
     const res = await app.request(`/api/v1/admin/orders/${code}`, { headers: { cookie: `admin_session=${sid}` } });
     assert.equal(res.status, 200);
     const body = (await res.json()) as { data: { unique_code: string; delivery_address: string | null; items: Array<{ product_id: string; quantity: number; name: string }> } };
@@ -324,7 +324,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
   it("GET /posts/:id -> detail + produk saran", async () => {
     const app = createApp(pool);
     const id = randomUUID();
-    await pool.query("INSERT INTO posts (id, title, body, tag, image_url, product_ids) VALUES ($1, 'Promo', 'Isi promo.', 'News', 'https://img/x.jpg', $2)", [id, ["prod_001"]]);
+    await pool.query("INSERT INTO posts (id, title, body, tag, image_url, product_ids) VALUES ($1, 'Promo', 'Isi promo.', 'News', 'https://img/x.jpg', $2)", [id, ["samp_001"]]);
     try {
       const res = await app.request(`/api/v1/posts/${id}`);
       assert.equal(res.status, 200);
@@ -333,7 +333,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
       assert.equal(data["image_url"], "https://img/x.jpg");
       const prods = data["products"] as Array<{ id: string }>;
       assert.equal(prods.length, 1);
-      assert.equal(prods[0]?.id, "prod_001");
+      assert.equal(prods[0]?.id, "samp_001");
     } finally {
       await pool.query("DELETE FROM posts WHERE id = $1", [id]);
     }
@@ -349,7 +349,7 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
-    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "M", body: "B", tag: "FunFact", image_url: "https://img/y.jpg", product_ids: ["prod_001"] }) });
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "M", body: "B", tag: "FunFact", image_url: "https://img/y.jpg", product_ids: ["samp_001"] }) });
     assert.equal(res.status, 200);
     const id = ((await res.json()) as { data: { id: string } }).data.id;
     const row = await pool.query<{ image_url: string }>("SELECT image_url FROM posts WHERE id = $1", [id]);

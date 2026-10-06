@@ -4,7 +4,7 @@ import { createApp } from "../src/app.js";
 import { closeRedis } from "../src/db/redis.js";
 import type { Pool } from "pg";
 
-const rows = [{ id: "prod_001", name: "Salad Quinoa Ayam Grilled", category_id: "cat_food", price: 45000, tags: ["high-protein"], image_url: null, description: null, is_active: true, calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4, allergens: ["kacang"] }];
+const rows = [{ id: "samp_001", name: "Salad Quinoa Ayam Grilled", category_id: "cat_food", price: 45000, tags: ["high-protein"], image_url: null, description: null, is_active: true, calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4, allergens: ["kacang"] }];
 const catRows = [{ id: "cat_food", name: "Food", description: null }];
 const pool = { query: async (text: string) => ({ rows: String(text).includes("FROM categories") ? catRows : rows }) } as unknown as Pool;
 
@@ -15,7 +15,7 @@ describe("menu", () => {
     const res = await createApp(pool).request("/api/v1/products");
     assert.equal(res.status, 200);
     const body = await res.json() as { status: string; data: Array<{ id: string; price: number; nutrition: { calories_kcal: number } }> };
-    assert.equal(body.data[0]?.id, "prod_001");
+    assert.equal(body.data[0]?.id, "samp_001");
     assert.equal(body.data[0]?.nutrition.calories_kcal, 320);
   });
   it("GET /products/:id unknown → 404 PRODUCT_NOT_FOUND", async () => {
