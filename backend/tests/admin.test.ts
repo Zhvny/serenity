@@ -97,12 +97,20 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(list.status, 200);
   });
 
-  it("admin create name_en non-string -> 400 VALIDATION_ERROR", async () => {
-    const app = createApp(pool);
+  it("admin create name_en non-string -> 400 VALIDATION_ERROR", async () => {    const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
     const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
     const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
     const res = await app.request("/api/v1/admin/products", { method: "POST", headers: h, body: JSON.stringify({ id: "px", name: "X", category_id: "cat_food", price: 100, name_en: 123 }) });
+    assert.equal(res.status, 400);
+    assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
+  });
+  it("admin create post body_en >2000 -> 400 VALIDATION_ERROR", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const res = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "T", body: "B", body_en: "x".repeat(2001), tag: "News" }) });
     assert.equal(res.status, 400);
     assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
   });

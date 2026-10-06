@@ -425,6 +425,7 @@ export function AdminPage() {
                       <h3>{p.name}</h3>
                       <span className={p.is_active ? "status-badge status-badge--ok" : "status-badge"}>{p.is_active ? "Aktif" : "Nonaktif"}</span>
                       {p.source === "seed_dev" ? <span className="tag" title="Data bawaan seed (bukan buatan admin)">Seed</span> : null}
+                      {p.name_en === null || (p.description !== null && p.description_en === null) ? <span className="tag" title="Belum ada terjemahan Inggris">EN kurang</span> : null}
                     </div>
                     <p className="admin-row-meta"><span className="admin-id">{p.id}</span><span className="admin-price">Rp {p.price.toLocaleString("id-ID")}</span></p>
                   </div>
