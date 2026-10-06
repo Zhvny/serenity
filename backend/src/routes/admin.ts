@@ -238,6 +238,55 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { id } });
   });
 
+  // Daftar post untuk kelola (read-only fields + EN presence dihitung frontend).
+  r.get("/posts", async (c) => {
+    const { rows } = await pool.query(
+      "SELECT id, title, body, excerpt, title_en, body_en, excerpt_en, tag, product_id, image_url, product_ids, created_at FROM posts ORDER BY created_at DESC LIMIT 100",
+    );
+    return c.json({ status: "success", data: rows });
+  });
+
+  // Edit post penuh (skema sama dengan create).
+  r.put("/posts/:id", zValidator("json", postSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+  }), async (c) => {
+    const id = c.req.param("id");
+    const body = c.req.valid("json");
+    if (body.product_id != null) {
+      const prod = await pool.query("SELECT 1 FROM products WHERE id = $1", [body.product_id]);
+      if ((prod.rowCount ?? 0) === 0) {
+        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+      }
+    }
+    const pids = body.product_ids ?? [];
+    for (const pid of pids) {
+      const prod = await pool.query("SELECT 1 FROM products WHERE id = $1", [pid]);
+      if ((prod.rowCount ?? 0) === 0) {
+        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+      }
+    }
+    const upd = await pool.query(
+      "UPDATE posts SET title = $2, body = $3, excerpt = $4, title_en = $5, body_en = $6, excerpt_en = $7, tag = $8, product_id = $9, image_url = $10, product_ids = $11 WHERE id = $1 RETURNING id",
+      [id, body.title, body.body, body.excerpt ?? null, body.title_en ?? null, body.body_en ?? null, body.excerpt_en ?? null, body.tag, body.product_id ?? null, body.image_url ?? null, pids],
+    );
+    if ((upd.rowCount ?? 0) === 0) {
+      return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
+    }
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "update_post", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { id } });
+  });
+
+  // Hapus post (post_views ikut CASCADE).
+  r.delete("/posts/:id", async (c) => {
+    const id = c.req.param("id");
+    const del = await pool.query("DELETE FROM posts WHERE id = $1 RETURNING id", [id]);
+    if ((del.rowCount ?? 0) === 0) {
+      return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
+    }
+    await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "delete_post", JSON.stringify({ id })]);
+    return c.json({ status: "success", data: { id } });
+  });
+
   // Lunaskan parent underpaid secara manual: syarat anak lunas menutup sisa.
   r.post("/orders/:code/settle-parent", async (c) => {
     const code = c.req.param("code");

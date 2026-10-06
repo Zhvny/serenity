@@ -122,7 +122,7 @@ async function getCsrf(): Promise<string> {
   return parse<{ csrfToken: string }>(res).then((d) => d.csrfToken);
 }
 
-async function adminMutate<T>(path: string, method: "POST" | "PUT", input?: unknown): Promise<T> {
+async function adminMutate<T>(path: string, method: "POST" | "PUT" | "DELETE", input?: unknown): Promise<T> {
   const token = await getCsrf();
   let res: Response;
   try {
@@ -234,6 +234,20 @@ export function getRecommendations(): Promise<Recommendation[]> {
 
 export function adminCreatePost(input: { title: string; body: string; excerpt?: string | null; title_en?: string | null; body_en?: string | null; excerpt_en?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
   return adminMutate<{ id: string }>("/admin/posts", "POST", input);
+}
+
+export type AdminPost = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
+
+export function adminListPosts(): Promise<AdminPost[]> {
+  return apiGet<AdminPost[]>("/admin/posts");
+}
+
+export function adminUpdatePost(id: string, input: { title: string; body: string; excerpt?: string | null; title_en?: string | null; body_en?: string | null; excerpt_en?: string | null; tag: string; product_id?: string | null; image_url?: string | null; product_ids?: string[] }): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>(`/admin/posts/${encodeURIComponent(id)}`, "PUT", input);
+}
+
+export function adminDeletePost(id: string): Promise<{ id: string }> {
+  return adminMutate<{ id: string }>(`/admin/posts/${encodeURIComponent(id)}`, "DELETE");
 }
 
 // --- QRIS (public cart flow) ---

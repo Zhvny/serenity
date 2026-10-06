@@ -14,7 +14,11 @@ import {
   adminMarkPaid,
   adminSettleParent,
   adminCreatePost,
+  adminListPosts,
+  adminUpdatePost,
+  adminDeletePost,
   type Product,
+  type AdminPost,
   type PendingOrder,
   type OrderDetail,
 } from "../services/api.ts";
@@ -87,6 +91,9 @@ export function AdminPage() {
   const [postPids, setPostPids] = useState<string[]>([]);
   const [postMsg, setPostMsg] = useState("");
   const [postImgOk, setPostImgOk] = useState(true);
+  const [posts, setPosts] = useState<AdminPost[]>([]);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const desktop = useDesktop();
   const formRef = useRef<HTMLElement>(null);
 
@@ -99,6 +106,12 @@ export function AdminPage() {
     setProducts(list);
     setLoggedIn(true);
     setLoadError("");
+  }
+
+  async function refreshPosts(): Promise<void> {
+    const list = await adminListPosts();
+    setPosts(list);
+    setLoggedIn(true);
   }
 
   async function refreshOrders(status: string): Promise<void> {
@@ -114,7 +127,7 @@ export function AdminPage() {
 
   async function refresh(): Promise<void> {
     try {
-      await Promise.all([refreshProducts(), refreshOrders(orderFilter)]);
+      await Promise.all([refreshProducts(), refreshOrders(orderFilter), refreshPosts()]);
     } catch (e: unknown) {
       if (e instanceof ApiError && e.code === "UNAUTH") setLoggedIn(false);
       else setLoadError(e instanceof Error ? e.message : "Gagal memuat");
@@ -217,18 +230,57 @@ export function AdminPage() {
     }
     try {
       const opt = (v: string): string | null => (v.trim() === "" ? null : v.trim());
-      await adminCreatePost({ title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), title_en: opt(postTitleEn), body_en: opt(postBodyEn), excerpt_en: opt(postExcerptEn), tag: postTag, product_id: null, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids });
-      setPostTitle("");
-      setPostBody("");
-      setPostExcerpt("");
-      setPostTitleEn("");
-      setPostBodyEn("");
-      setPostExcerptEn("");
-      setPostImage("");
-      setPostPids([]);
+      const input = { title: postTitle.trim(), body: postBody.trim(), excerpt: postExcerpt.trim() === "" ? null : postExcerpt.trim(), title_en: opt(postTitleEn), body_en: opt(postBodyEn), excerpt_en: opt(postExcerptEn), tag: postTag, product_id: null, image_url: postImage.trim() === "" ? null : postImage.trim(), product_ids: postPids };
+      if (editingPostId !== null) {
+        await adminUpdatePost(editingPostId, input);
+      } else {
+        await adminCreatePost(input);
+      }
+      resetPostForm();
+      await refreshPosts();
       setPostMsg("Post tersimpan.");
     } catch (err: unknown) {
       onError(err, "Gagal menyimpan post");
+    }
+  }
+  function resetPostForm(): void {
+    setPostTitle("");
+    setPostBody("");
+    setPostExcerpt("");
+    setPostTitleEn("");
+    setPostBodyEn("");
+    setPostExcerptEn("");
+    setPostImage("");
+    setPostPids([]);
+    setPostImgOk(true);
+    setEditingPostId(null);
+    setConfirmDeleteId(null);
+  }
+  function startPostEdit(p: AdminPost): void {
+    setEditingPostId(p.id);
+    setPostTitle(p.title);
+    setPostBody(p.body);
+    setPostExcerpt(p.excerpt ?? "");
+    setPostTitleEn(p.title_en ?? "");
+    setPostBodyEn(p.body_en ?? "");
+    setPostExcerptEn(p.excerpt_en ?? "");
+    setPostTag(p.tag);
+    setPostImage(p.image_url ?? "");
+    setPostPids(p.product_ids ?? []);
+    setPostImgOk(true);
+    setPostMsg("");
+    setTab("posts");
+  }
+  async function handlePostDelete(id: string): Promise<void> {
+    setPostMsg("");
+    try {
+      await adminDeletePost(id);
+      if (editingPostId === id) resetPostForm();
+      setConfirmDeleteId(null);
+      await refreshPosts();
+      setPostMsg("Post dihapus.");
+    } catch (err: unknown) {
+      onError(err, "Gagal menghapus post");
     }
   }
   async function handleAdvance(code: string): Promise<void> {
@@ -443,8 +495,38 @@ export function AdminPage() {
           </section>
         </div>
       ) : (
-        <section className="admin-section">
-          <h2 className="admin-subhead">Tambah Post (FunFact / News / SoftSelling)</h2>
+        <div className="admin-orders">
+          <section className="admin-section">
+            <h2 className="admin-subhead">Daftar post</h2>
+            {posts.length === 0 ? (
+              <p className="admin-empty">Belum ada post.</p>
+            ) : (
+              <ul className="admin-list">
+                {posts.map((p) => (
+                  <li key={p.id} className="admin-row">
+                    <div className="admin-row-main">
+                      <div className="admin-row-top">
+                        <h3>{p.title}</h3>
+                        <span className="fact-tag">{p.tag}</span>
+                        {p.title_en === null ? <span className="tag" title="Belum ada terjemahan Inggris">EN kurang</span> : null}
+                      </div>
+                      <p className="admin-row-meta"><span className="admin-id">{p.id}</span></p>
+                    </div>
+                    <div className="admin-row-actions">
+                      <button type="button" className="admin-btn admin-btn--ghost" aria-label={`Edit ${p.title}`} onClick={() => startPostEdit(p)}>Edit</button>
+                      {confirmDeleteId === p.id ? (
+                        <button type="button" className="admin-btn admin-btn--ghost-danger" aria-label={`Yakin hapus ${p.title}`} onClick={() => void handlePostDelete(p.id)}>Yakin hapus?</button>
+                      ) : (
+                        <button type="button" className="admin-btn admin-btn--ghost-danger" aria-label={`Hapus ${p.title}`} onClick={() => setConfirmDeleteId(p.id)}>Hapus</button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        <section className="admin-section" aria-label="Form post">
+          <h2 className="admin-subhead">{editingPostId !== null ? "Edit post" : "Tambah Post (FunFact / News / Research)"}</h2>
           <div className="post-editor">
           <form className="admin-form" onSubmit={(e) => void handlePostSubmit(e)}>
             <label htmlFor="post-title">Judul</label>
@@ -480,7 +562,8 @@ export function AdminPage() {
               </div>
             ) : null}
             <div className="admin-form-actions">
-              <button type="submit" className="admin-btn" disabled={postTitle.trim() === "" || postBody.trim() === ""}>Simpan Post</button>
+              <button type="submit" className="admin-btn" disabled={postTitle.trim() === "" || postBody.trim() === ""}>{editingPostId !== null ? "Simpan Perubahan" : "Simpan Post"}</button>
+              {editingPostId !== null ? <button type="button" className="admin-btn admin-btn--ghost" onClick={resetPostForm}>Batal</button> : null}
             </div>
             {postMsg !== "" ? <p role="status">{postMsg}</p> : null}
           </form>
@@ -507,6 +590,7 @@ export function AdminPage() {
           </div>
           </div>
         </section>
+        </div>
       )}
     </main>
   );

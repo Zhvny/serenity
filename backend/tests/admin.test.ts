@@ -300,6 +300,31 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(res.status, 401);
   });
 
+  it("admin posts CRUD: list -> update EN -> delete", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const created = await app.request("/api/v1/admin/posts", { method: "POST", headers: h, body: JSON.stringify({ title: "CRUD T", body: "Isi.", tag: "News" }) });
+    assert.equal(created.status, 200);
+    const pid = ((await created.json()) as { data: { id: string } }).data.id;
+    try {
+      const list = await app.request("/api/v1/admin/posts", { headers: { cookie: `admin_session=${sid}` } });
+      assert.equal(list.status, 200);
+      const rows = ((await list.json()) as { data: Array<{ id: string }> }).data;
+      assert.ok(rows.some((r) => r.id === pid));
+      const upd = await app.request(`/api/v1/admin/posts/${encodeURIComponent(pid)}`, { method: "PUT", headers: h, body: JSON.stringify({ title: "CRUD T2", body: "Isi 2.", tag: "News", title_en: "CRUD T2 EN" }) });
+      assert.equal(upd.status, 200);
+      const del = await app.request(`/api/v1/admin/posts/${encodeURIComponent(pid)}`, { method: "DELETE", headers: h });
+      assert.equal(del.status, 200);
+      const gone = await app.request(`/api/v1/admin/posts`, { headers: { cookie: `admin_session=${sid}` } });
+      const rows2 = ((await gone.json()) as { data: Array<{ id: string }> }).data;
+      assert.ok(!rows2.some((r) => r.id === pid));
+    } finally {
+      await pool.query("DELETE FROM post_views WHERE post_id = $1", [pid]);
+      await pool.query("DELETE FROM posts WHERE id = $1", [pid]);
+    }
+  });
   it("POST /admin/posts valid -> 200 + tersimpan", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
