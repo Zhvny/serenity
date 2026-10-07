@@ -30,7 +30,8 @@ export function CheckoutPage() {
   const [msg, setMsg] = useState("");
   const [consent, setConsent] = useState(false);
   const [waitLeft, setWaitLeft] = useState(CONSENT_DELAY_S);
-  const [script, setScript] = useState<"loading" | "ready" | "blocked">("loading");
+  const [script, setScript] = useState<"loading" | "ready" | "blocked">(() =>
+    getTurnstile() !== undefined ? "ready" : "loading");
   const [token, setToken] = useState("");
   const widgetHost = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
@@ -45,16 +46,12 @@ export function CheckoutPage() {
 
   // Muat script Turnstile sekali; deteksi blokir (ad-blocker/DNS) via timeout.
   useEffect(() => {
-    if (getTurnstile() !== undefined) {
-      setScript("ready");
-      return;
-    }
+    if (script !== "loading") return;
     let done = false;
     const finish = (s: "ready" | "blocked") => {
       if (done) return;
       done = true;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hasil async load script
-      setScript(s);
+      setScript(s); // hasil async load script / timeout, bukan render sinkron
     };
     const timer = setTimeout(() => finish("blocked"), SCRIPT_TIMEOUT_MS);
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${TURNSTILE_SCRIPT}"]`);
@@ -75,7 +72,7 @@ export function CheckoutPage() {
     el.onerror = () => { clearTimeout(timer); finish("blocked"); };
     document.head.appendChild(el);
     return () => clearTimeout(timer);
-  }, []);
+  }, [script]);
 
   // Render widget HANYA setelah consent: token sekali-pakai berumur pendek,
   // render di awal berisiko basi saat tombol diklik.
@@ -92,14 +89,22 @@ export function CheckoutPage() {
     });
   }, [consent, script]);
 
-  // Consent dicabut -> buang widget + token.
-  useEffect(() => {
-    if (consent) return;
+  // Buang widget saat unmount (tanpa setState -> aman lint).
+  useEffect(() => () => {
     const ts = getTurnstile();
     if (widgetId.current !== null && ts !== undefined) ts.remove(widgetId.current);
-    widgetId.current = null;
-    setToken("");
-  }, [consent]);
+  }, []);
+
+  function handleConsent(checked: boolean): void {
+    // Consent dicabut -> buang widget + token di event handler (bukan effect).
+    if (!checked) {
+      const ts = getTurnstile();
+      if (widgetId.current !== null && ts !== undefined) ts.remove(widgetId.current);
+      widgetId.current = null;
+      setToken("");
+    }
+    setConsent(checked);
+  }
 
   async function handlePay(): Promise<void> {
     if (token === "") return;
@@ -131,7 +136,7 @@ export function CheckoutPage() {
           <h1>{t("shop.pay.title")}</h1>
           <p>{t("shop.pay.intro")}</p>
           <label className="pay-consent" htmlFor="donation-consent">
-            <input id="donation-consent" type="checkbox" checked={consent} disabled={waitLeft > 0} onChange={(e) => setConsent(e.target.checked)} />
+            <input id="donation-consent" type="checkbox" checked={consent} disabled={waitLeft > 0} onChange={(e) => handleConsent(e.target.checked)} />
             {t("shop.pay.consent.a")}<strong>{t("shop.pay.consent.b")}</strong>{t("shop.pay.consent.c")}<strong>{t("shop.pay.consent.d")}</strong>{t("shop.pay.consent.e")}
             {waitLeft > 0 ? ` ${t("shop.pay.wait", { seconds: waitLeft })}` : ""}
           </label>
