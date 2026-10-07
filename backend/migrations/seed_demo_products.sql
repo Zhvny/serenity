@@ -5,10 +5,10 @@
 -- Idempoten: ON CONFLICT DO NOTHING (bisa diulang).
 -- Melengkapi samp_001–005: nonaktif, tanpa gambar, tanpa nutrisi, bebas alergen.
 
-INSERT INTO products (id, name, category_id, price, tags, image_url, description, is_active) VALUES
-  ('samp_006', 'Kue Contoh Nonaktif', 'cat_dessert', 20000, ARRAY['contoh'], '/images/samp_006.jpg', 'Produk contoh nonaktif untuk uji filter menu dan tombol Aktifkan di admin.', FALSE),
-  ('samp_007', 'Teh Tawar Melati', 'cat_drink', 10000, ARRAY['vegan', 'low-calorie'], NULL, 'Teh melati tanpa gula, tanpa alergen.', TRUE),
-  ('samp_008', 'Roti Gandum Klasik', 'cat_food', 15000, ARRAY['high-fiber'], '/images/samp_008.jpg', 'Roti gandum tanpa baris nutrisi (uji LEFT JOIN).', TRUE)
+INSERT INTO products (id, name, category_id, price, tags, image_url, description, is_active, name_en, description_en) VALUES
+  ('samp_006', 'Kue Contoh Nonaktif', 'cat_dessert', 20000, ARRAY['contoh'], '/images/samp_006.jpg', 'Produk contoh nonaktif untuk uji filter menu dan tombol Aktifkan di admin.', FALSE, 'Sample Inactive Cake', NULL),
+  ('samp_007', 'Teh Tawar Melati', 'cat_drink', 10000, ARRAY['vegan', 'low-calorie'], NULL, 'Teh melati tanpa gula, tanpa alergen.', TRUE, 'Plain Jasmine Tea', 'Sugar-free jasmine tea, allergen-free.'),
+  ('samp_008', 'Roti Gandum Klasik', 'cat_food', 15000, ARRAY['high-fiber'], '/images/samp_008.jpg', 'Roti gandum tanpa baris nutrisi (uji LEFT JOIN).', TRUE, 'Classic Whole-Wheat Bread', 'Whole-wheat bread with no nutrition row (LEFT JOIN test).')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO nutrition_info (product_id, calories_kcal, protein_g, carbs_g, fat_g, fiber_g, sugar_g) VALUES

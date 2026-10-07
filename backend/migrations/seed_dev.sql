@@ -11,8 +11,8 @@ INSERT INTO allergens (name) VALUES
 ('kacang'), ('susu'), ('gluten'), ('telur'), ('seafood'), ('kedelai')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO products (id, name, category_id, price, tags, image_url, source) VALUES
-('samp_001', 'Salad Quinoa Ayam Grilled', 'cat_food', 45000, ARRAY['high-protein','gluten-free','low-carb'], '/images/samp_001.jpg', 'seed_dev')
+INSERT INTO products (id, name, category_id, price, tags, image_url, source, name_en) VALUES
+('samp_001', 'Salad Quinoa Ayam Grilled', 'cat_food', 45000, ARRAY['high-protein','gluten-free','low-carb'], '/images/samp_001.jpg', 'seed_dev', 'Grilled Chicken Quinoa Salad')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO nutrition_info (product_id, calories_kcal, protein_g, carbs_g, fat_g, fiber_g, sugar_g) VALUES
@@ -24,11 +24,11 @@ SELECT 'samp_001', id FROM allergens WHERE name IN ('kacang', 'susu', 'gluten')
 ON CONFLICT DO NOTHING;
 
 -- Produk tambahan (digabung dari seed_dev_02.sql)
-INSERT INTO products (id, name, category_id, price, tags, image_url, source) VALUES
-('samp_002', 'Brownie Alpukat Cokelat Hitam', 'cat_dessert', 35000, ARRAY['gluten-free','low-sugar'], '/images/samp_002.jpg', 'seed_dev'),
-('samp_003', 'Jus Hijau Apel Timun', 'cat_drink', 25000, ARRAY['vegan','low-calorie'], '/images/samp_003.jpg', 'seed_dev'),
-('samp_004', 'Nasi Merah Ayam Kemangi', 'cat_food', 40000, ARRAY['high-protein'], '/images/samp_004.jpg', 'seed_dev'),
-('samp_005', 'Puding Chia Mangga', 'cat_dessert', 30000, ARRAY['vegan','gluten-free'], '/images/samp_005.jpg', 'seed_dev')
+INSERT INTO products (id, name, category_id, price, tags, image_url, source, name_en) VALUES
+('samp_002', 'Brownie Alpukat Cokelat Hitam', 'cat_dessert', 35000, ARRAY['gluten-free','low-sugar'], '/images/samp_002.jpg', 'seed_dev', 'Dark Chocolate Avocado Brownie'),
+('samp_003', 'Jus Hijau Apel Timun', 'cat_drink', 25000, ARRAY['vegan','low-calorie'], '/images/samp_003.jpg', 'seed_dev', 'Green Apple Cucumber Juice'),
+('samp_004', 'Nasi Merah Ayam Kemangi', 'cat_food', 40000, ARRAY['high-protein'], '/images/samp_004.jpg', 'seed_dev', 'Red Rice with Basil Chicken'),
+('samp_005', 'Puding Chia Mangga', 'cat_dessert', 30000, ARRAY['vegan','gluten-free'], '/images/samp_005.jpg', 'seed_dev', 'Mango Chia Pudding')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO nutrition_info (product_id, calories_kcal, protein_g, carbs_g, fat_g, fiber_g, sugar_g) VALUES
