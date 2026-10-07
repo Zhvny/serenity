@@ -43,7 +43,7 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 @media (max-width: 480px) {
   .site-header { column-gap: 8px; }
   .site-header .logo { font-size: 20px; gap: 6px; }
-  .site-header .logo .sprite { width: 28px; height: 28px; }
+  .site-header .logo .sprite { width: 32px; height: 32px; }
   .site-header .header-actions { gap: 6px; }
   .sound-toggle { width: 36px; height: 36px; font-size: 20px; }
   .sound-toggle--header { display: none; } /* di ponsel tombol suara pindah ke footer */
@@ -61,6 +61,7 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 @media (max-width: 380px) {
   :root { --su: 2.5px; }
   .site-header { padding-left: 10px; padding-right: 10px; column-gap: 6px; }
+  .site-header .logo { font-size: 18px; gap: 4px; }
 }
 @media (max-width: 340px) {
   .site-header .logo-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -141,4 +142,9 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 .admin-btn { white-space: nowrap; }
 @media (max-width: 640px) {
   .admin-table th:last-child, .admin-table td:last-child { position: sticky; right: 0; background: var(--canvas); }
+}
+
+/* Label "MALAM" (id) lebih panjang dari "NIGHT": lebarkan saklar siang/malam di layar non-ponsel. */
+@media (min-width: 481px) {
+  .daynight { --dn-w: 104px; }
 }

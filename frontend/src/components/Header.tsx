@@ -4,7 +4,7 @@ import { getCart } from "../services/api.ts";
 import type { Category } from "../services/api.ts";
 import { Icon } from "./Icon.tsx";
 import { Sprite } from "../pixel/Sprite.tsx";
-import { SPROUT } from "../pixel/data/scene.ts";
+import { LOGO_MARK } from "../pixel/data/logo.ts";
 import { PAPER_BAG, PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
 import { ThemeToggle } from "./ThemeToggle.tsx";
 import { LanguageToggle } from "./LanguageToggle.tsx";
@@ -42,7 +42,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
 
   return (
     <header className="site-header">
-      <Link to="/" className="logo"><Sprite sprite={SPROUT} /> <span className="logo-text">Serenity</span></Link>
+      <Link to="/" className="logo"><Sprite sprite={LOGO_MARK} /> <span className="logo-text">Serenity</span></Link>
       <nav aria-label={t("shell.nav.categories")}>
         {categories.map((c) => (
           <Link key={c.id} to={`/menu?category=${c.id}`} aria-current={activeCategory === c.id ? "page" : undefined}>{categoryLabel(c, lang)}</Link>
