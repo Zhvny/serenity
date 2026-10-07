@@ -33,4 +33,18 @@ describe("csrfMw", () => {
   it("GET bebas token -> 200", async () => {
     assert.equal((await app().request("/x")).status, 200);
   });
+  it("FRONTEND_ORIGIN koma: origin kedua & pertama lolos, asing tetap 403", async () => {
+    const prev = process.env.FRONTEND_ORIGIN;
+    process.env.FRONTEND_ORIGIN = "https://satu.test,http://localhost:5173";
+    try {
+      const ok2 = await app().request("/x", { method: "POST", headers: { origin: "http://localhost:5173", "x-csrf-token": "t", cookie: "csrf_token=t" } });
+      assert.equal(ok2.status, 200);
+      const ok1 = await app().request("/x", { method: "POST", headers: { origin: "https://satu.test", "x-csrf-token": "t", cookie: "csrf_token=t" } });
+      assert.equal(ok1.status, 200);
+      const bad = await app().request("/x", { method: "POST", headers: { origin: "https://evil.test", "x-csrf-token": "t", cookie: "csrf_token=t" } });
+      assert.equal(bad.status, 403);
+    } finally {
+      if (prev === undefined) delete process.env.FRONTEND_ORIGIN; else process.env.FRONTEND_ORIGIN = prev;
+    }
+  });
 });

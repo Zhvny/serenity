@@ -4,7 +4,9 @@ import { logger } from "hono/logger";
 import { getRedis } from "../db/redis.js";
 
 export function corsMw(): MiddlewareHandler {
-  return cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173", credentials: true });
+  // Daftar origin boleh koma (prod SWA + admin lokal): hono/cors refleksikan yang cocok.
+  const origins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173").split(",").map((s) => s.trim());
+  return cors({ origin: origins, credentials: true });
 }
 
 export function loggerMw(): MiddlewareHandler {
