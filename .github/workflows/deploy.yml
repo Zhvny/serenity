@@ -148,10 +148,10 @@ jobs:
         run: |
           az containerapp exec \
             --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --command "node scripts/migrate.js"
+            --command "node /app/scripts/migrate.js"
           az containerapp exec \
             --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --command "node scripts/seed.js"
+            --command "node /app/scripts/seed.js"
 
   # 4) Frontend: build di runner (VITE_API_URL=/api/v1) lalu upload ke SWA (skip Oryx build).
   deploy-frontend:
