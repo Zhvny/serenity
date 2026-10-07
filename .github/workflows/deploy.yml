@@ -153,7 +153,8 @@ jobs:
             --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
             --command "node /app/scripts/seed.js"
 
-  # 4) Frontend: build di runner (VITE_API_URL=/api/v1) lalu upload ke SWA (skip Oryx build).
+  # 4) Frontend: build di runner (direct mode: VITE_API_URL absolut ke CA,
+  #    karena linked-backend SWA<->CA 500 persisten) lalu upload ke SWA (skip Oryx build).
   deploy-frontend:
     needs: verify
     runs-on: ubuntu-latest
@@ -162,10 +163,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Build frontend (API satu domain)
+      - name: Build frontend (API direct ke CA)
         working-directory: frontend
         env:
-          VITE_API_URL: /api/v1
+          VITE_API_URL: ${{ secrets.BACKEND_API_URL }}
         run: npm ci && npm run build
       - name: Deploy ke Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
