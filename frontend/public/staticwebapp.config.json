@@ -1,4 +1,7 @@
 {
+  "routes": [
+    { "route": "/admin*", "statusCode": 403 }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["/assets/*", "/api/*", "/*.{png,jpg,svg,ico,webp,woff,woff2}"]
