@@ -71,6 +71,9 @@ jobs:
       - name: Backend migrate (skema CI)
         working-directory: backend
         run: npm run migrate
+      - name: Backend seed (katalog seed_dev, idempoten — test butuh kategori FK)
+        working-directory: backend
+        run: node scripts/seed.js
       - name: Backend typecheck
         working-directory: backend
         run: npx tsc --noEmit
