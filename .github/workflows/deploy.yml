@@ -10,16 +10,12 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
-# OIDC ke Azure (tanpa password). Secrets yang dibutuhkan:
-#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
-#   ACR_NAME            (mis. acrserenity1234)              -- registry
-#   RG                  (mis. rg-serenity-prod)
-#   CA_BACKEND          (nama Container App backend)
-#   MIGRATE_JOB         (nama Container Apps Job migrasi; dibuat di infra/azure.sh)
+# Hybrid B (2026-10-07): akun lab tak boleh register app Entra → tanpa OIDC.
+# CI: verify + deploy frontend (token SWA). Backend MANUAL dari laptop
+# (docker push + containerapp update + exec). Secrets yang dibutuhkan:
 #   SWA_TOKEN           (deployment token Static Web Apps)
-#   SMOKE_URL           (base URL backend publik, tanpa trailing slash)
+#   BACKEND_API_URL     (mis. https://serenity-be.xxx.azurecontainerapps.io/api/v1)
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -101,59 +97,7 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=high
 
-  # 2) Build + push image backend (docker biasa; az acr build/Tasks diblokir di subscription ini).
-  build-backend:
-    needs: verify
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Docker build + push (:sha + :latest)
-        run: |
-          az acr login --name "${{ secrets.ACR_NAME }}"
-          docker build -t "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:${{ github.sha }}" -t "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:latest" ./backend
-          docker push "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:${{ github.sha }}"
-          docker push "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:latest"
-
-  # 3) Rollout :sha -> migrasi+seed via exec -> smoke. (Jobs tak didukung Express:
-  #    migrasi jalan di dalam container via exec; butuh INTERNAL_KEY di secrets.)
-  deploy-backend:
-    needs: build-backend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Rollout backend ke revisi :sha
-        run: |
-          az containerapp update \
-            --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --image "${{ secrets.ACR_NAME }}.azurecr.io/serenity-be:${{ github.sha }}" \
-            --min-replicas 0 --max-replicas 3
-      - name: Smoke /api/v1/health (200)
-        run: |
-          for i in $(seq 1 15); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SMOKE_URL }}/api/v1/health" || true)
-            if [ "$code" = "200" ]; then echo "health OK"; exit 0; fi
-            echo "attempt $i -> $code"; sleep 6
-          done
-          echo "smoke gagal (health != 200)"; exit 1
-      - name: Migrasi + seed via exec
-        run: |
-          az containerapp exec \
-            --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --command "sh -c 'DATABASE_URL=\$DB_MIGRATE_URL node /app/scripts/migrate.js'"
-          az containerapp exec \
-            --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --command "node /app/scripts/seed.js"
-
-  # 4) Frontend: build di runner (direct mode: VITE_API_URL absolut ke CA,
+  # 2) Frontend: build di runner (direct mode: VITE_API_URL absolut ke CA,
   #    karena linked-backend SWA<->CA 500 persisten) lalu upload ke SWA (skip Oryx build).
   deploy-frontend:
     needs: verify
