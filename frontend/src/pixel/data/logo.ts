@@ -1,0 +1,63 @@
+// Logo Serenity: cupcake berkrim dengan tunas hijau di atas ubin biru langit (terbaca di halaman terang & gelap).
+// LOGO_MARK 32x32 untuk header/footer/kartu sosial; LOGO_FAVICON 16x16 digambar ulang (bukan hasil kecilkan).
+import type { Sprite } from "../types.ts";
+
+export const LOGO_MARK: Sprite = {
+  name: "logo-mark",
+  rows: [
+    "................................",
+    "....kkkkkkkkkkkkkkkkkkkkkkkk....",
+    "...knnnnnnnkkknnnnkklknnnnnnk...",
+    "..knnnnnnnkgggknnkllllknnnnnNk..",
+    ".knnnnnnnnkggggknkllllknnnnnNNk.",
+    ".knnnnnnnnnkgggGkllllknnnnnnNNk.",
+    ".knnnnnnnnnnkgGGklllknnnnnnnNNk.",
+    ".knnnnnnnnnnnkGkwkkknnnnnnnnNNk.",
+    ".knnnnnnnnnnkwkwwckknnnnnnnnNNk.",
+    ".knnnnnnnnnkwwwkkkwwknnnnnnnNNk.",
+    ".knnnnnnnnnkwwwwwwwwknnnnnnnNNk.",
+    ".knnnnnnnnkkwwwwpwcckknnnnnnNNk.",
+    ".knnnnnnnkwwkkwwwckkwwknnnnnNNk.",
+    ".knnnnnnkwwwwwkkkkwwwwwknnnnNNk.",
+    ".knnnnnnkwwwwywwwwrwcccknnnnNNk.",
+    ".knnnnnkwkkwwwwwwwccckkwknnnNNk.",
+    ".knnnnkwwwwkkkwwcckkkwwwwknnNNk.",
+    ".knnnnkwwwwrwwkkkkwwpwwwcknnNNk.",
+    ".knnnkkwwwwwwwwywwwwwcycckknNNk.",
+    ".knnkttkkwwwwwwwwwwcccckkttkNNk.",
+    ".knnkttttkkkwwwwcccckkkttttkNNk.",
+    ".knnnkkbbbbbkkkkkkkkbbbbbkknNNk.",
+    ".knnnnkkkkkkkbbbbbbkkkkkkknnNNk.",
+    ".knnnnkppPppPkkkkkkppPppPknNNNk.",
+    ".knnnnnkpPppPppPppPppPppknNNNNk.",
+    ".knnnnnkpPppPppPppPppPppkNNNNNk.",
+    ".knnnnnnkPppPppPppPppPpkNNNNNNk.",
+    ".knnnnnnkPppPppPppPppPpkNNNNNNk.",
+    "..kNNNNNNkkkkkkkkkkkkkkNNNNNNk..",
+    "...kNNNNNNNNNNNNNNNNNNNNNNNNk...",
+    "....kkkkkkkkkkkkkkkkkkkkkkkk....",
+    "................................",
+  ],
+};
+
+export const LOGO_FAVICON: Sprite = {
+  name: "logo-favicon",
+  rows: [
+    "..kkkkkkkkkkkk..",
+    ".knnnnnnnnnnnnk.",
+    "knnnnggnllnnnnnk",
+    "knnnnnkwwknnnnnk",
+    "knnnnkwwwwknnnnk",
+    "knnnkwwwwwwknnnk",
+    "knnkwwrwwwwwknnk",
+    "knkwwwwwwywwwknk",
+    "knkwwwwwwwwwcknk",
+    "knktttttttttbknk",
+    "knnkppppppppknnk",
+    "knnkpPpPpPpPknnk",
+    "knnnkpPpPpPknnnk",
+    "knnnkkkkkkkknnnk",
+    ".kNNNNNNNNNNNNk.",
+    "..kkkkkkkkkkkk..",
+  ],
+};

@@ -14,9 +14,10 @@ import * as signs from "./data/signs.ts";
 import * as mascot2 from "./data/mascot2.ts";
 import * as fxsprites from "./data/fxsprites.ts";
 import { ICONS_BAKERY } from "./data/iconsBakery.ts";
+import * as logo from "./data/logo.ts";
 
 const isSprite = (v: unknown): v is Sprite => typeof v === "object" && v !== null && "rows" in v && "name" in v;
-const all: Sprite[] = [...Object.values(foodA), ...Object.values(foodB), ...Object.values(foodC), ...Object.values(scene), ...Object.values(mascot), ...Object.values(ICONS), ...Object.values(bakeryA), ...Object.values(bakeryB), ...Object.values(signs), ...Object.values(mascot2), ...Object.values(fxsprites), ...Object.values(ICONS_BAKERY)].filter(isSprite);
+const all: Sprite[] = [...Object.values(foodA), ...Object.values(foodB), ...Object.values(foodC), ...Object.values(scene), ...Object.values(mascot), ...Object.values(ICONS), ...Object.values(bakeryA), ...Object.values(bakeryB), ...Object.values(signs), ...Object.values(mascot2), ...Object.values(fxsprites), ...Object.values(ICONS_BAKERY), ...Object.values(logo)].filter(isSprite);
 
 describe("pixel sprite renderer", () => {
   it("menggabung run horizontal per warna dan melewati piksel transparan", () => {
@@ -84,6 +85,8 @@ describe("sprite toko roti", () => {
     expect(spriteSize(signs.SIGN_BOARD)).toEqual({ w: 44, h: 20 });
     expect(spriteSize(signs.CHALKBOARD)).toEqual({ w: 40, h: 28 });
     expect(spriteSize(signs.PRICE_TAG)).toEqual({ w: 14, h: 18 });
+    expect(spriteSize(logo.LOGO_MARK)).toEqual({ w: 32, h: 32 });
+    expect(spriteSize(logo.LOGO_FAVICON)).toEqual({ w: 16, h: 16 });
   });
 });
 
