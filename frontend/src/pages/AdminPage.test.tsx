@@ -326,7 +326,7 @@ describe("AdminPage", () => {
   });
   it("tab Post -> daftar + edit isi form PUT + hapus DELETE 2-klik", async () => {
     const user = userEvent.setup();
-    const calls: Array<{ url: string; method: string }> = [];
+    const calls: string[] = [];
     const rows = [{ id: "post-9", title: "Lama", body: "Isi lama.", excerpt: null, title_en: null, body_en: null, excerpt_en: null, tag: "News", product_id: null, image_url: null, product_ids: [], deleted_at: null, created_at: "2026-10-04T00:00:00Z" }];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url); const method = init?.method ?? "GET";
