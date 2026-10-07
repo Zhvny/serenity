@@ -1,0 +1,20 @@
+name: expire
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+# Expire order basi via endpoint internal (Jobs tak didukung di Express env).
+# Butuh secret: SMOKE_URL (base URL backend publik) + INTERNAL_KEY (di repo secrets).
+permissions:
+  contents: none
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /internal/expire
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.SMOKE_URL }}/api/v1/internal/expire" -H "x-internal-key: ${{ secrets.INTERNAL_KEY }}")
+          echo "expire -> $code"
