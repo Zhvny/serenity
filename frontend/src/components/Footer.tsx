@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { Category } from "../services/api.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
-import { SPROUT } from "../pixel/data/scene.ts";
+import { LOGO_MARK } from "../pixel/data/logo.ts";
 import { CAT_SLEEP } from "../pixel/data/mascot.ts";
 import { SHOP_BELL, PAPER_BAG } from "../pixel/data/bakeryB.ts";
 import { BREAD_LOAF } from "../pixel/data/bakeryA.ts";
@@ -19,7 +19,7 @@ export function Footer({ categories = [] }: { categories?: Pick<Category, "id" |
       <div className="gingham-strip" aria-hidden="true" />
       <div className="footer-grid">
         <div className="footer-brand">
-          <span className="footer-logo"><Sprite sprite={SPROUT} /> Serenity</span>
+          <span className="footer-logo"><Sprite sprite={LOGO_MARK} /> Serenity</span>
           <p>{t("shell.footer.tagline")}</p>
         </div>
         <nav className="footer-col" aria-label={t("shell.footer.links")}>
