@@ -24,14 +24,14 @@ export function Footer({ categories = [] }: { categories?: Pick<Category, "id" |
         </div>
         <nav className="footer-col" aria-label={t("shell.footer.links")}>
           <h3>{t("shell.footer.explore")}</h3>
-          <Link to="/">{t("shell.footer.menu")}</Link>
+          <Link to="/menu">{t("shell.footer.menu")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>
         {categories.length > 0 ? (
           <nav className="footer-col" aria-label={t("shell.footer.categories")}>
             <h3>{t("shell.footer.categories")}</h3>
             {categories.map((c) => (
-              <Link key={c.id} to={`/?category=${c.id}`}>{categoryLabel(c, lang)}</Link>
+              <Link key={c.id} to={`/menu?category=${c.id}`}>{categoryLabel(c, lang)}</Link>
             ))}
           </nav>
         ) : null}

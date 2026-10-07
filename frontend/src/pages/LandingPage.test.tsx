@@ -8,7 +8,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 describe("LandingPage", () => {
   it("tanpa fetch menu: hero + CTA ke /menu", async () => {
-    const spy = vi.fn(async (_url: string) => new Response(JSON.stringify({ status: "success", data: [] })));
+    const spy = vi.fn(async (url: string) => { void url; return new Response(JSON.stringify({ status: "success", data: [] })); });
     vi.stubGlobal("fetch", spy);
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: /manis yang menyayangi/i })).toBeInTheDocument();
