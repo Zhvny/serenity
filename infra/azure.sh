@@ -4,7 +4,7 @@
 set -euo pipefail
 
 RG=rg-serenity-prod
-LOC=southeastasia
+LOC=centralindonesia
 ACR=acrserenity$RANDOM           # harus unik global
 PG=pg-serenity                   # server PG Flexible
 PG_ADMIN=serenity_admin
