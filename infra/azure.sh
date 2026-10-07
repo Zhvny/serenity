@@ -20,7 +20,8 @@ az group create -n "$RG" -l "$LOC"
 az postgres flexible-server create -g "$RG" -n "$PG" -l "$LOC" \
   --tier Burstable --sku-name Standard_B1ms --storage-size 32 --version 15 \
   --admin-user "$PG_ADMIN" --admin-password "$PG_ADMIN_PASSWORD" \
-  --public-access 0.0.0.0 --yes
+  --public-access None --yes
+# Buka firewall manual per IP setelahnya (jangan 0.0.0.0 di prod) — lihat DEPLOY-AZURE.md §3.
 az postgres flexible-server db create -g "$RG" -s "$PG" -d serenity
 # TODO manual: jalankan migrasi awal lalu infra/db-roles.sql (buat role migrasi+app).
 
