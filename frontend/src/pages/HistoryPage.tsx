@@ -127,7 +127,7 @@ export function HistoryPage() {
           <div className="state" role="status">
             <h2>{t("orders.history.emptyTitle")}</h2>
             <p>{t("orders.history.emptyText")}</p>
-            <Link className="btn-secondary" to="/">{t("orders.history.viewMenu")}</Link>
+            <Link className="btn-secondary" to="/menu">{t("orders.history.viewMenu")}</Link>
           </div>
         ) : (
           <ul className="history-list">
