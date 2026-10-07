@@ -55,7 +55,7 @@ export function postRoutes(pool: Pool): Hono {
     let sid = c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
     if (sid === undefined) {
       sid = randomUUID();
-      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=Lax; Path=/`);
+      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
     await pool.query(
       "INSERT INTO post_views (post_id, session_id) VALUES ($1, $2) ON CONFLICT (post_id, session_id) DO NOTHING",

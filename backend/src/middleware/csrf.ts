@@ -25,6 +25,6 @@ export function csrfMw(): MiddlewareHandler {
 
 export function issueCsrf(c: { header: (n: string, v: string) => void }): string {
   const token = randomUUID();
-  c.header("Set-Cookie", `${CSRF_COOKIE}=${token}; SameSite=Lax; Path=/`);
+  c.header("Set-Cookie", `${CSRF_COOKIE}=${token}; SameSite=None; Secure; Path=/`);
   return token;
 }
