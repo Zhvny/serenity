@@ -258,8 +258,8 @@ export function adminRestorePost(id: string): Promise<{ id: string }> {
 
 export type ThanksData = { unique_code: string; nominal: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string };
 
-export function generateCode(donationConsent = false): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
-  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>("/orders/generate-code", { donation_consent: donationConsent });
+export function generateCode(donationConsent = false, turnstileToken = "", honeypot = ""): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
+  return apiPost<{ order_id: string; unique_code: string; qr_url: string; nominal: number }>("/orders/generate-code", { donation_consent: donationConsent, turnstile_token: turnstileToken, website: honeypot });
 }
 
 export function getThanks(ref: string): Promise<ThanksData> {
