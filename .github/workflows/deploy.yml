@@ -148,7 +148,7 @@ jobs:
         run: |
           az containerapp exec \
             --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
-            --command "node /app/scripts/migrate.js"
+            --command "sh -c 'DATABASE_URL=\$DB_MIGRATE_URL node /app/scripts/migrate.js'"
           az containerapp exec \
             --name "${{ secrets.CA_BACKEND }}" --resource-group "${{ secrets.RG }}" \
             --command "node /app/scripts/seed.js"
