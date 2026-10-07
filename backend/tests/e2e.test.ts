@@ -10,6 +10,10 @@ import { closeRedis } from "../src/db/redis.js";
 // test per-unit bisa lewatkan.
 
 process.env.QUASI_STATIC_QR_URL = process.env.QUASI_STATIC_QR_URL ?? "https://qr.e2e/merchant";
+process.env.TURNSTILE_SECRET = "test-secret";
+// siteverify selalu sukses di E2E (jalan in-process; fetch nyata tak dipakai app).
+globalThis.fetch = (async () =>
+  new Response(JSON.stringify({ success: true, "error-codes": [] }), { status: 200 })) as typeof fetch;
 const SALT = "e2esalt123456789";
 const PASS = "e2e-pass-123";
 
@@ -94,7 +98,7 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     assert.equal(items[0]?.quantity, 2);
 
     // 3) generate-code QRIS: nominal server = 45000 x 2
-    const gen = await app.request("/api/v1/orders/generate-code", { method: "POST", headers: json({ cookie }), body: "{}" });
+    const gen = await app.request("/api/v1/orders/generate-code", { method: "POST", headers: json({ cookie }), body: JSON.stringify({ turnstile_token: "e2e-tok" }) });
     assert.equal(gen.status, 200);
     const g = ((await gen.json()) as { data: { order_id: string; unique_code: string; qr_url: string; nominal: number } }).data;
     createdOrders.push(g.order_id);

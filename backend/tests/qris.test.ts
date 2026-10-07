@@ -6,6 +6,17 @@ import { createPool } from "../src/db/pool.js";
 import { closeRedis } from "../src/db/redis.js";
 
 process.env.QUASI_STATIC_QR_URL = "https://qr.example/merchant";
+process.env.TURNSTILE_SECRET = "test-secret";
+
+// Stub siteverify Cloudflare (fetch global; app.request in-process tak pakai fetch).
+let siteverifyImpl: () => Response = () =>
+  new Response(JSON.stringify({ success: true, "error-codes": [] }), { status: 200 });
+const realFetch = globalThis.fetch;
+globalThis.fetch = (async () => siteverifyImpl()) as typeof fetch;
+
+const TOK = "tok-test";
+const genBody = (extra: Record<string, unknown> = {}) =>
+  JSON.stringify({ turnstile_token: TOK, ...extra });
 
 const pool = createPool();
 const XFF = `qris-ip-${randomUUID()}`;
@@ -21,7 +32,7 @@ after(async () => {
     await pool.query("DELETE FROM cart_items WHERE cart_id = $1", [id]);
     await pool.query("DELETE FROM carts WHERE id = $1", [id]);
   }
-  await pool.end();
+  globalThis.fetch = realFetch; await pool.end();
   await closeRedis();
 });
 
@@ -39,7 +50,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const res = await createApp(pool).request("/api/v1/orders/generate-code", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
-      body: JSON.stringify({}),
+      body: genBody(),
     });
     assert.equal(res.status, 200);
     const { data } = (await res.json()) as { data: { unique_code: string; qr_url: string; nominal: number; order_id: string } };
@@ -59,7 +70,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const res = await createApp(pool).request("/api/v1/orders/generate-code", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
-      body: JSON.stringify({ donation_consent: true }),
+      body: genBody({ donation_consent: true }),
     });
     assert.equal(res.status, 200);
     const { data } = (await res.json()) as { data: { unique_code: string; order_id: string } };
@@ -70,7 +81,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
 
   it("thanks: sertakan paid_amount + donation_consent", async () => {
     const cartId = await seedCart();
-    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
+    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: genBody() });
     const { data } = (await gen.json()) as { data: { unique_code: string; order_id: string } };
     createdOrders.push(data.order_id);
     await pool.query("UPDATE orders SET paid_amount = 50000, donation_consent = TRUE WHERE id = $1", [data.order_id]);
@@ -83,7 +94,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
 
   it("generate-code: keranjang dikosongkan setelah order dibuat", async () => {
     const cartId = await seedCart();
-    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
+    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: genBody() });
     assert.equal(gen.status, 200);
     const { data } = (await gen.json()) as { data: { order_id: string } };
     createdOrders.push(data.order_id);
@@ -93,7 +104,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
 
   it("thanks: pemilik sesi -> 200 (kode+nominal+qr), sesi lain -> 404 seragam", async () => {
     const cartId = await seedCart();
-    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: "{}" });
+    const gen = await createApp(pool).request("/api/v1/orders/generate-code", { method: "POST", headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF }, body: genBody() });
     const { data } = (await gen.json()) as { data: { unique_code: string; order_id: string } };
     createdOrders.push(data.order_id);
 
@@ -113,5 +124,79 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
   it("thanks: ref tak ada -> 404", async () => {
     const res = await createApp(pool).request("/api/v1/thanks?ref=ORD-TIDAKADA", { headers: { cookie: "cart_id=x", "x-forwarded-for": XFF } });
     assert.equal(res.status, 404);
+  });
+
+  it("tanpa turnstile_token -> 400 VALIDATION_ERROR", async () => {
+    const cartId = await seedCart();
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
+      body: JSON.stringify({}),
+    });
+    assert.equal(res.status, 400);
+    assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
+  });
+
+  it("token palsu (siteverify false) -> 403 TURNSTILE_FAILED", async () => {
+    siteverifyImpl = () => new Response(JSON.stringify({ success: false, "error-codes": ["invalid-input-response"] }), { status: 200 });
+    try {
+      const cartId = await seedCart();
+      const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
+        body: genBody(),
+      });
+      assert.equal(res.status, 403);
+      assert.equal(((await res.json()) as { code: string }).code, "TURNSTILE_FAILED");
+    } finally {
+      siteverifyImpl = () => new Response(JSON.stringify({ success: true, "error-codes": [] }), { status: 200 });
+    }
+  });
+
+  it("honeypot terisi -> 403 tanpa panggil siteverify", async () => {
+    let called = false;
+    const prev = siteverifyImpl;
+    siteverifyImpl = () => { called = true; return prev(); };
+    try {
+      const cartId = await seedCart();
+      const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF },
+        body: genBody({ website: "http://bot.example" }),
+      });
+      assert.equal(res.status, 403);
+      assert.equal(called, false);
+    } finally {
+      siteverifyImpl = prev;
+    }
+  });
+
+  it("generate kedua sesi sama <30 dtk -> 429 RATE_LIMITED", async () => {
+    const cartId = await seedCart();
+    const app = createApp(pool);
+    const headers = { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF };
+    const first = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
+    assert.equal(first.status, 200);
+    createdOrders.push((((await first.json()) as { data: { order_id: string } }).data).order_id);
+    await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+    const second = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
+    assert.equal(second.status, 429);
+    assert.equal(((await second.json()) as { code: string }).code, "RATE_LIMITED");
+  });
+
+  it("pending >=3 sesi sama -> 429 walau jeda cukup", async () => {
+    const cartId = await seedCart();
+    const app = createApp(pool);
+    const headers = { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": XFF };
+    for (let i = 0; i < 3; i += 1) {
+      const gen = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
+      assert.equal(gen.status, 200);
+      const id = (((await gen.json()) as { data: { order_id: string } }).data).order_id;
+      createdOrders.push(id);
+      await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+      await pool.query("UPDATE orders SET created_at = CURRENT_TIMESTAMP - INTERVAL '61 seconds' WHERE id = $1", [id]);
+    }
+    const fourth = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
+    assert.equal(fourth.status, 429);
   });
 });
