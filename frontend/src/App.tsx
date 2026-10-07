@@ -14,6 +14,9 @@ import { PostDetailPage } from "./pages/PostDetailPage.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 
 export default function App() {
+  // /admin hanya dibundel-terjangkau bila flag hidup (build publik SWA: false;
+  // admin lokal: unset/true). Lapisan 2 setelah SWA 403 + halaman 403 statis.
+  const includeAdmin = import.meta.env.VITE_INCLUDE_ADMIN !== "false";
   return (
     <ErrorBoundary>
       <Routes>
@@ -21,7 +24,7 @@ export default function App() {
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/products/:id" element={<DetailPage />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        {includeAdmin && <Route path="/admin" element={<AdminPage />} />}
         <Route path="/thanks" element={<ThanksPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/status/:code" element={<StatusPage />} />

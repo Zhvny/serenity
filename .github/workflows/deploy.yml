@@ -114,6 +114,7 @@ jobs:
         working-directory: frontend
         env:
           VITE_API_URL: ${{ secrets.BACKEND_API_URL }}
+          VITE_INCLUDE_ADMIN: "false"
         run: npm ci && npm run build
       - name: Deploy ke Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
