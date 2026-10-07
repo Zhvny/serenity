@@ -65,6 +65,9 @@ export const id = {
   "shop.pay.cta": "Bayar via QRIS",
   "shop.pay.sending": "Memproses…",
   "shop.pay.error": "Gagal membuat pembayaran",
+  "shop.pay.human": "Verifikasi manusia",
+  "shop.pay.blocked": "Skrip verifikasi tak termuat. Matikan pemblokir iklan lalu muat ulang, atau coba browser lain.",
+  "shop.pay.retryHistory": "Gagal membuat pembayaran. Bila pesanan sudah terbentuk, cek halaman Riwayat.",
 
   "shop.map.locate": "Gunakan lokasi saya",
   "shop.map.locating": "Mencari lokasi…",
@@ -148,6 +151,9 @@ export const en = {
   "shop.pay.cta": "Pay with QRIS",
   "shop.pay.sending": "Processing…",
   "shop.pay.error": "Couldn't create the payment",
+  "shop.pay.human": "Human verification",
+  "shop.pay.blocked": "Verification script didn't load. Turn off your ad blocker, reload, or try another browser.",
+  "shop.pay.retryHistory": "Couldn't create the payment. If the order already went through, check the History page.",
 
   "shop.map.locate": "Use my location",
   "shop.map.locating": "Finding your location…",
