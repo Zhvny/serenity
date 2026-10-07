@@ -4,7 +4,12 @@ import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { getCart } from "../services/cart.js";
 import { nextOrderId, newCode } from "../services/orders.js";
+import { verifyTurnstile } from "../services/turnstile.js";
 import { productRepo } from "../repos/products.js";
+
+// Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
+const MAX_PENDING_PER_SESSION = 3;
+const MIN_INTERVAL_MS = 30_000;
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
@@ -14,7 +19,11 @@ export function qrisRoutes(pool: Pool): Hono {
   const r = new Hono();
   const products = productRepo(pool);
 
-  const generateSchema = z.object({ donation_consent: z.boolean().optional().default(false) });
+  const generateSchema = z.object({
+    donation_consent: z.boolean().optional().default(false),
+    turnstile_token: z.string().min(1).max(2048),
+    website: z.string().max(200).optional().default(""), // honeypot: manusia kirim "", bot naif mengisi
+  });
 
   // Generate kode QRIS: nominal OTORITATIF server (hitung ulang dari cart sesi).
   r.post("/orders/generate-code", zValidator("json", generateSchema, (result, c) => {
@@ -23,6 +32,26 @@ export function qrisRoutes(pool: Pool): Hono {
     const cartId = cartIdOf(c);
     if (cartId === undefined) {
       return c.json({ status: "error", code: "NO_CART", message: "Keranjang tidak ditemukan" }, 400);
+    }
+    const body = c.req.valid("json");
+    // Honeypot dulu (tanpa DB): kode sama dengan turnstile agar tanpa oracle.
+    if (body.website !== "") {
+      return c.json({ status: "error", code: "TURNSTILE_FAILED", message: "Verifikasi gagal" }, 403);
+    }
+    // Throttle per sesi (2 query ringan): batas pending + jeda 30 dtk.
+    const pending = await pool.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM orders WHERE session_id = $1 AND status = 'pending_payment'", [cartId]);
+    const last = await pool.query<{ last: Date | null }>(
+      "SELECT MAX(created_at) AS last FROM orders WHERE session_id = $1", [cartId]);
+    const lastMs = last.rows[0]?.last === null || last.rows[0]?.last === undefined
+      ? 0 : new Date(last.rows[0].last).getTime();
+    if ((pending.rows[0]?.n ?? 0) >= MAX_PENDING_PER_SESSION || Date.now() - lastMs < MIN_INTERVAL_MS) {
+      return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
+    }
+    // Turnstile: token invalid/basi/duplikat -> tolak; CF tak terjangkau -> fail-open (ter-log di service).
+    const verdict = await verifyTurnstile(body.turnstile_token);
+    if (verdict.ok === false) {
+      return c.json({ status: "error", code: "TURNSTILE_FAILED", message: "Verifikasi gagal" }, 403);
     }
     const items = await getCart(pool, cartId);
     if (items.length === 0) {
