@@ -10,8 +10,8 @@ export function csrfMw(): MiddlewareHandler {
     const method = c.req.method;
     if (method === "GET" || method === "HEAD" || method === "OPTIONS") return next();
     const origin = c.req.header("origin");
-    const allowed = process.env.FRONTEND_ORIGIN ?? "http://localhost:5173";
-    if (origin !== undefined && origin !== allowed) {
+    const allowed = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173").split(",").map((s) => s.trim());
+    if (origin !== undefined && !allowed.includes(origin)) {
       return c.json({ status: "error", code: "CSRF_ORIGIN", message: "Origin ditolak" }, 403);
     }
     const cookie = c.req.header("cookie")?.match(/csrf_token=([^;]+)/)?.[1];
