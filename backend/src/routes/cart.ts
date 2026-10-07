@@ -26,7 +26,7 @@ export function cartRoutes(pool: Pool): Hono {
     let cartId = cartIdOf(c);
     if (cartId === undefined) {
       cartId = randomUUID();
-      c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=Lax; Path=/`);
+      c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
     const item = await addItem(pool, cartId, body.product_id, body.quantity, body.note ?? null);
     return c.json({ status: "success", data: item });

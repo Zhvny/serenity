@@ -44,13 +44,13 @@ export function loginRoute(pool: Pool): Hono {
       return c.json({ status: "error", code: "INVALID_CREDS", message: "Kredensial salah" }, 401);
     }
     const sessionId = await createSession(pool, username);
-    c.header("Set-Cookie", `admin_session=${sessionId}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${12 * 3600}`);
+    c.header("Set-Cookie", `admin_session=${sessionId}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=${12 * 3600}`);
     return c.json({ status: "success", data: null });
   });
   r.post("/logout", async (c) => {
     const id = c.req.header("cookie")?.match(/admin_session=([^;]+)/)?.[1];
     if (id !== undefined) await destroySession(pool, id);
-    c.header("Set-Cookie", "admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+    c.header("Set-Cookie", "admin_session=; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=0");
     return c.json({ status: "success", data: null });
   });
   return r;

@@ -23,7 +23,7 @@ export function recommendRoutes(pool: Pool): Hono {
     let sid = cartIdOf(c);
     if (sid === undefined) {
       sid = randomUUID();
-      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=Lax; Path=/`);
+      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
     await pool.query(
       `INSERT INTO user_preferences (session_id, needs, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)
