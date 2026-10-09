@@ -7,26 +7,29 @@ import { createSession, destroySession, isLocked, recordLogin, sessionUser, veri
 import { markPaid } from "../services/orders.js";
 
 const loginSchema = z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(256) });
+// URL gambar: absolut http(s) ATAU path relatif-root (/images/...). Menolak
+// javascript:/data:/vbscript: (stored-XSS via <img>/preview) + batas 500.
+const imageUrlField = z.string().max(500).refine((s) => /^(https?:\/\/|\/)/.test(s), { message: "URL gambar tidak valid" }).nullish();
 const createSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  category_id: z.string().min(1),
+  id: z.string().min(1).max(64),
+  name: z.string().min(1).max(200),
+  category_id: z.string().min(1).max(64),
   price: z.number().int().min(1).max(10_000_000),
-  tags: z.array(z.string()).optional(),
-  image_url: z.string().nullish(),
-  description: z.string().nullish(),
+  tags: z.array(z.string().min(1).max(64)).max(20).optional(),
+  image_url: imageUrlField,
+  description: z.string().max(2000).nullish(),
   name_en: z.string().max(200).nullish(),
-  description_en: z.string().nullish(),
+  description_en: z.string().max(2000).nullish(),
 });
 const updateSchema = z.object({
-  name: z.string().min(1),
-  category_id: z.string().min(1),
+  name: z.string().min(1).max(200),
+  category_id: z.string().min(1).max(64),
   price: z.number().int().min(1).max(10_000_000),
-  tags: z.array(z.string()).optional(),
-  image_url: z.string().nullish(),
-  description: z.string().nullish(),
+  tags: z.array(z.string().min(1).max(64)).max(20).optional(),
+  image_url: imageUrlField,
+  description: z.string().max(2000).nullish(),
   name_en: z.string().max(200).nullish(),
-  description_en: z.string().nullish(),
+  description_en: z.string().max(2000).nullish(),
 });
 
 export function loginRoute(pool: Pool): Hono {
@@ -209,9 +212,9 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     body_en: z.string().max(2000).nullish(),
     excerpt_en: z.string().max(300).nullish(),
     tag: z.enum(["FunFact", "News", "Research"]),
-    product_id: z.string().min(1).nullish(),
-    image_url: z.string().max(500).nullish(),
-    product_ids: z.array(z.string().min(1)).max(10).nullish(),
+    product_id: z.string().min(1).max(64).nullish(),
+    image_url: imageUrlField,
+    product_ids: z.array(z.string().min(1).max(64)).max(10).nullish(),
   });
   r.post("/posts", zValidator("json", postSchema, (result, c) => {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
