@@ -10,6 +10,9 @@ import { productRepo } from "../repos/products.js";
 // Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
 const MAX_PENDING_PER_SESSION = 3;
 const MIN_INTERVAL_MS = 30_000;
+// Batas global: rotasi sesi (cart_id baru per request) tetap berbagi ember ini.
+// Turnstile sudah memaksa 1 solve per order; ember global menutup jendela fail-open.
+// Dibaca per-request agar test bisa override via env (default 30/mnt).
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
@@ -46,6 +49,12 @@ export function qrisRoutes(pool: Pool): Hono {
     const lastMs = last.rows[0]?.last === null || last.rows[0]?.last === undefined
       ? 0 : new Date(last.rows[0].last).getTime();
     if ((pending.rows[0]?.n ?? 0) >= MAX_PENDING_PER_SESSION || Date.now() - lastMs < MIN_INTERVAL_MS) {
+      return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
+    }
+    const maxGlobal = Number(process.env.GENERATE_GLOBAL_PER_MIN ?? 30);
+    const global = await pool.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM orders WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'");
+    if ((global.rows[0]?.n ?? 0) >= maxGlobal) {
       return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
     }
     // Turnstile: token invalid/basi/duplikat -> tolak; CF tak terjangkau -> fail-open (ter-log di service).
