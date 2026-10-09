@@ -28,6 +28,24 @@ export function securityHeaders(): MiddlewareHandler {
 const WINDOW_SEC = 60;
 const LIMITS: Record<string, number> = { GET: 60, POST: 20, PUT: 10, DELETE: 10 };
 
+// Fallback in-memory saat Redis unreachable (prod tanpa Redis): per-replika.
+// ponytail: tak konsisten lintas replika; Redis tetap sumber utama bila ada.
+// Diekspor untuk test; RATE_LIMIT_STORE=memory memaksa jalur ini.
+const mem = new Map<string, { n: number; reset: number }>();
+export function memRateCount(key: string): number {
+  const now = Date.now();
+  const e = mem.get(key);
+  if (e === undefined || e.reset <= now) {
+    mem.set(key, { n: 1, reset: now + WINDOW_SEC * 1000 });
+    if (mem.size > 10000) {
+      for (const [k, v] of mem) if (v.reset <= now) mem.delete(k);
+    }
+    return 1;
+  }
+  e.n += 1;
+  return e.n;
+}
+
 function clientIp(xff: string | undefined): string {
   // ponytail: pakai first-hop x-forwarded-for untuk dev; di prod (Azure Container Apps)
   // ganti ke IP koneksi tepercaya agar header tak bisa dipalsukan untuk bypass limit.
@@ -46,15 +64,20 @@ export function tieredRateLimit(): MiddlewareHandler {
     const ip = clientIp(c.req.header("x-forwarded-for"));
     const key = `rl:${method}:${ip}`;
     let count: number;
-    try {
-      const r = getRedis();
-      // lazyConnect + enableOfflineQueue: perintah pertama memicu connect & di-antre;
-      // tak perlu r.connect() manual (menghindari balapan "already connecting").
-      const res = await r.multi().incr(key).expire(key, WINDOW_SEC, "NX").exec();
-      const incr = res?.[0]?.[1];
-      count = typeof incr === "number" ? incr : Number(incr);
-    } catch {
-      return next();
+    if (process.env.RATE_LIMIT_STORE === "memory") {
+      count = memRateCount(key);
+    } else {
+      try {
+        const r = getRedis();
+        // lazyConnect + enableOfflineQueue: perintah pertama memicu connect & di-antre;
+        // tak perlu r.connect() manual (menghindari balapan "already connecting").
+        const res = await r.multi().incr(key).expire(key, WINDOW_SEC, "NX").exec();
+        const incr = res?.[0]?.[1];
+        count = typeof incr === "number" ? incr : Number(incr);
+      } catch {
+        // Dulu fail-open total; kini fallback memori per-replika (F2).
+        count = memRateCount(key);
+      }
     }
     if (count > limit) {
       return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
