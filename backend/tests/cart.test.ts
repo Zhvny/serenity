@@ -32,6 +32,14 @@ describe("cart", () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ product_id: "samp_001", quantity: 0 }) });
     assert.equal(res.status, 400);
   });
+  it("VALIDATION_ERROR tanpa gema detail zod (anti info-disclosure)", async () => {
+    const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ product_id: "samp_001', input-jahat", quantity: "bukan-angka" }) });
+    assert.equal(res.status, 400);
+    const b = (await res.json()) as { code: string; message: string };
+    assert.equal(b.code, "VALIDATION_ERROR");
+    assert.equal(b.message, "Input tidak valid");
+    assert.doesNotMatch(b.message, /jahat|bukan-angka/);
+  });
   it("POST /cart/add valid → 200 + Set-Cookie cart_id", async () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "samp_001", quantity: 2 }) });
     assert.equal(res.status, 200);
