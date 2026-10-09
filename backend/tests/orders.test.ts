@@ -39,6 +39,29 @@ describe("orders", () => {
     const res = await createApp(pool).request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ status: "paid" }) });
     assert.equal(res.status, 403);
   });
+  it("PUT /orders/:id/status kunci salah-panjang → 403; benar → 200 minimal tanpa PII", async () => {
+    const saved = process.env.INTERNAL_KEY;
+    process.env.INTERNAL_KEY = "kunci-test-status-123";
+    try {
+      const app = createApp(pool);
+      const bad = await app.request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF, "x-internal-key": "pendek" }, body: JSON.stringify({ status: "paid" }) });
+      assert.equal(bad.status, 403);
+      const created = await app.request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" }) });
+      const id = (((await created.json()) as { data: { order_id: string } }).data).order_id;
+      try {
+        const ok = await app.request(`/api/v1/orders/${id}/status`, { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF, "x-internal-key": "kunci-test-status-123" }, body: JSON.stringify({ status: "paid" }) });
+        assert.equal(ok.status, 200);
+        const data = (((await ok.json()) as { data: Record<string, unknown> }).data);
+        assert.equal(data["status"], "paid");
+        assert.equal(data["delivery_address"], undefined);
+      } finally {
+        await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+        await pool.query("DELETE FROM orders WHERE id = $1", [id]);
+      }
+    } finally {
+      if (saved === undefined) delete process.env.INTERNAL_KEY; else process.env.INTERNAL_KEY = saved;
+    }
+  });
   it("POST /orders qty 11 → 400 VALIDATION_ERROR", async () => {
     const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 11 }], mode: "instant" });
     assert.equal(res.status, 400);
