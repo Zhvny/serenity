@@ -119,6 +119,20 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(res.status, 400);
     assert.equal(((await res.json()) as { code: string }).code, "VALIDATION_ERROR");
   });
+  it("admin create product image javascript: -> 400; relatif-root lolos; nama >200 -> 400", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const base = { name: "X", category_id: "cat_food", price: 100 };
+    const bad = await app.request("/api/v1/admin/products", { method: "POST", headers: h, body: JSON.stringify({ ...base, id: "px-f7a", image_url: "javascript:alert(1)" }) });
+    assert.equal(bad.status, 400);
+    const rel = await app.request("/api/v1/admin/products", { method: "POST", headers: h, body: JSON.stringify({ ...base, id: "px-f7b", image_url: "/images/x.jpg" }) });
+    assert.equal(rel.status, 200);
+    createdProducts.push("px-f7b");
+    const long = await app.request("/api/v1/admin/products", { method: "POST", headers: h, body: JSON.stringify({ ...base, id: "px-f7c", name: "x".repeat(201) }) });
+    assert.equal(long.status, 400);
+  });
 
   it("mark-paid idempoten: changed true lalu false; status paid; satu audit", async () => {
     const app = createApp(pool);
