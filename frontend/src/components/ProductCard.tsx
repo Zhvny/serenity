@@ -11,7 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   const [lang] = useLang();
   const name = pickContent(lang, product.name_en, product.name);
   return (
-    <Link className="product-card" to={`/products/${product.id}`} aria-label={name}>
+    <Link className="product-card" to={`/products/${encodeURIComponent(product.id)}`} aria-label={name}>
       <ProductPhoto product={product} className="product-photo" lazy />
       <span className="price-tag" aria-hidden="true">
         <Sprite sprite={PRICE_TAG} />
