@@ -27,6 +27,20 @@ describe("persistensi cart", () => {
     assert.equal(found?.quantity, 2);
     assert.equal(found?.note, "tanpa es");
   });
+  it("10x addItem paralel produk sama → qty penuh tanpa lost update", async () => {
+    const cid = `cart-race-${randomUUID()}`;
+    await pool.query("INSERT INTO carts (id) VALUES ($1)", [cid]);
+    try {
+      await addItem(pool, cid, "samp_001", 1, null);
+      await Promise.all(Array.from({ length: 9 }, () => addItem(pool, cid, "samp_001", 1, null)));
+      const items = await getCart(pool, cid);
+      assert.equal(items.length, 1);
+      assert.equal(items[0]?.quantity, 10);
+    } finally {
+      await pool.query("DELETE FROM cart_items WHERE cart_id = $1", [cid]);
+      await pool.query("DELETE FROM carts WHERE id = $1", [cid]);
+    }
+  });
 });
 
 describe("persistensi order + order-id sequence", () => {
