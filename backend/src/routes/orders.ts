@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
 import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { productRepo } from "../repos/products.js";
@@ -84,14 +85,20 @@ export function orderRoutes(pool: Pool): Hono {
   r.put("/orders/:order_id/status", zValidator("json", statusSchema, (result, c) => {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
   }), async (c) => {
-    const key = process.env.INTERNAL_KEY;
-    if (key === undefined || c.req.header("x-internal-key") !== key) {
+    const key = process.env.INTERNAL_KEY ?? "";
+    const got = c.req.header("x-internal-key") ?? "";
+    // timingSafeEqual (bukan !==) agar tak ada oracle panjang-kunci; key kosong = tolak.
+    const keyOk = key !== "" && got.length === key.length &&
+      timingSafeEqual(Buffer.from(got), Buffer.from(key));
+    if (!keyOk) {
       return c.json({ status: "error", code: "INTERNAL_ONLY", message: "Khusus internal" }, 403);
     }
     const order = await setStatus(pool, c.req.param("order_id"), c.req.valid("json").status);
-    return order === null
-      ? c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404)
-      : c.json({ status: "success", data: order });
+    if (order === null) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    // Minimal: tanpa PII (delivery_address dkk) di respons.
+    return c.json({ status: "success", data: { order_id: order.order_id, status: order.status } });
   });
   // Top-up selisih underpaid: order anak terpisah (nominal = sisa), max 1 level.
   r.post("/orders/:code/topup", async (c) => {
