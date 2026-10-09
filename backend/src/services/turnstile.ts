@@ -37,5 +37,8 @@ export async function verifyTurnstile(token: string): Promise<VerifyResult> {
 function failopen(): VerifyResult {
   failopenTotal += 1;
   console.error(JSON.stringify({ event: "turnstile_failopen", n: failopenTotal }));
+  // Mode darurat fail-closed: TURNSTILE_STRICT=true menolak saat CF tak terjangkau
+  // (default fail-open sesuai keputusan grill; flip via env tanpa deploy kode).
+  if (process.env.TURNSTILE_STRICT === "true") return { ok: false };
   return { ok: "failopen" };
 }

@@ -14,8 +14,12 @@ import { internalRoutes } from "./routes/internal.js";
 import { postRoutes } from "./routes/posts.js";
 import { recommendRoutes } from "./routes/recommend.js";
 
-export function createApp(pool: Pool): Hono {
-  const app = new Hono().basePath("/api/v1");
+// Path log disanitasi: dikendalikan penyerang (CRLF/ANSI injection ke log).
+export function safeLogPath(path: string): string {
+  return path.replace(/[\r\n\x1b]/g, "").slice(0, 200);
+}
+
+export function createApp(pool: Pool): Hono {  const app = new Hono().basePath("/api/v1");
   app.use(corsMw(), loggerMw(), securityHeaders(), tieredRateLimit(), originMw());
   app.get("/health", (c) => c.json({ status: "success", data: { ok: true } } satisfies ApiSuccess<{ ok: boolean }>));
   app.get("/csrf", (c) => c.json({ status: "success", data: { csrfToken: issueCsrf(c) } }));
@@ -34,7 +38,8 @@ export function createApp(pool: Pool): Hono {
   app.route("/", postRoutes(pool));
   app.notFound((c) => c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404));
   app.onError((_e, c) => {
-    console.error(JSON.stringify({ route: c.req.path, msg: "internal" }));
+    // Sanitasi: path dikendalikan penyerang (CRLF/ANSI injection ke log).
+    console.error(JSON.stringify({ route: safeLogPath(c.req.path), msg: "internal" }));
     return c.json({ status: "error", code: "INTERNAL", message: "Kesalahan internal" }, 500);
   });
   return app;

@@ -41,6 +41,15 @@ describe("verifyTurnstile", () => {
     stubFetch(async () => new Response("err", { status: 500 }));
     assert.deepEqual(await verifyTurnstile("tok"), { ok: "failopen" });
   });
+  it("TURNSTILE_STRICT=true: network error -> tolak (fail-closed darurat)", async () => {
+    process.env.TURNSTILE_STRICT = "true";
+    stubFetch(async () => { throw new Error("down"); });
+    try {
+      assert.deepEqual(await verifyTurnstile("tok"), { ok: false });
+    } finally {
+      delete process.env.TURNSTILE_STRICT;
+    }
+  });
   it("secret unset -> tolak tanpa panggil fetch", async () => {
     delete process.env.TURNSTILE_SECRET;
     let called = false;
