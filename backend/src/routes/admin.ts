@@ -6,7 +6,7 @@ import { productRepo } from "../repos/products.js";
 import { createSession, destroySession, isLocked, recordLogin, sessionUser, verifyPassword } from "../services/adminAuth.js";
 import { markPaid } from "../services/orders.js";
 
-const loginSchema = z.object({ username: z.string().min(1), password: z.string().min(1) });
+const loginSchema = z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(256) });
 const createSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -35,10 +35,11 @@ export function loginRoute(pool: Pool): Hono {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
   }), async (c) => {
     const { username, password } = c.req.valid("json");
-    if (await isLocked(pool, username)) {
-      return c.json({ status: "error", code: "LOCKED", message: "Akun terkunci sementara" }, 429);
-    }
-    const valid = username === (process.env.ADMIN_USER ?? "") && verifyPassword(password);
+    // Anti-oracle (F6): terkunci maupun salah -> 401 INVALID_CREDS seragam.
+    // Kunci tetap ditegakkan (password benar saat terkunci pun ditolak),
+    // tapi penyerang tak bisa membedakan user-ada vs terkunci vs salah.
+    const locked = await isLocked(pool, username);
+    const valid = !locked && username === (process.env.ADMIN_USER ?? "") && (await verifyPassword(password));
     await recordLogin(pool, username, valid);
     if (!valid) {
       return c.json({ status: "error", code: "INVALID_CREDS", message: "Kredensial salah" }, 401);

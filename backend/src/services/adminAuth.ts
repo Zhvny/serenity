@@ -1,4 +1,5 @@
-import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomUUID, scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import type { Pool } from "pg";
 
 // Session + lockout DB-backed (migrasi 006_admin_sessions.sql).
@@ -13,10 +14,11 @@ export function assertAdminConfig(): void {
   }
 }
 
-export function verifyPassword(password: string): boolean {
+export async function verifyPassword(password: string): Promise<boolean> {
   const [salt, hash] = (process.env.ADMIN_PASS_HASH ?? "").split(":");
   if (salt === undefined || hash === undefined || salt === "" || hash === "") return false;
-  const a = scryptSync(password, salt, 64);
+  // scrypt async (bukan scryptSync): gagal-login tak boleh blokir event loop.
+  const a = (await promisify(scrypt)(password, salt, 64)) as Buffer;
   const b = Buffer.from(hash, "hex");
   return a.length === b.length && timingSafeEqual(a, b);
 }

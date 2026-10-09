@@ -68,16 +68,21 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(((await res.json()) as { code: string }).code, "INVALID_CREDS");
   });
 
-  it("password salah 5x -> 429 LOCKED", async () => {
+  it("password salah 6x -> tetap 401 seragam (tanpa oracle LOCKED), kunci internal jalan", async () => {
     const u = loginUser("brute"); createdUsers.push(u);
     const app = createApp(pool);
-    let last = 0;
     for (let i = 0; i < 6; i++) {
       const r = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: u, password: "salah" }) });
-      last = r.status;
-      if (last === 429) break;
+      assert.equal(r.status, 401);
+      assert.equal(((await r.json()) as { code: string }).code, "INVALID_CREDS");
     }
-    assert.equal(last, 429);
+    const { isLocked } = await import("../src/services/adminAuth.js");
+    assert.equal(await isLocked(pool, u), true);
+  });
+
+  it("password >256 char -> 400 (anti scrypt-DoS)", async () => {
+    const res = await createApp(pool).request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: "x".repeat(300) }) });
+    assert.equal(res.status, 400);
   });
 
   it("GET /admin/products tanpa session -> 401 UNAUTH", async () => {
