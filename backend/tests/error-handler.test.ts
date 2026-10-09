@@ -1,6 +1,6 @@
 import { describe, it, after } from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../src/app.js";
+import { createApp, safeLogPath } from "../src/app.js";
 import { getRedis, closeRedis } from "../src/db/redis.js";
 import type { Pool } from "pg";
 
@@ -26,6 +26,25 @@ describe("error handler", () => {
       assert.equal(res.status, 500);
       assert.doesNotMatch(txt, /passwords|leaked|password=xyz/);
       assert.doesNotMatch(logs.join("\n"), /passwords|leaked|password=xyz/);
+    } finally {
+      console.error = orig;
+    }
+  });
+
+  it("log onError bebas CRLF/ANSI dari path (anti log-injection)", async () => {
+    assert.equal(safeLogPath("/api/v1/x\r\nINJECTED\x1b[31m"), "/api/v1/xINJECTED[31m");
+    assert.equal(safeLogPath("/ok").length > 0, true);
+    assert.equal(safeLogPath("a".repeat(500)).length, 200);
+    const boomPool = { query: async () => { throw new Error("boom"); } } as unknown as Pool;
+    const logs: string[] = [];
+    const orig = console.error;
+    console.error = (...args: unknown[]) => { logs.push(args.map(String).join(" ")); };
+    try {
+      const res = await createApp(boomPool).request("/api/v1/products");
+      assert.equal(res.status, 500);
+      for (const line of logs) {
+        assert.doesNotMatch(line, /[\r\n\x1b]/);
+      }
     } finally {
       console.error = orig;
     }
