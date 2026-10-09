@@ -199,4 +199,32 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const fourth = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
     assert.equal(fourth.status, 429);
   });
+
+  it("ember global: sesi beda tetap 429 saat order/menit penuh", async () => {
+    const prev = process.env.GENERATE_GLOBAL_PER_MIN;
+    process.env.GENERATE_GLOBAL_PER_MIN = "1";
+    // Kosongkan ember: mundurkan semua order lama (DB test saja).
+    await pool.query("UPDATE orders SET created_at = CURRENT_TIMESTAMP - INTERVAL '2 minutes'");
+    try {
+      const c1 = await seedCart();
+      const first = await createApp(pool).request("/api/v1/orders/generate-code", {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: `cart_id=${c1}`, "x-forwarded-for": XFF },
+        body: genBody(),
+      });
+      assert.equal(first.status, 200);
+      createdOrders.push((((await first.json()) as { data: { order_id: string } }).data).order_id);
+      // Sesi SEGAR (rotasi cart_id) tetap ditolak ember global.
+      const c2 = await seedCart();
+      const second = await createApp(pool).request("/api/v1/orders/generate-code", {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: `cart_id=${c2}`, "x-forwarded-for": XFF },
+        body: genBody(),
+      });
+      assert.equal(second.status, 429);
+      assert.equal(((await second.json()) as { code: string }).code, "RATE_LIMITED");
+    } finally {
+      if (prev === undefined) delete process.env.GENERATE_GLOBAL_PER_MIN; else process.env.GENERATE_GLOBAL_PER_MIN = prev;
+    }
+  });
 });
