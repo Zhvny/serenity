@@ -24,7 +24,7 @@ export function orderRoutes(pool: Pool): Hono {
   const r = new Hono();
   const products = productRepo(pool);
   r.post("/orders", zValidator("json", createSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
     if (body.mode === "instant" && body.scheduled_at != null) {
@@ -83,7 +83,7 @@ export function orderRoutes(pool: Pool): Hono {
     return c.json({ status: "success", data: safe });
   });
   r.put("/orders/:order_id/status", zValidator("json", statusSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const key = process.env.INTERNAL_KEY ?? "";
     const got = c.req.header("x-internal-key") ?? "";

@@ -18,7 +18,7 @@ function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): st
 export function cartRoutes(pool: Pool): Hono {
   const r = new Hono();
   const products = productRepo(pool);
-  r.post("/cart/add", zValidator("json", addSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
+  r.post("/cart/add", zValidator("json", addSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
     const body = c.req.valid("json");
     if (await products.getById(body.product_id) === null) {
       return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
@@ -34,7 +34,7 @@ export function cartRoutes(pool: Pool): Hono {
   r.get("/cart", async (c) => {
     return c.json({ status: "success", data: await getCart(pool, cartIdOf(c) ?? "") });
   });
-  r.put("/cart/items/:item_id", zValidator("json", updateSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
+  r.put("/cart/items/:item_id", zValidator("json", updateSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
     const body = c.req.valid("json");
     const item = await updateItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"), body.quantity, body.note);
     return item === null ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: item });
@@ -43,7 +43,7 @@ export function cartRoutes(pool: Pool): Hono {
     const ok = await removeItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"));
     return !ok ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: { removed: true } });
   });
-  r.post("/cart/checkout", zValidator("json", checkoutSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
+  r.post("/cart/checkout", zValidator("json", checkoutSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
     const body = c.req.valid("json");
     if (body.mode === "instant" && body.scheduled_at != null) {
       return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at harus null untuk mode instant" }, 400);

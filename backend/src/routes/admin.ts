@@ -35,7 +35,7 @@ const updateSchema = z.object({
 export function loginRoute(pool: Pool): Hono {
   const r = new Hono();
   r.post("/login", zValidator("json", loginSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const { username, password } = c.req.valid("json");
     // Anti-oracle (F6): terkunci maupun salah -> 401 INVALID_CREDS seragam.
@@ -80,7 +80,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   });
 
   r.post("/products", zValidator("json", createSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
     const created = await repo.create({ id: body.id, name: body.name, category_id: body.category_id, price: body.price, tags: body.tags ?? [], image_url: body.image_url ?? null, description: body.description ?? null, name_en: body.name_en ?? null, description_en: body.description_en ?? null });
@@ -104,7 +104,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   });
 
   r.put("/products/:id", zValidator("json", updateSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const id = c.req.param("id");
     const body = c.req.valid("json");
@@ -141,7 +141,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     }
     const next = NEXT[status];
     if (next === undefined) {
-      return c.json({ status: "error", code: "INVALID_TRANSITION", message: `Tidak bisa memajukan dari status '${status}'` }, 409);
+      return c.json({ status: "error", code: "INVALID_TRANSITION", message: "Status berubah, muat ulang" }, 409);
     }
     // Transisi atomik + aman balapan: hanya update bila status masih sama.
     const upd = await pool.query<{ status: string }>(
@@ -186,7 +186,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Idempoten (hanya transisi dari pending_payment) + audit.
   const markPaidSchema = z.object({ paid_amount: z.number().int().min(1) });
   r.post("/orders/:code/mark-paid", zValidator("json", markPaidSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const code = c.req.param("code");
     const paidAmount = c.req.valid("json").paid_amount;
@@ -217,7 +217,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     product_ids: z.array(z.string().min(1).max(64)).max(10).nullish(),
   });
   r.post("/posts", zValidator("json", postSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const body = c.req.valid("json");
     if (body.product_id != null) {
@@ -252,7 +252,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
 
   // Edit post penuh (skema sama dengan create).
   r.put("/posts/:id", zValidator("json", postSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const id = c.req.param("id");
     const body = c.req.valid("json");

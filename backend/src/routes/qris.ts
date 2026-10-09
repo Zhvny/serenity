@@ -30,7 +30,7 @@ export function qrisRoutes(pool: Pool): Hono {
 
   // Generate kode QRIS: nominal OTORITATIF server (hitung ulang dari cart sesi).
   r.post("/orders/generate-code", zValidator("json", generateSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400);
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
   }), async (c) => {
     const cartId = cartIdOf(c);
     if (cartId === undefined) {
