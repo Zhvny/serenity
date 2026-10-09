@@ -7,7 +7,7 @@ const querySchema = z.object({ category: z.string().max(50).regex(/^[a-z0-9_-]+$
 
 export function menuRoutes(service: MenuService): Hono {
   const r = new Hono();
-  r.get("/products", zValidator("query", querySchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: result.error.issues[0]?.message ?? "Input tidak valid" }, 400); }), async (c) => {
+  r.get("/products", zValidator("query", querySchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
     const q = c.req.valid("query");
     const data = await service.listProducts({ category: q.category, tag: q.tag });
     return c.json({ status: "success", data });
