@@ -111,7 +111,7 @@ export function MenuPage() {
           <div className="hero-visual">
             <HeroScene />
             {featured !== null ? (
-              <Link to={`/products/${featured.id}`} className="hero-card hero-card--board" aria-label={t("menu.board.label", { name: featured.name })}>
+              <Link to={`/products/${encodeURIComponent(featured.id)}`} className="hero-card hero-card--board" aria-label={t("menu.board.label", { name: featured.name })}>
                 <Sprite sprite={CHALKBOARD} className="board-frame" />
                 <div className="board-text">
                   <p className="board-kicker">{t("menu.board.kicker")}</p>
