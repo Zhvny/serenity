@@ -1,0 +1,31 @@
+name: dastardly
+
+# Scan DAST sekali-jalan (manual) ke SWA publik. Read-only: Dastardly hanya
+# crawl + cek pasif/ringan (7 issue, cap ~10 mnt), tanpa modul exploit.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: none
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Dastardly scan (SWA publik)
+        uses: PortSwigger/dastardly-github-action@main
+        with:
+          target-url: 'https://icy-smoke-0179acc00.3.azurestaticapps.net'
+      - name: Tampilkan ringkasan report
+        if: always()
+        run: |
+          python3 -c "
+          import xml.etree.ElementTree as ET
+          t = ET.parse('dastardly-report.xml').getroot()
+          ts = t.findall('.//testsuite')[0] if t.findall('.//testsuite') else t
+          print('tests=' + ts.get('tests','?') + ' failures=' + ts.get('failures','?') + ' errors=' + ts.get('errors','?'))
+          for tc in t.iter('testcase'):
+              f = tc.find('failure')
+              if f is not None:
+                  print('FAIL: ' + (tc.get('name') or '?'))
+          "
