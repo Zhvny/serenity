@@ -6,8 +6,6 @@
   ![Vite 8](https://img.shields.io/badge/Vite-8-93c572) ![React 19](https://img.shields.io/badge/React-19-3f6f3c) ![Hono](https://img.shields.io/badge/Hono-API-93c572) ![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-3f6f3c)
 </div>
 
-> 🌱 Tema pixel-bakery — primary `#93c572` · deep `#3f6f3c` · soft `#b8de8f`
-
 Aplikasi pemesanan dan pre-order makanan sehat; makanan utama, dessert sehat, dan minuman sehat dalam satu menu, lengkap dengan info nutrisi dan alergen. Pembayaran via QRIS quasi-statis (verifikasi manual admin).
 
 ## Fitur Utama
