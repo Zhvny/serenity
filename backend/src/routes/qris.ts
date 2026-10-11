@@ -10,6 +10,7 @@ import { productRepo } from "../repos/products.js";
 // Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
 const MAX_PENDING_PER_SESSION = 3;
 const MIN_INTERVAL_MS = 30_000;
+let globalThrottleTrips = 0;
 // Batas global: rotasi sesi (cart_id baru per request) tetap berbagi ember ini.
 // Turnstile sudah memaksa 1 solve per order; ember global menutup jendela fail-open.
 // Dibaca per-request agar test bisa override via env (default 30/mnt).
@@ -55,10 +56,13 @@ export function qrisRoutes(pool: Pool): Hono {
     const global = await pool.query<{ n: number }>(
       "SELECT count(*)::int AS n FROM orders WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '1 minute'");
     if ((global.rows[0]?.n ?? 0) >= maxGlobal) {
+      // Visibilitas serangan borongan: tiap penolakan ember global ter-log + counter.
+      globalThrottleTrips += 1;
+      console.error(JSON.stringify({ event: "generate_global_throttled", n: globalThrottleTrips }));
       return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
     }
     // Turnstile: token invalid/basi/duplikat -> tolak; CF tak terjangkau -> fail-open (ter-log di service).
-    const verdict = await verifyTurnstile(body.turnstile_token);
+    const verdict = await verifyTurnstile(body.turnstile_token, c.req.header("x-forwarded-for")?.split(",")[0]?.trim());
     if (verdict.ok === false) {
       return c.json({ status: "error", code: "TURNSTILE_FAILED", message: "Verifikasi gagal" }, 403);
     }
