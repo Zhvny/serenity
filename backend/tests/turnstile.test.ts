@@ -61,4 +61,14 @@ describe("verifyTurnstile", () => {
     stubFetch(async () => siteverify(true));
     assert.deepEqual(await verifyTurnstile(""), { ok: false });
   });
+  it("remoteip diteruskan ke siteverify (reputasi IP)", async () => {
+    let sent = "";
+    process.env.TURNSTILE_SECRET = "test-secret";
+    globalThis.fetch = (async (_url: unknown, init?: unknown) => {
+      sent = String((init as { body: string }).body);
+      return siteverify(true);
+    }) as typeof fetch;
+    assert.deepEqual(await verifyTurnstile("tok", "9.9.9.9"), { ok: true });
+    assert.match(sent, /remoteip=9\.9\.9\.9/);
+  });
 });
