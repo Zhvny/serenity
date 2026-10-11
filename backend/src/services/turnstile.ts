@@ -10,16 +10,19 @@ export function turnstileFailopenTotal(): number {
 
 export type VerifyResult = { ok: true } | { ok: false } | { ok: "failopen" };
 
-export async function verifyTurnstile(token: string): Promise<VerifyResult> {
+export async function verifyTurnstile(token: string, remoteIp?: string): Promise<VerifyResult> {
   const secret = process.env.TURNSTILE_SECRET ?? "";
   if (secret === "" || token === "") return { ok: false };
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
+    // remoteip ikut dikirim agar Cloudflare bisa pakai reputasi IP pen-solve.
+    const form: Record<string, string> = { secret, response: token };
+    if (remoteIp !== undefined && remoteIp !== "") form["remoteip"] = remoteIp;
     const res = await fetch(SITEVERIFY_URL, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ secret, response: token }).toString(),
+      body: new URLSearchParams(form).toString(),
       signal: ctrl.signal,
     });
     if (!res.ok) return failopen();
