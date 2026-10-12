@@ -5,6 +5,7 @@ import type { Pool } from "pg";
 import { getCart } from "../services/cart.js";
 import { nextOrderId, newCode } from "../services/orders.js";
 import { verifyTurnstile } from "../services/turnstile.js";
+import { claimIdem, completeIdem, idemKeyOf, releaseIdem } from "../services/idempotency.js";
 import { productRepo } from "../repos/products.js";
 
 // Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
@@ -37,10 +38,24 @@ export function qrisRoutes(pool: Pool): Hono {
     if (cartId === undefined) {
       return c.json({ status: "error", code: "NO_CART", message: "Keranjang tidak ditemukan" }, 400);
     }
+    // Idempotency-Key (opsional) diklaim AWAL agar retry yang responsnya hilang
+    // tetap replay 200 sama (melewati throttle/cek bisnis tanpa efek samping).
+    // Semua return gagal di bawah melepas klaim agar retry mengulang bersih.
+    const genKey = idemKeyOf(c.req.header("Idempotency-Key"));
+    const GEN_EP = "POST /orders/generate-code";
+    const fail = async (status: 400 | 403 | 404 | 409 | 429 | 500, code: string, message: string) => {
+      if (genKey !== null) await releaseIdem(pool, GEN_EP, genKey);
+      return c.json({ status: "error", code, message }, status);
+    };
+    if (genKey !== null) {
+      const claim = await claimIdem(pool, GEN_EP, genKey);
+      if (claim.kind === "replay") return c.json(claim.body as { status: string; data: unknown });
+      if (claim.kind === "busy") return c.json({ status: "error", code: "IDEMPOTENT_RETRY", message: "Masih diproses, coba lagi" }, 409);
+    }
     const body = c.req.valid("json");
     // Honeypot dulu (tanpa DB): kode sama dengan turnstile agar tanpa oracle.
     if (body.website !== "") {
-      return c.json({ status: "error", code: "TURNSTILE_FAILED", message: "Verifikasi gagal" }, 403);
+      return fail(403, "TURNSTILE_FAILED", "Verifikasi gagal");
     }
     // Throttle per sesi (2 query ringan): batas pending + jeda 30 dtk.
     const pending = await pool.query<{ n: number }>(
@@ -50,7 +65,7 @@ export function qrisRoutes(pool: Pool): Hono {
     const lastMs = last.rows[0]?.last === null || last.rows[0]?.last === undefined
       ? 0 : new Date(last.rows[0].last).getTime();
     if ((pending.rows[0]?.n ?? 0) >= MAX_PENDING_PER_SESSION || Date.now() - lastMs < MIN_INTERVAL_MS) {
-      return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
+      return fail(429, "RATE_LIMITED", "Terlalu banyak permintaan");
     }
     const maxGlobal = Number(process.env.GENERATE_GLOBAL_PER_MIN ?? 30);
     const global = await pool.query<{ n: number }>(
@@ -59,27 +74,27 @@ export function qrisRoutes(pool: Pool): Hono {
       // Visibilitas serangan borongan: tiap penolakan ember global ter-log + counter.
       globalThrottleTrips += 1;
       console.error(JSON.stringify({ event: "generate_global_throttled", n: globalThrottleTrips }));
-      return c.json({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429);
+      return fail(429, "RATE_LIMITED", "Terlalu banyak permintaan");
     }
     // Turnstile: token invalid/basi/duplikat -> tolak; CF tak terjangkau -> fail-open (ter-log di service).
     const verdict = await verifyTurnstile(body.turnstile_token, c.req.header("x-forwarded-for")?.split(",")[0]?.trim());
     if (verdict.ok === false) {
-      return c.json({ status: "error", code: "TURNSTILE_FAILED", message: "Verifikasi gagal" }, 403);
+      return fail(403, "TURNSTILE_FAILED", "Verifikasi gagal");
     }
     const items = await getCart(pool, cartId);
     if (items.length === 0) {
-      return c.json({ status: "error", code: "CART_EMPTY", message: "Keranjang kosong" }, 400);
+      return fail(400, "CART_EMPTY", "Keranjang kosong");
     }
     let total = 0;
     for (const it of items) {
       const p = await products.getById(it.product_id);
       if (p === null) {
-        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
+        return fail(404, "PRODUCT_NOT_FOUND", "Produk tidak ditemukan");
       }
       total += p.price * it.quantity;
     }
     if (total <= 0) {
-      return c.json({ status: "error", code: "INVALID_AMOUNT", message: "Nominal tidak valid" }, 400);
+      return fail(400, "INVALID_AMOUNT", "Nominal tidak valid");
     }
     const qrBase = process.env.QUASI_STATIC_QR_URL ?? "";
     const orderId = await nextOrderId(pool);
@@ -91,6 +106,8 @@ export function qrisRoutes(pool: Pool): Hono {
       priced.push({ product_id: it.product_id, quantity: it.quantity, price: p === null ? 0 : p.price });
     }
     // unique_code crypto + retry bila bentrok UNIQUE (sangat jarang untuk 128-bit).
+    let generated: { order_id: string; unique_code: string; qr_url: string; nominal: number } | null = null;
+    try {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const code = newCode();
       const qrUrl = `${qrBase}?ref=${code}`;
@@ -112,7 +129,8 @@ export function qrisRoutes(pool: Pool): Hono {
         await client.query("DELETE FROM cart_items WHERE cart_id = $1", [cartId]);
         await client.query("COMMIT");
         client.release();
-        return c.json({ status: "success", data: { order_id: orderId, unique_code: code, qr_url: qrUrl, nominal: total } });
+        generated = { order_id: orderId, unique_code: code, qr_url: qrUrl, nominal: total };
+        break;
       } catch (e) {
         await client.query("ROLLBACK");
         client.release();
@@ -121,7 +139,17 @@ export function qrisRoutes(pool: Pool): Hono {
         throw e;
       }
     }
-    return c.json({ status: "error", code: "CODE_COLLISION", message: "Gagal membuat kode" }, 500);
+    } catch (e) {
+      if (genKey !== null) await releaseIdem(pool, GEN_EP, genKey);
+      throw e;
+    }
+    if (generated === null) {
+      if (genKey !== null) await releaseIdem(pool, GEN_EP, genKey);
+      return c.json({ status: "error", code: "CODE_COLLISION", message: "Gagal membuat kode" }, 500);
+    }
+    const genOut = { status: "success", data: generated } as const;
+    if (genKey !== null) await completeIdem(pool, GEN_EP, genKey, genOut);
+    return c.json(genOut);
   });
 
   // Thanks terikat sesi (ADR-0001): hanya pemilik cart_id; sesi lain -> 404 seragam.
