@@ -19,6 +19,11 @@ param(
 # az/node menulis ke stderr pada kondisi normal (warning SSL pg, progress az).
 # Jangan biarkan itu menghentikan script: pakai cek $LASTEXITCODE eksplisit.
 $ErrorActionPreference = "Continue"
+
+# Prompt password butuh konsol. Di konteks non-konsol (pipe/CI/agent) Read-Host
+# menggantung diam-diam -> gagalkan cepat dengan pesan jelas.
+if ([Console]::IsInputRedirected) { Write-Error "Prompt password butuh terminal interaktif; stdin dialihkan."; exit 1 }
+
 $fqdn = if ($env:PG_FQDN) { $env:PG_FQDN } else { "$Server.postgres.database.azure.com" }
 $rule = "migrate-prod-$($PID)"
 
