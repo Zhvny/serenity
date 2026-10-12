@@ -7,14 +7,20 @@ import { Redis } from "ioredis";
 // Bersihkan counter rate-limit (rl:*) sekali di awal suite agar run berulang
 // dalam 60s tak terbawa sisa (TTL window). Toleran bila Redis mati.
 async function flushRateLimit() {
-  const r = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { lazyConnect: true, maxRetriesPerRequest: 1, enableOfflineQueue: false });
+  // retryStrategy null: jangan reconnect tanpa batas -> gagal cepat saat Redis mati.
+  // Race timeout: jaring bila connect() menggantung alih-alih menolak cepat.
+  const r = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+    lazyConnect: true, maxRetriesPerRequest: 1, enableOfflineQueue: false,
+    retryStrategy: () => null,
+  });
   r.on("error", () => {});
   try {
-    await r.connect();
+    const connect = r.connect().catch(() => {}); // gagal konek bukan error fatal
+    await Promise.race([connect, new Promise((res) => setTimeout(res, 1500))]);
     const keys = await r.keys("rl:*");
     if (keys.length > 0) await r.del(...keys);
   } catch { /* redis mati -> abaikan */ }
-  try { await r.quit(); } catch { /* noop */ }
+  try { r.disconnect(); } catch { /* noop */ } // immediate: tak tunggu reconnect timer
 }
 
 await flushRateLimit();
