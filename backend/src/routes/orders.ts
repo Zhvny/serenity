@@ -5,6 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { productRepo } from "../repos/products.js";
 import { createOrder, deliveryError, getOrder, setStatus, listMine, newCode, nextOrderId } from "../services/orders.js";
+import { claimIdem, completeIdem, idemKeyOf, releaseIdem } from "../services/idempotency.js";
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
@@ -46,8 +47,23 @@ export function orderRoutes(pool: Pool): Hono {
       }
       total += p.price * item.quantity;
     }
-    const order = await createOrder(pool, body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address, cartIdOf(c) ?? null);
-    return c.json({ status: "success", data: order });
+    const orderKey = idemKeyOf(c.req.header("Idempotency-Key"));
+    const ORDER_EP = "POST /orders";
+    if (orderKey !== null) {
+      const claim = await claimIdem(pool, ORDER_EP, orderKey);
+      if (claim.kind === "replay") return c.json(claim.body as { status: string; data: unknown });
+      if (claim.kind === "busy") return c.json({ status: "error", code: "IDEMPOTENT_RETRY", message: "Masih diproses, coba lagi" }, 409);
+    }
+    let order;
+    try {
+      order = await createOrder(pool, body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address, cartIdOf(c) ?? null);
+    } catch (e) {
+      if (orderKey !== null) await releaseIdem(pool, ORDER_EP, orderKey);
+      throw e;
+    }
+    const created = { status: "success", data: order } as const;
+    if (orderKey !== null) await completeIdem(pool, ORDER_EP, orderKey, created);
+    return c.json(created);
   });
   r.get("/orders/mine", async (c) => {
     // Terikat sesi (ADR-0001); tanpa cookie -> 404 seragam. Daftarkan SEBELUM /:order_id.
@@ -113,17 +129,31 @@ export function orderRoutes(pool: Pool): Hono {
     if (p === undefined || cartId === undefined || p.session_id !== cartId) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
+    // Idempotency-Key per parent diklaim AWAL (alasan sama dengan generate-code).
+    const topKey = idemKeyOf(c.req.header("Idempotency-Key"));
+    const TOP_EP = `POST /orders/${code}/topup`;
+    const topFail = async (code_: string, message: string) => {
+      if (topKey !== null) await releaseIdem(pool, TOP_EP, topKey);
+      return c.json({ status: "error", code: code_, message }, 409);
+    };
+    if (topKey !== null) {
+      const claim = await claimIdem(pool, TOP_EP, topKey);
+      if (claim.kind === "replay") return c.json(claim.body as { status: string; data: unknown });
+      if (claim.kind === "busy") return c.json({ status: "error", code: "IDEMPOTENT_RETRY", message: "Masih diproses, coba lagi" }, 409);
+    }
     const sisa = p.total_amount - (p.paid_amount ?? 0);
     if (p.status !== "underpaid" || p.parent_code !== null || sisa <= 0) {
-      return c.json({ status: "error", code: "INVALID_TOPUP", message: "Top-up hanya untuk order underpaid level pertama" }, 409);
+      return topFail("INVALID_TOPUP", "Top-up hanya untuk order underpaid level pertama");
     }
     // Satu anak berjalan dalam satu waktu: tolak bila ada anak yang belum expired/cancelled.
     const open = await pool.query("SELECT 1 FROM orders WHERE parent_code = $1 AND status NOT IN ('expired','cancelled') LIMIT 1", [code]);
     if ((open.rowCount ?? 0) > 0) {
-      return c.json({ status: "error", code: "INVALID_TOPUP", message: "Sudah ada kode top-up yang berjalan" }, 409);
+      return topFail("INVALID_TOPUP", "Sudah ada kode top-up yang berjalan");
     }
     const qrBase = process.env.QUASI_STATIC_QR_URL ?? "";
     const orderId = await nextOrderId(pool);
+    let child: { order_id: string; unique_code: string; qr_url: string; nominal: number } | null = null;
+    try {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const childCode = newCode();
       const qrUrl = `${qrBase}?ref=${childCode}`;
@@ -141,7 +171,8 @@ export function orderRoutes(pool: Pool): Hono {
         // Aktivitas top-up me-reset jam expire parent.
         await client.query("UPDATE orders SET updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1", [code]);
         await client.query("COMMIT");
-        return c.json({ status: "success", data: { order_id: orderId, unique_code: childCode, qr_url: qrUrl, nominal: sisa } });
+        child = { order_id: orderId, unique_code: childCode, qr_url: qrUrl, nominal: sisa };
+        break;
       } catch (e) {
         try { await client.query("ROLLBACK"); } catch { /* abaikan, koneksi rusak */ }
         if (e instanceof Error && /unique/i.test(e.message)) continue;
@@ -150,7 +181,17 @@ export function orderRoutes(pool: Pool): Hono {
         client.release();
       }
     }
-    return c.json({ status: "error", code: "CODE_COLLISION", message: "Gagal membuat kode" }, 500);
+    } catch (e) {
+      if (topKey !== null) await releaseIdem(pool, TOP_EP, topKey);
+      throw e;
+    }
+    if (child === null) {
+      if (topKey !== null) await releaseIdem(pool, TOP_EP, topKey);
+      return c.json({ status: "error", code: "CODE_COLLISION", message: "Gagal membuat kode" }, 500);
+    }
+    const topOut = { status: "success", data: child } as const;
+    if (topKey !== null) await completeIdem(pool, TOP_EP, topKey, topOut);
+    return c.json(topOut);
   });
   return r;
 }
