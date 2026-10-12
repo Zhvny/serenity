@@ -16,7 +16,9 @@ param(
   [string]$MigrateUser = $(if ($env:MIGRATE_USER) { $env:MIGRATE_USER } else { "serenity_migrate" })
 )
 
-$ErrorActionPreference = "Stop"
+# az/node menulis ke stderr pada kondisi normal (warning SSL pg, progress az).
+# Jangan biarkan itu menghentikan script: pakai cek $LASTEXITCODE eksplisit.
+$ErrorActionPreference = "Continue"
 $fqdn = if ($env:PG_FQDN) { $env:PG_FQDN } else { "$Server.postgres.database.azure.com" }
 $rule = "migrate-prod-$($PID)"
 
@@ -35,11 +37,12 @@ $ip = (Invoke-RestMethod -Uri "https://api.ipify.org").Trim()
 Write-Host "IP lokal: $ip - buka firewall rule sementara '$rule'"
 az postgres flexible-server firewall-rule create -g $ResourceGroup -s $Server -n $rule `
   --start-ip-address $ip --end-ip-address $ip -o none
+if ($LASTEXITCODE -ne 0) { throw "Gagal buka firewall rule '$rule' (exit $LASTEXITCODE)." }
 
 $opened = $true
 try {
   # 3) Migrasi via runner yang sama dengan CI (nomor + lock + checksum).
-  $conn = "postgres://${MigrateUser}:${plain}@${fqdn}:5432/${Database}?sslmode=require"
+  $conn = "postgres://${MigrateUser}:${plain}@${fqdn}:5432/${Database}?sslmode=verify-full"
   $env:DATABASE_URL = $conn
   Write-Host "Menjalankan migrasi..."
   node "$PSScriptRoot/migrate.js"
@@ -50,13 +53,16 @@ try {
     Write-Host "Seed idempoten (katalog)..."
     node "$PSScriptRoot/seed.js"
   }
-  if ($code -ne 0) { Write-Error "Migrasi gagal (exit $code)." }
+  if ($code -ne 0) { throw "Migrasi gagal (exit $code)." }
 } finally {
   Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
   $plain = $null
   if ($opened) {
     Write-Host "Tutup firewall rule '$rule'"
     az postgres flexible-server firewall-rule delete -g $ResourceGroup -s $Server -n $rule --yes -o none
+    if ($LASTEXITCODE -ne 0) {
+      Write-Warning "GAGAL tutup rule '$rule' - tutup manual: az postgres flexible-server firewall-rule delete -g $ResourceGroup -s $Server -n $rule --yes"
+    }
     $remaining = az postgres flexible-server firewall-rule list -g $ResourceGroup -s $Server --query "[].name" -o tsv
     Write-Host "Rule tersisa: $remaining"
   }
