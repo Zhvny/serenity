@@ -98,4 +98,13 @@ describe("migrations", () => {
     const check = ddl.split("\n").find((l) => l.includes("posts_tag_check") && l.includes("CHECK"));
     assert.ok(check !== undefined && check.includes("Research") && !check.includes("SoftSelling"));
   });
+
+  it("022 grant DML idempotency_keys ke role runtime (tanpa DROP)", () => {
+    const sql = readFileSync(new URL("../migrations/022_idem_grants.sql", import.meta.url), "utf8");
+    assert.match(sql, /GRANT/i);
+    assert.match(sql, /idempotency_keys/);
+    assert.match(sql, /serenity_app/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });
