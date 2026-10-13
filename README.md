@@ -33,23 +33,23 @@ Aplikasi pemesanan dan pre-order makanan sehat; makanan utama, dessert sehat, da
 serenity/
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # Header, FilterBar, ProductCard, Icon, Footer, LocationPicker, ErrorBoundary
-│   │   ├── pages/        # Menu, Detail, Cart, Checkout, Thanks, Status, Admin, NotFound (+ *.test.tsx)
+│   │   ├── components/            # Header, FilterBar, ProductCard, Icon, Footer, LocationPicker, ErrorBoundary
+│   │   ├── pages/                 # Menu, Detail, Cart, Checkout, Thanks, Status, Admin, NotFound (+ *.test.tsx)
 │   │   ├── services/api.ts        # fetch wrapper + api.test.ts
 │   │   ├── utils/format.ts        # rupiah dsb.
 │   │   └── index.css              # token DESIGN.md
 │   └── index.html
 ├── backend/
 │   ├── src/
-│   │   ├── routes/       # menu, cart, orders, qris, admin.ts
-│   │   ├── services/     # menu, cart, orders, adminAuth.ts
+│   │   ├── routes/                # menu, cart, orders, qris, admin.ts
+│   │   ├── services/              # menu, cart, orders, adminAuth.ts
 │   │   ├── repos/products.ts      # query produk
 │   │   ├── db/{pool,redis}.ts     # PG pool + Redis fail-open
 │   │   └── middleware/{csrf,security}.ts
-│   ├── migrations/       # 001–010 (*.sql + *.down.sql) + seed_dev.sql
+│   ├── migrations/                # 001–010 (*.sql + *.down.sql) + seed_dev.sql
 │   ├── scripts/migrate.js         # runner bernomor + lock + checksum
-│   └── tests/            # node --test: admin, cart, orders, qris, security, e2e… (≥80% handler)
-├── infra/                # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
+│   └── tests/                     # node --test: admin, cart, orders, qris, security, e2e… (≥80% handler)
+├── infra/                         # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
 ├── .github/workflows/deploy.yml   # CI: lint → verify → acr build → migrasi → rollout → SWA
 └── README.md
 ```
