@@ -68,6 +68,10 @@ jobs:
       - name: Backend install
         working-directory: backend
         run: npm ci
+      - name: Backend roles CI (GRANT 022 butuh role ada di DB fresh)
+        working-directory: backend
+        run: |
+          node -e "import('pg').then(async ({default:pg}) => { const c = new pg.Client({connectionString: process.env.DATABASE_URL}); await c.connect(); try { for (const r of ['serenity_app', 'serenity_migrate']) { try { await c.query('CREATE ROLE ' + r + ' LOGIN'); } catch (e) { if (!/already exists/.test(e.message)) throw e; } } } finally { await c.end(); } })"
       - name: Backend migrate (skema CI)
         working-directory: backend
         run: npm run migrate
