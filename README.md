@@ -4,6 +4,8 @@
   **Serenity - Healthy Pre-Order**
 
   ![Vite 8](https://img.shields.io/badge/Vite-8-93c572) ![React 19](https://img.shields.io/badge/React-19-3f6f3c) ![Hono](https://img.shields.io/badge/Hono-API-93c572) ![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-3f6f3c)
+
+  Bahasa: **Indonesia** · [English](README.en.md) · [中文](README.zh-CN.md)
 </div>
 
 Aplikasi pemesanan dan pre-order makanan sehat; makanan utama, dessert sehat, dan minuman sehat dalam satu menu, lengkap dengan info nutrisi dan alergen. Pembayaran via QRIS quasi-statis (verifikasi manual admin).
@@ -21,11 +23,11 @@ Aplikasi pemesanan dan pre-order makanan sehat; makanan utama, dessert sehat, da
 
 | Layer | Teknologi |
 |---|---|
-| Frontend | Vite 8 + React 19 + React Compiler, react-router, fetch native, CSS token (`DESIGN.md`), npm |
-| Backend | Node 22 + Hono + TypeScript strict, `pg` Pool (parameterized), `zod`, `node --test` |
-| Database | PostgreSQL 15+ (migrasi bernomor + lock + checksum) |
+| Frontend | [Vite](https://vite.dev) 8 + [React](https://react.dev) 19 + React Compiler, react-router, fetch native, CSS token (`DESIGN.md`), npm |
+| Backend | Node 22 + [Hono](https://hono.dev) + TypeScript strict, `pg` Pool (parameterized), `zod`, `node --test` |
+| Database | [PostgreSQL](https://www.postgresql.org) 15+ (migrasi bernomor + lock + checksum) |
 | Pembayaran | QRIS quasi-statis (tanpa gateway) |
-| Deploy | Azure: Static Web Apps + Container Apps + PG Flexible + ACR + Key Vault |
+| Deploy | [Azure](https://azure.microsoft.com): Static Web Apps + Container Apps + PG Flexible + ACR + Key Vault |
 
 ## Struktur Direktori
 
@@ -46,13 +48,15 @@ serenity/
 │   │   ├── repos/products.ts      # query produk
 │   │   ├── db/{pool,redis}.ts     # PG pool + Redis fail-open
 │   │   └── middleware/{csrf,security}.ts
-│   ├── migrations/                # 001–010 (*.sql + *.down.sql) + seed_dev.sql
+│   ├── migrations/                # 001–022 (*.sql + *.down.sql) + seed_dev.sql
 │   ├── scripts/migrate.js         # runner bernomor + lock + checksum
 │   └── tests/                     # node --test: admin, cart, orders, qris, security, e2e… (≥80% handler)
 ├── infra/                         # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
 ├── .github/workflows/deploy.yml   # CI: lint → verify → acr build → migrasi → rollout → SWA
 └── README.md
 ```
+
+Jelajahi kode: [frontend](frontend/) · [backend](backend/) · [infra](infra/) · [CI deploy](.github/workflows/deploy.yml)
 
 ## Cara Run (Development)
 
@@ -80,11 +84,11 @@ Verifikasi: `npm test` (backend `node --test`, frontend Vitest) + `tsc` + lint.
 
 ## Deployment
 
-Target aktual = **Azure**. Ikuti `DEPLOY-AZURE.md` (bash) atau `DEPLOY-AZURE.ps1` (PowerShell): provisioning → Key Vault + GitHub secrets → push → CI deploy → verifikasi/rollback.
+Target aktual = **Azure**. Ikuti `DEPLOY-AZURE.md` (bash, local-only) atau `DEPLOY-AZURE.ps1` (PowerShell): provisioning → Key Vault + GitHub secrets → push → CI deploy → verifikasi/rollback.
 
 ## Dokumen
 
-`SPEC.md` (kontrak + never-do) · `DESIGN.md` (UI/UX) · `API.md` · `DATABASE.md` · `docs/env-reference.md` · `AGENTS.md` (aturan agent).
+`SPEC.md` (kontrak + never-do) · `DESIGN.md` (UI/UX) · `API.md` · `DATABASE.md` · `docs/env-reference.md` · `AGENTS.md` (aturan agent) — local-only, tak ikut repo.
 
 ## License
 
