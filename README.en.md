@@ -35,23 +35,23 @@ Healthy food ordering and pre-order app; mains, healthy desserts, and healthy dr
 serenity/
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # Header, FilterBar, ProductCard, Icon, Footer, LocationPicker, ErrorBoundary
-│   │   ├── pages/        # Menu, Detail, Cart, Checkout, Thanks, Status, Admin, NotFound (+ *.test.tsx)
+│   │   ├── components/            # Header, FilterBar, ProductCard, Icon, Footer, LocationPicker, ErrorBoundary
+│   │   ├── pages/                 # Menu, Detail, Cart, Checkout, Thanks, Status, Admin, NotFound (+ *.test.tsx)
 │   │   ├── services/api.ts        # fetch wrapper + api.test.ts
 │   │   ├── utils/format.ts        # rupiah etc.
 │   │   └── index.css              # DESIGN.md tokens
 │   └── index.html
 ├── backend/
 │   ├── src/
-│   │   ├── routes/       # menu, cart, orders, qris, admin.ts
-│   │   ├── services/     # menu, cart, orders, adminAuth.ts
+│   │   ├── routes/                # menu, cart, orders, qris, admin.ts
+│   │   ├── services/              # menu, cart, orders, adminAuth.ts
 │   │   ├── repos/products.ts      # product queries
 │   │   ├── db/{pool,redis}.ts     # PG pool + fail-open Redis
 │   │   └── middleware/{csrf,security}.ts
-│   ├── migrations/       # 001–022 (*.sql + *.down.sql) + seed_dev.sql
+│   ├── migrations/                # 001–022 (*.sql + *.down.sql) + seed_dev.sql
 │   ├── scripts/migrate.js         # numbered runner + lock + checksum
-│   └── tests/            # node --test: admin, cart, orders, qris, security, e2e… (≥80% handlers)
-├── infra/                # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
+│   └── tests/                     # node --test: admin, cart, orders, qris, security, e2e… (≥80% handlers)
+├── infra/                         # azure.sh (provisioning), db-roles.sql (2-role), pii-ttl.sql, restore-test.sh
 ├── .github/workflows/deploy.yml   # CI: lint → verify → acr build → migrate → rollout → SWA
 └── README.md
 ```
@@ -81,14 +81,6 @@ npm run dev   # VITE_API_URL defaults to http://localhost:3000/api/v1
 ```
 
 Verify: `npm test` (backend `node --test`, frontend Vitest) + `tsc` + lint.
-
-## Deployment
-
-Actual target = **Azure**. Follow `DEPLOY-AZURE.md` (bash, local-only) or `DEPLOY-AZURE.ps1` (PowerShell): provisioning → Key Vault + GitHub secrets → push → CI deploy → verify/rollback.
-
-## Docs
-
-`SPEC.md` (contract + never-do) · `DESIGN.md` (UI/UX) · `API.md` · `DATABASE.md` · `docs/env-reference.md` · `AGENTS.md` (agent rules) — local-only, not in repo.
 
 ## License
 

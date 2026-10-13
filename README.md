@@ -82,14 +82,6 @@ npm run dev   # VITE_API_URL default http://localhost:3000/api/v1
 
 Verifikasi: `npm test` (backend `node --test`, frontend Vitest) + `tsc` + lint.
 
-## Deployment
-
-Target aktual = **Azure**. Ikuti `DEPLOY-AZURE.md` (bash, local-only) atau `DEPLOY-AZURE.ps1` (PowerShell): provisioning → Key Vault + GitHub secrets → push → CI deploy → verifikasi/rollback.
-
-## Dokumen
-
-`SPEC.md` (kontrak + never-do) · `DESIGN.md` (UI/UX) · `API.md` · `DATABASE.md` · `docs/env-reference.md` · `AGENTS.md` (aturan agent) — local-only, tak ikut repo.
-
 ## License
 
 `MIT LICENSE` (Copyright © 2026 Serenity).

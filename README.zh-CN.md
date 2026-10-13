@@ -35,23 +35,23 @@
 serenity/
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # Header、FilterBar、ProductCard、Icon、Footer、LocationPicker、ErrorBoundary
-│   │   ├── pages/        # Menu、Detail、Cart、Checkout、Thanks、Status、Admin、NotFound（+ *.test.tsx）
+│   │   ├── components/            # Header、FilterBar、ProductCard、Icon、Footer、LocationPicker、ErrorBoundary
+│   │   ├── pages/                 # Menu、Detail、Cart、Checkout、Thanks、Status、Admin、NotFound（+ *.test.tsx）
 │   │   ├── services/api.ts        # fetch 封装 + api.test.ts
 │   │   ├── utils/format.ts        # 印尼盾格式化等
 │   │   └── index.css              # DESIGN.md 变量
 │   └── index.html
 ├── backend/
 │   ├── src/
-│   │   ├── routes/       # menu、cart、orders、qris、admin.ts
-│   │   ├── services/     # menu、cart、orders、adminAuth.ts
+│   │   ├── routes/                # menu、cart、orders、qris、admin.ts
+│   │   ├── services/              # menu、cart、orders、adminAuth.ts
 │   │   ├── repos/products.ts      # 商品查询
 │   │   ├── db/{pool,redis}.ts     # PG 连接池 + 降级 Redis
 │   │   └── middleware/{csrf,security}.ts
-│   ├── migrations/       # 001–022（*.sql + *.down.sql）+ seed_dev.sql
+│   ├── migrations/                # 001–022（*.sql + *.down.sql）+ seed_dev.sql
 │   ├── scripts/migrate.js         # 编号迁移执行器 + 锁 + 校验和
-│   └── tests/            # node --test：admin、cart、orders、qris、security、e2e…（≥80% handler）
-├── infra/                # azure.sh（资源开通）、db-roles.sql（双角色）、pii-ttl.sql、restore-test.sh
+│   └── tests/                     # node --test：admin、cart、orders、qris、security、e2e…（≥80% handler）
+├── infra/                         # azure.sh（资源开通）、db-roles.sql（双角色）、pii-ttl.sql、restore-test.sh
 ├── .github/workflows/deploy.yml   # CI：lint → verify → acr 构建 → 迁移 → 发布 → SWA
 └── README.md
 ```
@@ -81,14 +81,6 @@ npm run dev   # VITE_API_URL 默认为 http://localhost:3000/api/v1
 ```
 
 验证：`npm test`（后端 `node --test`、前端 Vitest）+ `tsc` + lint。
-
-## 部署
-
-实际目标 = **Azure**。按 `DEPLOY-AZURE.md`（bash，仅本地）或 `DEPLOY-AZURE.ps1`（PowerShell）：开通资源 → Key Vault + GitHub secrets → push → CI 部署 → 验证/回滚。
-
-## 文档
-
-`SPEC.md`（契约 + 禁忌）· `DESIGN.md`（UI/UX）· `API.md` · `DATABASE.md` · `docs/env-reference.md` · `AGENTS.md`（agent 规则）—— 仅本地，不在仓库中。
 
 ## 许可证
 
