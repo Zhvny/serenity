@@ -182,6 +182,21 @@ describe("AdminPage", () => {
     expect(mp?.body).toContain('"paid_amount":90000');
   });
 
+  it("daftar: delivery tanpa ongkir -> badge; sudah diisi -> tanpa badge", async () => {
+    const noFee = { id: "HP-NF", unique_code: "ORD-NF", total_amount: 45000, status: "pending_payment", delivery_method: "delivery", delivery_fee: null, created_at: "2026-10-02T00:00:00Z" };
+    const withFee = { id: "HP-WF", unique_code: "ORD-WF", total_amount: 45000, status: "pending_payment", delivery_method: "delivery", delivery_fee: 12000, created_at: "2026-10-02T00:00:00Z" };
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [noFee, withFee] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    expect(await screen.findByText("ORD-NF")).toBeInTheDocument();
+    expect(screen.getAllByText(/Ongkir belum diisi/)).toHaveLength(1);
+  });
+
   it("filter Kurang bayar -> fetch status=underpaid", async () => {
     const user = userEvent.setup();
     const urls: string[] = [];

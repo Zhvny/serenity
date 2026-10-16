@@ -123,7 +123,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       return c.json({ status: "error", code: "INVALID_STATUS", message: "Status tidak valid" }, 400);
     }
     const { rows } = await pool.query(
-      `SELECT id, unique_code, total_amount, paid_amount, status, delivery_method, created_at
+      `SELECT id, unique_code, total_amount, paid_amount, status, delivery_method, delivery_fee, created_at
        FROM orders WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
       [status],
     );

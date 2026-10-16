@@ -166,7 +166,7 @@ export function adminUpdateProduct(id: string, product: { name: string; category
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
-export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; created_at: string };
+export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; delivery_fee: number | null; created_at: string };
 
 export function adminListOrders(status = "pending_payment"): Promise<PendingOrder[]> {
   return apiGet<PendingOrder[]>(`/admin/orders?status=${encodeURIComponent(status)}`);

@@ -352,7 +352,7 @@ export function AdminPage() {
                     <tr key={o.id} className={detail?.unique_code === o.unique_code ? "is-selected" : ""}>
                       <td><button type="button" className="admin-link" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>{o.id}</button><br /><small className="admin-id">{o.unique_code}</small></td>
                       <td className="admin-price">{rupiah(o.total_amount)}{o.paid_amount !== null && o.paid_amount !== undefined ? <><br /><small className="admin-id">Dibayar {rupiah(o.paid_amount)}</small></> : null}</td>
-                      <td>{o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</td>
+                      <td>{o.delivery_method === "delivery" ? <>Diantar{o.delivery_fee === null || o.delivery_fee === undefined ? <><br /><small className="admin-id">Ongkir belum diisi</small></> : null}</> : "Ambil sendiri"}</td>
                       <td>
                         {o.status === "pending_payment" ? (
                           <button type="button" className="admin-btn" aria-label={`Tandai lunas ${o.unique_code}`} onClick={() => void handleMarkPaid(o.unique_code, o.total_amount)}>Tandai Lunas</button>
@@ -379,7 +379,7 @@ export function AdminPage() {
                         <span className="history-sub">Dibayar {rupiah(o.paid_amount)}</span>
                       ) : null}
                       <span className="history-code">{o.unique_code}</span>
-                      <span className="history-date">{fmtDate(o.created_at)} · {o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</span>
+                      <span className="history-date">{fmtDate(o.created_at)} · {o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}{o.delivery_method === "delivery" && (o.delivery_fee === null || o.delivery_fee === undefined) ? " · Ongkir belum diisi" : ""}</span>
                     </div>
                     <div className="order-card-actions">
                       {o.status === "pending_payment" ? (
