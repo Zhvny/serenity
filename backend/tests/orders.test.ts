@@ -9,12 +9,13 @@ import { markPaid, listMine, expireStale } from "../src/services/orders.js";
 // DB-backed (serenity): order dipersistensi; test memakai Postgres riil + seed samp_001.
 const pool = createPool();
 const XFF = `orders-ip-${randomUUID()}`; // IP unik -> bucket rate-limit terisolasi dari file lain
-const future = new Date(Date.now() + 25 * 3600 * 1000).toISOString();
 const createdOrders: string[] = [];
 
-async function postOrder(body: unknown): Promise<Response> {
-  const res = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify(body) });
-  return res;
+async function seedStatusOrder(): Promise<string> {
+  const id = `HP-ST-${Date.now()}`;
+  createdOrders.push(id);
+  await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',45000,'pending_payment','pickup',$2,$3)", [id, `sess-st-${Date.now()}`, `ORD-ST-${Date.now()}`]);
+  return id;
 }
 
 after(async () => {
@@ -27,13 +28,10 @@ after(async () => {
 });
 
 describe("orders", () => {
-  it("POST /orders scheduled <24 jam → 400 INVALID_SCHEDULE", async () => {
-    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "scheduled", scheduled_at: new Date(Date.now() + 3600 * 1000).toISOString() });
-    assert.equal(res.status, 400);
-  });
-  it("POST /orders instant + scheduled_at → 400 INVALID_SCHEDULE", async () => {
-    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant", scheduled_at: future });
-    assert.equal(res.status, 400);
+  it("POST /orders legacy DIHAPUS -> 404 (cek via GET unknown-id seragam)", async () => {
+    // Route create warisan tanpa Turnstile/throttle ditutup; satu-satunya create = generate-code.
+    const res = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" }) });
+    assert.equal(res.status, 404);
   });
   it("PUT /orders/:id/status tanpa internal key → 403", async () => {
     const res = await createApp(pool).request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ status: "paid" }) });
@@ -46,8 +44,7 @@ describe("orders", () => {
       const app = createApp(pool);
       const bad = await app.request("/api/v1/orders/HP-0001/status", { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF, "x-internal-key": "pendek" }, body: JSON.stringify({ status: "paid" }) });
       assert.equal(bad.status, 403);
-      const created = await app.request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": XFF }, body: JSON.stringify({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" }) });
-      const id = (((await created.json()) as { data: { order_id: string } }).data).order_id;
+      const id = await seedStatusOrder();
       try {
         const ok = await app.request(`/api/v1/orders/${id}/status`, { method: "PUT", headers: { "content-type": "application/json", "x-forwarded-for": XFF, "x-internal-key": "kunci-test-status-123" }, body: JSON.stringify({ status: "paid" }) });
         assert.equal(ok.status, 200);
@@ -61,43 +58,6 @@ describe("orders", () => {
     } finally {
       if (saved === undefined) delete process.env.INTERNAL_KEY; else process.env.INTERNAL_KEY = saved;
     }
-  });
-  it("POST /orders qty 11 → 400 VALIDATION_ERROR", async () => {
-    const res = await postOrder({ items: [{ product_id: "samp_001", quantity: 11 }], mode: "instant" });
-    assert.equal(res.status, 400);
-  });
-});
-
-describe("orders delivery", () => {
-  const base = { items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" };
-
-  it("delivery tanpa address → 400 INVALID_ADDRESS", async () => {
-    const res = await postOrder({ ...base, delivery_method: "delivery" });
-    assert.equal(res.status, 400);
-    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
-  });
-  it("delivery address <10 char → 400 INVALID_ADDRESS", async () => {
-    const res = await postOrder({ ...base, delivery_method: "delivery", delivery_address: "jl a" });
-    assert.equal(res.status, 400);
-    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
-  });
-  it("delivery address >500 char → 400 INVALID_ADDRESS", async () => {
-    const res = await postOrder({ ...base, delivery_method: "delivery", delivery_address: "a".repeat(501) });
-    assert.equal(res.status, 400);
-    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
-  });
-  it("pickup + address terisi → 400 INVALID_ADDRESS", async () => {
-    const res = await postOrder({ ...base, delivery_method: "pickup", delivery_address: "Jl. Sehat No. 10 Jakarta" });
-    assert.equal(res.status, 400);
-    assert.equal(((await res.json()) as { code: string }).code, "INVALID_ADDRESS");
-  });
-  it("delivery + address valid → 200 + echo field", async () => {
-    const res = await postOrder({ ...base, delivery_method: "delivery", delivery_address: "Jl. Sehat No. 10 Jakarta" });
-    assert.equal(res.status, 200);
-    const json = (await res.json()) as { data: { order_id: string; delivery_method: string; delivery_address: string } };
-    createdOrders.push(json.data.order_id);
-    assert.equal(json.data.delivery_method, "delivery");
-    assert.equal(json.data.delivery_address, "Jl. Sehat No. 10 Jakarta");
   });
 });
 

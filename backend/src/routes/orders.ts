@@ -3,68 +3,19 @@ import { z } from "zod";
 import { timingSafeEqual } from "node:crypto";
 import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
-import { productRepo } from "../repos/products.js";
-import { createOrder, deliveryError, getOrder, setStatus, listMine, newCode, nextOrderId } from "../services/orders.js";
+import { getOrder, setStatus, listMine, newCode, nextOrderId } from "../services/orders.js";
 import { claimIdem, completeIdem, idemKeyOf, releaseIdem } from "../services/idempotency.js";
 
 function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
 }
 
-const createSchema = z.object({
-  items: z.array(z.object({ product_id: z.string().min(1), quantity: z.number().int().min(1).max(10) })).min(1),
-  mode: z.enum(["instant", "scheduled"]),
-  scheduled_at: z.string().datetime({ offset: true }).nullish(),
-  delivery_method: z.enum(["pickup", "delivery"]).default("pickup"),
-  delivery_address: z.string().nullish(),
-});
-
 const statusSchema = z.object({ status: z.enum(["paid", "failed", "expired"]) });
 
 export function orderRoutes(pool: Pool): Hono {
   const r = new Hono();
-  const products = productRepo(pool);
-  r.post("/orders", zValidator("json", createSchema, (result, c) => {
-    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
-  }), async (c) => {
-    const body = c.req.valid("json");
-    if (body.mode === "instant" && body.scheduled_at != null) {
-      return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at harus null untuk mode instant" }, 400);
-    }
-    if (body.mode === "scheduled" && (body.scheduled_at == null || Date.parse(body.scheduled_at) < Date.now() + 24 * 3600 * 1000)) {
-      return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at minimal 24 jam ke depan" }, 400);
-    }
-    const delivery_address = body.delivery_address ?? null;
-    const dErr = deliveryError(body.delivery_method, delivery_address);
-    if (dErr !== null) {
-      return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
-    }
-    let total = 0;
-    for (const item of body.items) {
-      const p = await products.getById(item.product_id);
-      if (p === null) {
-        return c.json({ status: "error", code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" }, 404);
-      }
-      total += p.price * item.quantity;
-    }
-    const orderKey = idemKeyOf(c.req.header("Idempotency-Key"));
-    const ORDER_EP = "POST /orders";
-    if (orderKey !== null) {
-      const claim = await claimIdem(pool, ORDER_EP, orderKey);
-      if (claim.kind === "replay") return c.json(claim.body as { status: string; data: unknown });
-      if (claim.kind === "busy") return c.json({ status: "error", code: "IDEMPOTENT_RETRY", message: "Masih diproses, coba lagi" }, 409);
-    }
-    let order;
-    try {
-      order = await createOrder(pool, body.items, body.mode, body.mode === "instant" ? null : (body.scheduled_at ?? null), total, body.delivery_method, delivery_address, cartIdOf(c) ?? null);
-    } catch (e) {
-      if (orderKey !== null) await releaseIdem(pool, ORDER_EP, orderKey);
-      throw e;
-    }
-    const created = { status: "success", data: order } as const;
-    if (orderKey !== null) await completeIdem(pool, ORDER_EP, orderKey, created);
-    return c.json(created);
-  });
+  // Catatan: POST /orders (legacy, tanpa Turnstile/throttle) DIHAPUS.
+  // Satu-satunya jalur create: POST /orders/generate-code (checkout + Turnstile).
   r.get("/orders/mine", async (c) => {
     // Terikat sesi (ADR-0001); tanpa cookie -> 404 seragam. Daftarkan SEBELUM /:order_id.
     const cartId = cartIdOf(c);

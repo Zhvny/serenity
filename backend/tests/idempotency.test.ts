@@ -84,20 +84,6 @@ describe("idempotency-key", () => {
     assert.equal(n, 1);
   });
 
-  it("POST /orders: key sama -> order_id sama, tanpa ganda", async () => {
-    const key = `ord-${randomUUID()}`;
-    createdKeys.push(["POST /orders", key]);
-    const hdr = { "content-type": "application/json", "x-forwarded-for": XFF, "Idempotency-Key": key };
-    const body = JSON.stringify({ items: [{ product_id: "samp_001", quantity: 1 }], mode: "instant" });
-    const r1 = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: hdr, body });
-    assert.equal(r1.status, 200);
-    const d1 = ((await r1.json()) as { data: { order_id: string } }).data;
-    createdOrders.push(d1.order_id);
-    const r2 = await createApp(pool).request("/api/v1/orders", { method: "POST", headers: hdr, body });
-    assert.equal(r2.status, 200);
-    assert.equal(((await r2.json()) as { data: { order_id: string } }).data.order_id, d1.order_id);
-  });
-
   it("topup: key sama -> child sama, 1 anak", async () => {
     const cartId = await seedCart();
     const gk = `par-${randomUUID()}`;

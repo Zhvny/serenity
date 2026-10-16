@@ -27,7 +27,7 @@ describe("security", () => {
     const app = createApp(pool);
     let limited = false;
     for (let i = 0; i < 22; i++) {
-      const r = await app.request("/api/v1/orders", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: JSON.stringify({ items: [], mode: "instant" }) });
+      const r = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: JSON.stringify({}) });
       if (r.status === 429) { limited = true; break; }
     }
     assert.equal(limited, true);

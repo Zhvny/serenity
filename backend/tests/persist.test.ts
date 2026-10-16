@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { createPool } from "../src/db/pool.js";
 import { addItem, getCart } from "../src/services/cart.js";
-import { createOrder, getOrder, nextOrderId } from "../src/services/orders.js";
+import { getOrder, nextOrderId } from "../src/services/orders.js";
 
 const pool = createPool();
 const cartId = `cart-test-${randomUUID()}`;
@@ -52,13 +52,15 @@ describe("persistensi order + order-id sequence", () => {
     const nb = Number(b.slice(-4));
     assert.equal(nb, na + 1);
   });
-  it("createOrder lalu getOrder (panggilan baru) → order tetap ada", async () => {
-    const order = await createOrder(pool, [{ product_id: "samp_001", quantity: 1 }], "instant", null, 45000, "pickup", null);
-    const again = await getOrder(pool, order.order_id);
+  it("seed SQL lalu getOrder (panggilan baru) → order tetap ada", async () => {
+    const id = `HP-RR-${Date.now()}`;
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',45000,'pending_payment','pickup','rr-sess',$2)", [id, `ORD-RR-${Date.now()}`]);
+    await pool.query("INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1,'samp_001',1,NULL,45000)", [id]);
+    const again = await getOrder(pool, id);
     assert.ok(again, "order tidak ditemukan setelah re-read DB");
-    assert.equal(again?.order_id, order.order_id);
+    assert.equal(again?.order_id, id);
     assert.equal(again?.total_amount, 45000);
-    await pool.query("DELETE FROM order_items WHERE order_id = $1", [order.order_id]);
-    await pool.query("DELETE FROM orders WHERE id = $1", [order.order_id]);
+    await pool.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [id]);
   });
 });

@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import type { Pool, PoolClient } from "pg";
-import type { CartItem, DeliveryMethod, Order, OrderMode, OrderStatus } from "../types.js";
+import type { Pool } from "pg";
+import type { DeliveryMethod, Order, OrderMode, OrderStatus } from "../types.js";
 
 export function newCode(): string {
   // 128-bit crypto-random, hex uppercase (dipindah dari routes/qris.ts agar dipakai topup).
@@ -34,42 +34,8 @@ export function deliveryError(method: DeliveryMethod, address: string | null | u
   return address != null ? "Alamat harus null untuk ambil sendiri" : null;
 }
 
-export async function createOrder(
-  pool: Pool,
-  items: Array<{ product_id: string; quantity: number }>,
-  mode: OrderMode,
-  scheduled_at: string | null,
-  total: number,
-  delivery_method: DeliveryMethod = "pickup",
-  delivery_address: string | null = null,
-  sessionId: string | null = null,
-): Promise<Order> {
-  const orderId = await nextOrderId(pool);
-  const client: PoolClient = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address, session_id) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7)",
-      [orderId, mode, scheduled_at, total, delivery_method, delivery_address, sessionId],
-    );
-    const orderItems: CartItem[] = [];
-    for (const i of items) {
-      const itemId = randomUUID();
-      await client.query(
-        "INSERT INTO order_items (order_id, product_id, quantity, note, price_at_order) VALUES ($1, $2, $3, NULL, 0)",
-        [orderId, i.product_id, i.quantity],
-      );
-      orderItems.push({ item_id: itemId, product_id: i.product_id, quantity: i.quantity, note: null });
-    }
-    await client.query("COMMIT");
-    return { order_id: orderId, items: orderItems, mode, scheduled_at, total_amount: total, paid_amount: null, status: "pending_payment", delivery_method, delivery_address, delivery_fee: null, parent_code: null, donation_consent: false };
-  } catch (e) {
-    await client.query("ROLLBACK");
-    throw e;
-  } finally {
-    client.release();
-  }
-}
+// createOrder (legacy, tanpa Turnstile/throttle) DIHAPUS bersama POST /orders.
+// Satu-satunya jalur create: generate-code (checkout + Turnstile).
 
 type OrderRow = { id: string; unique_code: string; mode: OrderMode; scheduled_at: Date | null; total_amount: number; paid_amount: number | null; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null; delivery_fee: number | null; parent_code: string | null; donation_consent: boolean };
 type ItemRow = { product_id: string; quantity: number; note: string | null };
