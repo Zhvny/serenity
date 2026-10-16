@@ -40,7 +40,8 @@ describe("PostDetailPage", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /fun fact/i })).toBeInTheDocument();
+    // Nama persis: footer kini juga punya link "Fun Fact".
+    expect(screen.getByRole("link", { name: "Kembali ke Fun Fact" })).toHaveAttribute("href", "/funfact");
   });
 
   it("lang en -> tidak ditemukan Inggris + produk saran Inggris", async () => {
