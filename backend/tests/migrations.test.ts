@@ -115,4 +115,11 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("024 serahkan idempotency_keys ke migrate (tanpa DROP)", () => {
+    const sql = readFileSync(new URL("../migrations/024_idem_owner.sql", import.meta.url), "utf8");
+    assert.match(sql, /OWNER TO serenity_migrate/i);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });
