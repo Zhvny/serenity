@@ -75,6 +75,10 @@ jobs:
       - name: Backend migrate (skema CI)
         working-directory: backend
         run: npm run migrate
+      - name: Backend role grants (cerminkan prod least-privilege utk grants.test)
+        working-directory: backend
+        run: |
+          node -e "import('node:fs').then(async ({readFileSync}) => { const {default:pg} = await import('pg'); let sql = readFileSync('../infra/db-roles.sql', 'utf8').replaceAll('<MIGRATE_PASSWORD>', 'ci-unused').replaceAll('<APP_PASSWORD>', 'ci-unused').split('\n').filter((l) => !/^\s*CREATE ROLE/.test(l)).join('\n'); const c = new pg.Client({connectionString: process.env.DATABASE_URL}); await c.connect(); try { await c.query(sql); } finally { await c.end(); } })"
       - name: Backend seed (katalog seed_dev, idempoten — test butuh kategori FK)
         working-directory: backend
         run: node scripts/seed.js
