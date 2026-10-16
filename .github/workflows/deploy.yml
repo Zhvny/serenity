@@ -132,3 +132,16 @@ jobs:
           app_location: "frontend/dist"
           skip_app_build: true
           output_location: ""
+      # Backend deploy MANUAL (lockstep tak mungkin di CI): probe ini informatif saja
+      # (continue-on-error). 404 di rute admin = backend belum di-rollout; jangan
+      # klaim "selesai" sebelum backend manual hijau.
+      - name: Smoke kompatibilitas frontend-backend (informatif)
+        continue-on-error: true
+        run: |
+          BE="${{ secrets.SMOKE_URL }}"
+          SWA="https://icy-smoke-0179acc00.3.azurestaticapps.net"
+          curl -fsS -o /dev/null -w "swa=%{http_code}\n" "$SWA/"
+          curl -fsS -o /dev/null -w "be-health=%{http_code}\n" "$BE/api/v1/health"
+          CODE="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BE/api/v1/admin/orders/PROBE/delivery-fee" -H 'Content-Type: application/json' -d '{"delivery_fee":0}')"
+          echo "fee-route=$CODE (403/401/404 = ada; 404 bisa berarti backend basi)"
+          test "$CODE" != "404" || echo "::warning::rute delivery-fee 404 — backend prod belum di-rollout manual"
