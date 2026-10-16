@@ -185,7 +185,7 @@ describe("AdminPage", () => {
   it("daftar: delivery tanpa ongkir -> badge; sudah diisi -> tanpa badge", async () => {
     const noFee = { id: "HP-NF", unique_code: "ORD-NF", total_amount: 45000, status: "pending_payment", delivery_method: "delivery", delivery_fee: null, created_at: "2026-10-02T00:00:00Z" };
     const withFee = { id: "HP-WF", unique_code: "ORD-WF", total_amount: 45000, status: "pending_payment", delivery_method: "delivery", delivery_fee: 12000, created_at: "2026-10-02T00:00:00Z" };
-    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);
       if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
       if (u.includes("/admin/orders")) return resp({ status: "success", data: [noFee, withFee] });
