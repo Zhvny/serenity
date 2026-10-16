@@ -14,6 +14,8 @@ describe("LandingPage", () => {
     expect(await screen.findByRole("heading", { name: /manis yang menyayangi/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu");
     expect(screen.getByRole("link", { name: /fun fact/i })).toHaveAttribute("href", "/funfact");
+    // Hero tinggal 1 CTA; satu-satunya link Fun Fact ada di footer.
+    expect(screen.getAllByRole("link", { name: /fun fact/i })).toHaveLength(1);
     expect(screen.queryByRole("link", { name: /jelajahi kategori/i })).toBeNull();
     const urls = spy.mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("/categories") || (u.includes("/products") && !u.includes("/recommendations")))).toBe(false);

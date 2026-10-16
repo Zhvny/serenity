@@ -17,6 +17,7 @@ export const id = {
   "shell.footer.links": "Tautan",
   "shell.footer.explore": "Jelajah",
   "shell.footer.menu": "Menu",
+  "shell.footer.funfact": "Fun Fact",
   "shell.footer.categories": "Kategori",
   "shell.footer.base": "Healthy Pre-Order",
 } as const;
@@ -38,6 +39,7 @@ export const en = {
   "shell.footer.links": "Links",
   "shell.footer.explore": "Explore",
   "shell.footer.menu": "Menu",
+  "shell.footer.funfact": "Fun Facts",
   "shell.footer.categories": "Categories",
   "shell.footer.base": "Healthy Pre-Order",
 } satisfies Record<keyof typeof id, string>;

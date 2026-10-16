@@ -75,6 +75,7 @@ describe("MenuPage", () => {
     render(<MemoryRouter><MenuPage /></MemoryRouter>);
     await screen.findByRole("link", { name: "Salad" });
     expect(screen.getByRole("link", { name: "Lihat Menu" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Jelajahi kategori" })).toBeNull();
     expect(screen.getByText("Pilihan hari ini")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Spesial hari ini: Salad" })).toBeInTheDocument();
     expect(screen.getByText("1 kkal · 1 g protein")).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe("MenuPage", () => {
     await screen.findByRole("link", { name: "Salad" });
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Sweet treats that love you back.");
     expect(screen.getByRole("link", { name: "See the menu" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Browse categories" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Browse categories" })).toBeNull();
     expect(screen.getByText("Today's picks")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Today's special: Salad" })).toBeInTheDocument();
     expect(screen.getByText("Today's special")).toBeInTheDocument();

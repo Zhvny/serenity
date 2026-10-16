@@ -105,7 +105,6 @@ export function MenuPage() {
             <p className="lead">{t("menu.hero.lead")}</p>
             <div className="hero-actions">
               <a className="btn-primary" href="#menu">{t("menu.hero.cta")} <Icon name="arrow-right" /></a>
-              <a className="btn-secondary" href="#menu">{t("menu.hero.browse")}</a>
             </div>
           </div>
           <div className="hero-visual">

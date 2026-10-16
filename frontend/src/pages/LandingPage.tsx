@@ -89,7 +89,6 @@ export function LandingPage() {
             <p className="lead">{t("landing.hero.lead")}</p>
             <div className="hero-actions">
               <Link className="btn-primary" to="/menu">{t("landing.hero.cta")} <Icon name="arrow-right" /></Link>
-              <Link className="btn-secondary" to="/funfact">{t("landing.hero.browse")}</Link>
             </div>
           </div>
           <div className="hero-visual">

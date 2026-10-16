@@ -11,10 +11,12 @@ const product: Product = { id: "samp_001", name: "Salad Quinoa", category_id: "c
 
 describe("ProductCard", () => {
   it("tampilkan nama, harga Rp, tag", () => {
-    render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
     expect(screen.getByText("Salad Quinoa")).toBeInTheDocument();
     expect(screen.getByText("Rp 45.000")).toBeInTheDocument();
     expect(screen.getByText("high-protein")).toBeInTheDocument();
+    // Tag gantung: kalori, bukan harga ganda (aria-hidden, garnish visual).
+    expect(container.querySelector(".price-tag-text")?.textContent).toBe("320 kkal");
   });
   it("image null → placeholder id/en, bukan img rusak", () => {
     const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);

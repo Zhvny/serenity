@@ -25,6 +25,7 @@ export function Footer({ categories = [] }: { categories?: Pick<Category, "id" |
         <nav className="footer-col" aria-label={t("shell.footer.links")}>
           <h3>{t("shell.footer.explore")}</h3>
           <Link to="/menu">{t("shell.footer.menu")}</Link>
+          <Link to="/funfact">{t("shell.footer.funfact")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>
         {categories.length > 0 ? (
