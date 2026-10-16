@@ -136,7 +136,7 @@
 .product-card > * { position: relative; z-index: 1; }
 .price-tag { position: absolute !important; z-index: 3 !important; top: -12px; right: 18px; width: 70px; pointer-events: none; transform-origin: 50% 0; }
 .price-tag .sprite { width: 100%; height: auto; }
-.price-tag-text { position: absolute; left: 0; right: 0; top: 42px; text-align: center; font-family: var(--font-ui); font-size: 16px; line-height: 1; color: #3b2a24; text-shadow: none; }
+.price-tag-text { position: absolute; left: 0; right: 0; top: 42px; text-align: center; font-family: var(--font-ui); font-size: 13px; line-height: 1; white-space: nowrap; color: #3b2a24; text-shadow: none; }
 .product-card:hover .price-tag, .product-card:focus-visible .price-tag { animation: tag-swing 800ms steps(6) 1; }
 @keyframes tag-swing { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 70% { transform: rotate(3deg); } }
 .product-photo--empty {
@@ -171,7 +171,7 @@
   .pastry .sprite { width: 48px; }
   .pastry { padding: 8px 6px 16px; }
   .price-tag { width: 56px; }
-  .price-tag-text { top: 33px; font-size: 14px; }
+  .price-tag-text { top: 33px; font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

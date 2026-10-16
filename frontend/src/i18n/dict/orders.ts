@@ -55,6 +55,7 @@ export const id = {
   "orders.history.donation": "Donasi disetujui",
   "orders.history.paidAmount": "Dibayar {amount}",
   "orders.history.payRest": "Bayar sisa",
+  "orders.history.pay": "Bayar",
   "orders.history.track": "Lacak",
 
   // NotFoundPage
@@ -118,6 +119,7 @@ export const en = {
   "orders.history.donation": "Donation approved",
   "orders.history.paidAmount": "Paid {amount}",
   "orders.history.payRest": "Pay the rest",
+  "orders.history.pay": "Pay",
   "orders.history.track": "Track",
 
   "orders.notfound.title": "Page not found",

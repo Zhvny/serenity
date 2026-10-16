@@ -155,6 +155,9 @@ export function HistoryPage() {
                     {o.paid_amount !== null ? <p className="history-sub">{t("orders.history.paidAmount", { amount: rupiah(o.paid_amount) })}</p> : null}
                     {kurang ? <p className="history-sub history-sub--warn">{t("orders.common.shortBy", { amount: rupiah(sisa) })}</p> : null}
                     <div className="history-actions">
+                      {o.status === "pending_payment" ? (
+                        <Link className="btn-primary btn-sm" to={`/thanks?ref=${encodeURIComponent(o.unique_code)}`}>{t("orders.history.pay")}</Link>
+                      ) : null}
                       {o.status === "underpaid" && o.parent_code === null ? (
                         <button type="button" className="btn-primary btn-sm" disabled={topupBusy} onClick={() => void handleTopup(o.unique_code)}>
                           {t("orders.history.payRest")}

@@ -50,6 +50,13 @@ describe("HistoryPage", () => {
     expect(screen.getByText(/2× Salad/)).toBeInTheDocument();
     expect(screen.getByText("Donasi disetujui")).toBeInTheDocument();
   });
+  it("pending → tombol Bayar buka /thanks?ref= (QR tak hilang)", async () => {
+    const pending = { id: "HP-9", unique_code: "ORD-9", total_amount: 45000, paid_amount: null, parent_code: null, status: "pending_payment", delivery_method: "pickup", donation_consent: false, created_at: "2026-10-02T14:00:00Z", items: [] };
+    mockList([pending]);
+    renderRiwayat();
+    expect(await screen.findByText("ORD-9")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Bayar" })).toHaveAttribute("href", "/thanks?ref=ORD-9");
+  });
   it("lang en -> nama item Inggris; null -> fallback", async () => {
     setLang("en");
     const en = { ...paid, items: [{ product_id: "p1", name: "Salad", name_en: "Salad EN", quantity: 2 }] };
