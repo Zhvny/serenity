@@ -155,6 +155,34 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     await pool.query("DELETE FROM audit_logs WHERE action='mark_paid' AND detail::text LIKE $1", [`%${code}%`]);
   });
 
+  it("delivery-fee: set + ulang sama (satu audit); tolak pickup/negatif/asing", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-DF${Date.now()}`;
+    const orderId = `HP-DF-${Date.now()}`;
+    createdOrders.push(orderId);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',45000,'pending_payment','delivery','df-sess',$2)", [orderId, code]);
+    const h = { ...csrf(), cookie: `admin_session=${sid}; csrf_token=t1` };
+    const first = await app.request(`/api/v1/admin/orders/${code}/delivery-fee`, { method: "POST", headers: h, body: JSON.stringify({ delivery_fee: 12000 }) });
+    assert.equal(first.status, 200);
+    assert.equal(((await first.json()) as { data: { delivery_fee: number } }).data.delivery_fee, 12000);
+    await app.request(`/api/v1/admin/orders/${code}/delivery-fee`, { method: "POST", headers: h, body: JSON.stringify({ delivery_fee: 12000 }) });
+    const audit = await pool.query<{ n: number }>("SELECT count(*)::int AS n FROM audit_logs WHERE action = 'set_delivery_fee' AND detail::text LIKE $1", [`%${code}%`]);
+    assert.equal(audit.rows[0]?.n, 1);
+    await pool.query("DELETE FROM audit_logs WHERE action='set_delivery_fee' AND detail::text LIKE $1", [`%${code}%`]);
+    const neg = await app.request(`/api/v1/admin/orders/${code}/delivery-fee`, { method: "POST", headers: h, body: JSON.stringify({ delivery_fee: -1 }) });
+    assert.equal(neg.status, 400);
+    const ghost = await app.request(`/api/v1/admin/orders/ORD-TIDAKADA/delivery-fee`, { method: "POST", headers: h, body: JSON.stringify({ delivery_fee: 5000 }) });
+    assert.equal(ghost.status, 404);
+    const pickCode = `ORD-PK${Date.now()}`;
+    const pickId = `HP-PK-${Date.now()}`;
+    createdOrders.push(pickId);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',45000,'pending_payment','pickup','pk-sess',$2)", [pickId, pickCode]);
+    const pick = await app.request(`/api/v1/admin/orders/${pickCode}/delivery-fee`, { method: "POST", headers: h, body: JSON.stringify({ delivery_fee: 5000 }) });
+    assert.equal(pick.status, 409);
+  });
+
   it("mark-paid kode tak dikenal -> 404", async () => {
     const app = createApp(pool);
     const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });

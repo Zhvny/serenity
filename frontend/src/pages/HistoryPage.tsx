@@ -151,6 +151,7 @@ export function HistoryPage() {
                   </div>
                   <div className="history-side">
                     <span className="history-total">{rupiah(o.total_amount)}</span>
+                    {o.delivery_fee !== null && o.delivery_fee !== undefined ? <p className="history-sub">{t("orders.history.shipFee", { amount: rupiah(o.delivery_fee) })}</p> : null}
                     <span className="status-badge">{LABEL[o.status] !== undefined ? t(LABEL[o.status]) : o.status}</span>
                     {o.paid_amount !== null ? <p className="history-sub">{t("orders.history.paidAmount", { amount: rupiah(o.paid_amount) })}</p> : null}
                     {kurang ? <p className="history-sub history-sub--warn">{t("orders.common.shortBy", { amount: rupiah(sisa) })}</p> : null}

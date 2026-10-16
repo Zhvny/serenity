@@ -176,6 +176,7 @@ export type OrderItemDetail = { product_id: string; name: string; quantity: numb
 export type OrderDetail = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string;
   scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
+  delivery_fee: number | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
   settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
@@ -194,6 +195,10 @@ export function adminMarkPaid(code: string, paidAmount: number): Promise<{ paid:
 
 export function adminSettleParent(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
+}
+
+export function adminSetDeliveryFee(code: string, fee: number): Promise<{ delivery_fee: number }> {
+  return adminMutate<{ delivery_fee: number }>(`/admin/orders/${encodeURIComponent(code)}/delivery-fee`, "POST", { delivery_fee: fee });
 }
 
 export type Post = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
@@ -269,6 +274,7 @@ export function getThanks(ref: string): Promise<ThanksData> {
 export type HistoryOrder = {
   id: string; unique_code: string; total_amount: number; paid_amount: number | null;
   status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
+  delivery_method: string; delivery_fee: number | null;
   items: Array<{ product_id: string; name: string; name_en: string | null; quantity: number }>;
 };
 

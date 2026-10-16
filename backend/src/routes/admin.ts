@@ -158,8 +158,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Detail satu order (untuk konfirmasi admin): item + alamat bila delivery (PII, hanya di detail).
   r.get("/orders/:code", async (c) => {
     const code = c.req.param("code");
-    const o = await pool.query<{ id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date }>(
-      `SELECT id, unique_code, total_amount, paid_amount, parent_code, status, mode, scheduled_at, delivery_method, delivery_address, delivery_lat, delivery_lng, created_at FROM orders WHERE unique_code = $1`,
+    const o = await pool.query<{ id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_fee: number | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date }>(
+      `SELECT id, unique_code, total_amount, paid_amount, parent_code, status, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_lat, delivery_lng, created_at FROM orders WHERE unique_code = $1`,
       [code],
     );
     const order = o.rows[0];
@@ -201,6 +201,32 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "mark_paid", JSON.stringify({ unique_code: code, paid_amount: paidAmount })]);
     }
     return c.json({ status: "success", data: { paid: order?.status === "paid", changed, status: order?.status ?? null } });
+  });
+
+  // Ongkir tunai (opsi B): admin input manual setelah cek aplikasi kurir.
+  // Hanya untuk delivery; nominal QRIS tak tersentuh (dibayar tunai).
+  const feeSchema = z.object({ delivery_fee: z.number().int().min(0).max(10_000_000) });
+  r.post("/orders/:code/delivery-fee", zValidator("json", feeSchema, (result, c) => {
+    if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
+  }), async (c) => {
+    const code = c.req.param("code");
+    const fee = c.req.valid("json").delivery_fee;
+    const cur = await pool.query<{ delivery_method: string; delivery_fee: number | null }>(
+      "SELECT delivery_method, delivery_fee FROM orders WHERE unique_code = $1", [code]);
+    const row = cur.rows[0];
+    if (row === undefined) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    if (row.delivery_method !== "delivery") {
+      return c.json({ status: "error", code: "INVALID_FEE", message: "Ongkir hanya untuk order diantar" }, 409);
+    }
+    if (row.delivery_fee !== fee) {
+      await pool.query(
+        "UPDATE orders SET delivery_fee = $2, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1",
+        [code, fee]);
+      await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "set_delivery_fee", JSON.stringify({ unique_code: code, delivery_fee: fee })]);
+    }
+    return c.json({ status: "success", data: { delivery_fee: fee } });
   });
 
   // Buat post FunFact/News/SoftSelling (opsional kait produk).

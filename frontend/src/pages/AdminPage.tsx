@@ -12,6 +12,7 @@ import {
   adminOrderDetail,
   adminAdvanceOrder,
   adminMarkPaid,
+  adminSetDeliveryFee,
   adminSettleParent,
   adminCreatePost,
   adminListPosts,
@@ -81,6 +82,7 @@ export function AdminPage() {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [paidInput, setPaidInput] = useState("");
+  const [feeInput, setFeeInput] = useState("");
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postExcerpt, setPostExcerpt] = useState("");
@@ -208,6 +210,7 @@ export function AdminPage() {
       const d = await adminOrderDetail(code);
       setDetail(d);
       setPaidInput(String(d.total_amount));
+      setFeeInput(d.delivery_fee === null || d.delivery_fee === undefined ? "" : String(d.delivery_fee));
     } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
   }
 
@@ -217,6 +220,10 @@ export function AdminPage() {
     if (detail?.unique_code === code) await openDetail(code);
     return status;
   }
+  async function handleSetFee(code: string): Promise<void> {
+    await act(() => adminSetDeliveryFee(code, Number(feeInput) || 0), "Gagal menyimpan ongkir");
+    if (detail?.unique_code === code) await openDetail(code);
+  };
   async function handleSettle(code: string): Promise<void> {
     await act(() => adminSettleParent(code), "Gagal melunaskan");
     if (detail?.unique_code === code) await openDetail(code);
@@ -402,6 +409,14 @@ export function AdminPage() {
               <p className="admin-detail-row"><span>Metode</span><strong>{detail.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}</strong></p>
               {detail.delivery_method === "delivery" && detail.delivery_address !== null ? (
                 <p className="admin-detail-row"><span>Alamat</span><strong>{detail.delivery_address}</strong></p>
+              ) : null}
+              {detail.delivery_method === "delivery" ? (
+                <>
+                  <p className="admin-detail-row"><span>Ongkir (tunai)</span><strong>{detail.delivery_fee === null || detail.delivery_fee === undefined ? "—" : rupiah(detail.delivery_fee)}</strong></p>
+                  <label htmlFor="fee-amount">Ongkir (Rp, cek aplikasi kurir)</label>
+                  <input id="fee-amount" type="number" min={0} value={feeInput} onChange={(e) => setFeeInput(e.target.value)} />
+                  <button type="button" className="admin-btn" onClick={() => void handleSetFee(detail.unique_code)}>Simpan Ongkir</button>
+                </>
               ) : null}
               <h3 className="admin-detail-sub">Item</h3>
               <ul className="admin-detail-items">

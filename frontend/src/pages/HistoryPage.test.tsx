@@ -57,6 +57,15 @@ describe("HistoryPage", () => {
     expect(await screen.findByText("ORD-9")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bayar" })).toHaveAttribute("href", "/thanks?ref=ORD-9");
   });
+  it("ongkir tampil bila ada, hilang bila null", async () => {
+    const withFee = { id: "HP-10", unique_code: "ORD-10", total_amount: 45000, paid_amount: null, parent_code: null, status: "pending_payment", delivery_method: "delivery", delivery_fee: 12000, donation_consent: false, created_at: "2026-10-02T15:00:00Z", items: [] };
+    const noFee = { id: "HP-11", unique_code: "ORD-11", total_amount: 45000, paid_amount: null, parent_code: null, status: "pending_payment", delivery_method: "pickup", delivery_fee: null, donation_consent: false, created_at: "2026-10-02T16:00:00Z", items: [] };
+    mockList([withFee, noFee]);
+    renderRiwayat();
+    expect(await screen.findByText("ORD-10")).toBeInTheDocument();
+    expect(screen.getByText(/Ongkir \(tunai\): Rp 12\.000/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ongkir \(tunai\): Rp 0/)).toBeNull();
+  });
   it("lang en -> nama item Inggris; null -> fallback", async () => {
     setLang("en");
     const en = { ...paid, items: [{ product_id: "p1", name: "Salad", name_en: "Salad EN", quantity: 2 }] };

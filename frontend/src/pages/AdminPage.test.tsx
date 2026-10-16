@@ -304,6 +304,30 @@ describe("AdminPage", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-PAID9/advance"))).toBe(true);
   });
 
+  it("detail delivery -> form ongkir + Simpan kirim POST delivery-fee", async () => {
+    const user = userEvent.setup();
+    const order = { id: "HP-F", unique_code: "ORD-FEE", total_amount: 45000, status: "pending_payment", delivery_method: "delivery", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...order, paid_amount: null, parent_code: null, mode: "instant", scheduled_at: null, delivery_address: "Jl. Mawar", delivery_fee: null, delivery_lat: null, delivery_lng: null, items: [] };
+    const calls: Array<{ url: string; method: string; body: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method, body: String(init?.body ?? "") });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-FEE/delivery-fee")) return resp({ status: "success", data: { delivery_fee: 12000 } });
+      if (u.includes("/admin/orders/ORD-FEE")) return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      if (u.includes("/admin/products")) return resp({ status: "success", data: [] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: /detail ORD-FEE/i }));
+    const input = await screen.findByLabelText(/ongkir/i) as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "12000");
+    await user.click(screen.getByRole("button", { name: "Simpan Ongkir" }));
+    await vi.waitFor(() => expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-FEE/delivery-fee") && c.body.includes("12000"))).toBe(true));
+  });
+
   it("tab Post -> arsip tampil + Kembalikan kirim POST restore", async () => {
     const user = userEvent.setup();
     const calls: string[] = [];

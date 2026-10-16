@@ -107,4 +107,12 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+
+  it("023 delivery_fee additif di orders (tanpa DROP)", () => {
+    const sql = readFileSync(new URL("../migrations/023_delivery_fee.sql", import.meta.url), "utf8");
+    assert.match(sql, /ALTER TABLE orders/i);
+    assert.match(sql, /delivery_fee/);
+    const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    assert.doesNotMatch(ddl, /DROP TABLE/i);
+  });
 });

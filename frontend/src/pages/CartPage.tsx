@@ -231,7 +231,7 @@ export function CartPage() {
                 <div className="cart-summary">
                   <p>{t("shop.cart.summary.subtotal")} <span>{rupiah(total)}</span></p>
                   <h2>{t("shop.cart.summary.total")} <span>{rupiah(total)}</span></h2>
-                  <p>{t("shop.cart.summary.shipnote")}</p>
+                  <p>{delivery === "delivery" ? t("shop.cart.summary.shipnoteDelivery") : t("shop.cart.summary.shipnotePickup")}</p>
                 </div>
               </div>
               <div className="cart-panel">

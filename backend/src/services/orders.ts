@@ -62,7 +62,7 @@ export async function createOrder(
       orderItems.push({ item_id: itemId, product_id: i.product_id, quantity: i.quantity, note: null });
     }
     await client.query("COMMIT");
-    return { order_id: orderId, items: orderItems, mode, scheduled_at, total_amount: total, paid_amount: null, status: "pending_payment", delivery_method, delivery_address, parent_code: null, donation_consent: false };
+    return { order_id: orderId, items: orderItems, mode, scheduled_at, total_amount: total, paid_amount: null, status: "pending_payment", delivery_method, delivery_address, delivery_fee: null, parent_code: null, donation_consent: false };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -71,12 +71,12 @@ export async function createOrder(
   }
 }
 
-type OrderRow = { id: string; unique_code: string; mode: OrderMode; scheduled_at: Date | null; total_amount: number; paid_amount: number | null; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null; parent_code: string | null; donation_consent: boolean };
+type OrderRow = { id: string; unique_code: string; mode: OrderMode; scheduled_at: Date | null; total_amount: number; paid_amount: number | null; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null; delivery_fee: number | null; parent_code: string | null; donation_consent: boolean };
 type ItemRow = { product_id: string; quantity: number; note: string | null };
 
 export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
   const { rows } = await pool.query<OrderRow>(
-    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, parent_code, donation_consent FROM orders WHERE id = $1",
+    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, delivery_fee, parent_code, donation_consent FROM orders WHERE id = $1",
     [id],
   );
   const o = rows[0];
@@ -92,6 +92,7 @@ export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
     status: o.status,
     delivery_method: o.delivery_method,
     delivery_address: o.delivery_address,
+    delivery_fee: o.delivery_fee,
     parent_code: o.parent_code,
     donation_consent: o.donation_consent,
   };
@@ -117,7 +118,7 @@ export async function markPaid(pool: Pool, code: string, paidAmount: number): Pr
 // Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
 export type MineItem = { product_id: string; name: string; name_en: string | null; quantity: number };
 export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address" | "items"> & { id: string; unique_code: string; items: MineItem[] }>> {
-  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, parent_code, donation_consent, created_at";
+  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
@@ -136,7 +137,7 @@ export async function listMine(pool: Pool, cartId: string, status?: string): Pro
     order_id: o.id, id: o.id, unique_code: o.unique_code, items: byOrder.get(o.id) ?? [], mode: o.mode,
     scheduled_at: o.scheduled_at === null ? null : o.scheduled_at.toISOString(),
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
-    delivery_method: o.delivery_method,
+    delivery_method: o.delivery_method, delivery_fee: o.delivery_fee,
     parent_code: o.parent_code, donation_consent: o.donation_consent,
   }));
 }
