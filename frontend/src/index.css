@@ -820,7 +820,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
 .map-picker-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); flex-wrap: wrap; }
 .map-locate { display: inline-flex; align-items: center; gap: var(--sp-xs); min-height: 36px; }
 .map-coord { color: var(--ink-mute); font-variant-numeric: tabular-nums; }
-.map-canvas { height: 240px; width: 100%; border: 1px solid var(--hairline-strong); border-radius: var(--r-md); overflow: hidden; }
+.map-canvas { height: 240px; width: 100%; border: 1px solid var(--hairline-strong); border-radius: var(--r-md); overflow: hidden; isolation: isolate; position: relative; z-index: 0; }
 .map-canvas:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .map-pin-dot { display: block; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 .map-picker + textarea, .map-picker ~ textarea { margin-top: var(--sp-sm); }
@@ -883,7 +883,7 @@ code { font-family: var(--font-mono); font-size: 16px; }
 
 /* Popup kebutuhan landing: overlay + kartu tengah. */
 .need-popup {
-  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center;
   padding: var(--sp-lg); background: rgb(0 0 0 / 0.45);
 }
 .need-popup-card {
