@@ -3,6 +3,7 @@ import type { Map as LeafletMap, Marker as LeafletMarker, LeafletMouseEvent } fr
 import "leaflet/dist/leaflet.css";
 import { Icon } from "./Icon.tsx";
 import { tNow, useT } from "../i18n/t.ts";
+import type { DictKey } from "../i18n/t.ts";
 import { getLang } from "../i18n/store.ts";
 
 const DEFAULT: [number, number] = [-6.2, 106.816667]; // Jakarta sebagai titik awal
@@ -29,6 +30,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<LeafletMarker | null>(null);
   const [status, setStatus] = useState<"idle" | "locating" | "geo-error">("idle");
+  const [geoIssue, setGeoIssue] = useState<DictKey | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [showConsent, setShowConsent] = useState(false);
 
@@ -66,8 +68,9 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   }, []);
 
   function requestMyLocation(): void {
-    if (!("geolocation" in navigator)) { setStatus("geo-error"); return; }
+    if (!("geolocation" in navigator)) { setGeoIssue("shop.map.geoUnavailable"); setStatus("geo-error"); return; }
     setStatus("locating");
+    setGeoIssue(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
@@ -79,8 +82,13 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
         setStatus("idle");
         void reverseGeocode(lat, lng).then((addr) => onChange({ lat, lng }, addr));
       },
-      () => setStatus("geo-error"),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      (err) => {
+        // 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+        setGeoIssue(err.code === 1 ? "shop.map.geoDenied" : err.code === 3 ? "shop.map.geoTimeout" : "shop.map.geoUnavailable");
+        setStatus("geo-error");
+      },
+      // Desktop tanpa GPS: akurasi tinggi bikin permintaan gagal; hasil kasar (IP/WiFi) sudah ditangani pesan shop.map.coarse.
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 },
     );
   }
 
@@ -100,7 +108,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
             : t("shop.map.accuracy", { meters: accuracy }))
           : t("shop.map.hint")}
       </p>
-      {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> {t("shop.map.geoerror")}</p> : null}
+      {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> {t(geoIssue ?? "shop.map.geoerror")}</p> : null}
       {showConsent ? (
         <div role="dialog" aria-label={t("shop.map.consent.title")} aria-modal="true" className="need-popup">
           <div className="need-popup-card">
