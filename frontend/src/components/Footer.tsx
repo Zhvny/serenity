@@ -13,22 +13,21 @@ import { useT } from "../i18n/t.ts";
 import { categoryLabel } from "../i18n/content.ts";
 
 export function Footer({ categories }: { categories?: Pick<Category, "id" | "name">[] }) {
-  const [cats, setCats] = useState<Pick<Category, "id" | "name">[]>(categories ?? []);
+  const [fetchedCats, setFetchedCats] = useState<Pick<Category, "id" | "name">[]>([]);
   const year = new Date().getFullYear();
   const [lang] = useLang();
   const t = useT();
 
   useEffect(() => {
-    if (categories && categories.length > 0) {
-      setCats(categories);
-      return;
-    }
+    if (categories && categories.length > 0) return;
     let alive = true;
     void getCategories()
-      .then((c) => { if (alive) setCats(c); })
+      .then((c) => { if (alive) setFetchedCats(c); })
       .catch(() => {});
     return () => { alive = false; };
   }, [categories]);
+
+  const cats = categories && categories.length > 0 ? categories : fetchedCats;
 
   return (
     <footer className="site-footer">
