@@ -7,6 +7,7 @@ import { nextOrderId, newCode } from "../services/orders.js";
 import { verifyTurnstile } from "../services/turnstile.js";
 import { claimIdem, completeIdem, idemKeyOf, releaseIdem } from "../services/idempotency.js";
 import { productRepo } from "../repos/products.js";
+import { cartIdOf, setCartCookie } from "./cart.js";
 
 // Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
 const MAX_PENDING_PER_SESSION = 3;
@@ -15,8 +16,6 @@ let globalThrottleTrips = 0;
 // Batas global: rotasi sesi (cart_id baru per request) tetap berbagi ember ini.
 // Turnstile sudah memaksa 1 solve per order; ember global menutup jendela fail-open.
 // Dibaca per-request agar test bisa override via env (default 30/mnt).
-
-import { cartIdOf, setCartCookie } from "./cart.js";
 
 export function qrisRoutes(pool: Pool): Hono {
   const r = new Hono();
