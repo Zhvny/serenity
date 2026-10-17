@@ -35,6 +35,12 @@ DEPLOY-AZURE.ps1
 # Local assets (placeholder images — never commit real assets)
 frontend/public/images/*.jpg
 frontend/public/images/*.png
+# Pengecualian: 5 foto produk seed yang memang dikirim ke SWA (2026-10-17).
+!frontend/public/images/samp_001.jpg
+!frontend/public/images/samp_002.jpg
+!frontend/public/images/samp_003.jpg
+!frontend/public/images/samp_004.jpg
+!frontend/public/images/samp_005.jpg
 
 # AI/project docs
 *.md
