@@ -134,8 +134,9 @@ describe("CartPage", () => {
     const user = userEvent.setup();
     let n = 0;
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      n += 1;
       const u = String(url);
+      if (u.includes("/categories")) return new Response(JSON.stringify({ status: "success", data: [] }));
+      n += 1;
       if (n <= 2) return new Response(JSON.stringify({ status: "error", code: "X", message: "Server mati" }), { status: 500 });
       if (u.includes("/products")) return new Response(JSON.stringify({ status: "success", data: [p1, p2] }));
       return new Response(JSON.stringify({ status: "success", data: items }));

@@ -43,7 +43,7 @@ export function Footer({ categories }: { categories?: Pick<Category, "id" | "nam
           <Link to="/funfact">{t("shell.footer.funfact")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>
-        {cats.length > 0 ? (
+        {Array.isArray(cats) && cats.length > 0 ? (
           <nav className="footer-col" aria-label={t("shell.footer.categories")}>
             <h3>{t("shell.footer.categories")}</h3>
             {cats.map((c) => (

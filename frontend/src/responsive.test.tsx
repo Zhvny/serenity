@@ -20,7 +20,12 @@ describe("responsive tokens", () => {
   });
 
   it("CartPage memakai struktur class token (.cart-row) tanpa inline style sage", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/cart") ? cart : prods }))));
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/categories")) return new Response(JSON.stringify({ status: "success", data: cats }));
+      if (u.includes("/cart")) return new Response(JSON.stringify({ status: "success", data: cart }));
+      return new Response(JSON.stringify({ status: "success", data: prods }));
+    }));
     const { container } = render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
     expect(container.querySelector(".cart-row")).not.toBeNull();

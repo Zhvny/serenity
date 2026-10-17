@@ -18,7 +18,7 @@ describe("LandingPage", () => {
     expect(screen.getAllByRole("link", { name: /fun fact/i })).toHaveLength(1);
     expect(screen.queryByRole("link", { name: /jelajahi kategori/i })).toBeNull();
     const urls = spy.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes("/categories") || (u.includes("/products") && !u.includes("/recommendations")))).toBe(false);
+    expect(urls.some((u) => u.includes("/products") && !u.includes("/recommendations"))).toBe(false);
   });
 
   it("preferensi kosong -> popup kebutuhan muncul sekali", async () => {
