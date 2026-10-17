@@ -223,7 +223,7 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 }
 
 /* Foto di kartu Fun Fact / Rekomendasi (dari master): rata ke tepi kartu, bergaris bawah seperti kartu produk. */
-.fact-photo { box-sizing: border-box; width: calc(100% + 40px); max-width: none; margin: -18px -20px 14px; border-radius: 0; border-bottom: var(--bw) solid var(--outline); }
-img.fact-photo { display: block; background: var(--canvas-soft); }
+.fact-photo { box-sizing: border-box; width: calc(100% + 40px); max-width: none; margin: -18px -20px 14px; border-radius: 0; border-bottom: var(--bw) solid var(--outline); aspect-ratio: 4 / 3; object-fit: cover; }
+img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4 / 3; object-fit: cover; }
 .fact-photo--empty { gap: 6px; }
 .mini-card-body { display: block; padding: 0; }
