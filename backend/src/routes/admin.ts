@@ -155,6 +155,34 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     return c.json({ status: "success", data: { status: next } });
   });
 
+  // Pembatalan pesanan oleh admin: berlaku untuk semua status yang belum selesai.
+  const CANCELLABLE = new Set(["pending_payment", "underpaid", "paid", "preparing", "ready"]);
+  r.post("/orders/:code/cancel", async (c) => {
+    const code = c.req.param("code");
+    const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown };
+    const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 200) : null;
+    const cur = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
+    const status = cur.rows[0]?.status;
+    if (status === undefined) {
+      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+    }
+    if (!CANCELLABLE.has(status)) {
+      return c.json({ status: "error", code: "INVALID_TRANSITION", message: "Pesanan dengan status ini tidak dapat dibatalkan" }, 409);
+    }
+    const upd = await pool.query<{ status: string }>(
+      "UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = $2 RETURNING status",
+      [code, status],
+    );
+    if (upd.rowCount === 0) {
+      return c.json({ status: "error", code: "INVALID_TRANSITION", message: "Status berubah, muat ulang" }, 409);
+    }
+    await pool.query(
+      `INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`,
+      [c.get("adminUser"), "cancel_order", JSON.stringify({ unique_code: code, from: status, to: "cancelled", reason })],
+    );
+    return c.json({ status: "success", data: { status: "cancelled" } });
+  });
+
   // Detail satu order (untuk konfirmasi admin): item + alamat bila delivery (PII, hanya di detail).
   r.get("/orders/:code", async (c) => {
     const code = c.req.param("code");

@@ -509,4 +509,40 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(r.status, 409);
     assert.equal(((await r.json()) as { code: string }).code, "INVALID_TRANSITION");
   });
+
+  it("POST /admin/orders/:code/cancel -> batalkan pesanan belum selesai, tolak jika sudah done/cancelled", async () => {
+    const app = createApp(pool);
+    const login = await app.request("/api/v1/admin/login", { method: "POST", headers: csrf(), body: JSON.stringify({ username: "admin", password: PASS }) });
+    const sid = (login.headers.get("set-cookie") ?? "").match(/admin_session=([^;]+)/)?.[1] ?? "";
+    const code = `ORD-CNL-${Date.now()}`;
+    const id = `HP-CNL-${Date.now()}`;
+    createdOrders.push(id);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'preparing','pickup','cnl-sess',$2)", [id, code]);
+    const h = { ...csrf(), "x-forwarded-for": `cnl-${randomUUID()}`, cookie: `admin_session=${sid}; csrf_token=t1` };
+
+    // 1. Sukses batalkan saat status preparing
+    const r = await app.request(`/api/v1/admin/orders/${code}/cancel`, { method: "POST", headers: h, body: JSON.stringify({ reason: "Pelanggan minta batalkan" }) });
+    assert.equal(r.status, 200);
+    assert.equal(((await r.json()) as { data: { status: string } }).data.status, "cancelled");
+
+    const dbStatus = (await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code=$1", [code])).rows[0]?.status;
+    assert.equal(dbStatus, "cancelled");
+
+    // 2. Audit log tercatat
+    const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action='cancel_order' AND detail::text LIKE $1", [`%${code}%`])).rows[0]?.n;
+    assert.equal(Number(n), 1);
+    await pool.query("DELETE FROM audit_logs WHERE action='cancel_order' AND detail::text LIKE $1", [`%${code}%`]);
+
+    // 3. Batalkan lagi yang sudah cancelled -> 409
+    const again = await app.request(`/api/v1/admin/orders/${code}/cancel`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(again.status, 409);
+
+    // 4. Batalkan order done -> 409
+    const codeDone = `ORD-CNLD-${Date.now()}`;
+    const idDone = `HP-CNLD-${Date.now()}`;
+    createdOrders.push(idDone);
+    await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'done','pickup','cnld-sess',$2)", [idDone, codeDone]);
+    const rDone = await app.request(`/api/v1/admin/orders/${codeDone}/cancel`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(rDone.status, 409);
+  });
 });

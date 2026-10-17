@@ -11,6 +11,7 @@ import {
   adminListOrders,
   adminOrderDetail,
   adminAdvanceOrder,
+  adminCancelOrder,
   adminMarkPaid,
   adminSetDeliveryFee,
   adminSettleParent,
@@ -305,6 +306,14 @@ export function AdminPage() {
     await act(() => adminAdvanceOrder(code), "Gagal memajukan status");
     if (detail?.unique_code === code) await openDetail(code);
   }
+  async function handleCancel(code: string): Promise<void> {
+    if (typeof window !== "undefined" && typeof window.confirm === "function" && !window.confirm(`Yakin batalkan pesanan ${code}?`)) return;
+    await act(async () => {
+      await adminCancelOrder(code);
+      await refreshOrders(orderFilter);
+      setDetail(null);
+    }, "Gagal membatalkan pesanan");
+  }
   async function handleDeactivate(id: string): Promise<void> { await act(() => adminDeactivateProduct(id), "Gagal menonaktifkan"); }
   async function handleReactivate(id: string): Promise<void> { await act(() => adminReactivateProduct(id), "Gagal mengaktifkan"); }
 
@@ -451,6 +460,9 @@ export function AdminPage() {
                 ) : ADVANCE_LABEL[detail.status] !== undefined ? (
                   <button type="button" className="admin-btn" onClick={() => void handleAdvance(detail.unique_code)}>{ADVANCE_LABEL[detail.status]}</button>
                 ) : <span className="status-badge status-badge--ok">Pesanan selesai</span>}
+                {["pending_payment", "underpaid", "paid", "preparing", "ready"].includes(detail.status) ? (
+                  <button type="button" className="admin-btn admin-btn--danger" onClick={() => void handleCancel(detail.unique_code)}>Batalkan Pesanan</button>
+                ) : null}
                 <button type="button" className="admin-btn admin-btn--ghost" onClick={() => setDetail(null)}>Tutup</button>
               </div>
             </aside>

@@ -88,8 +88,8 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
         setGeoIssue(err.code === 1 ? "shop.map.geoDenied" : err.code === 3 ? "shop.map.geoTimeout" : "shop.map.geoUnavailable");
         setStatus("geo-error");
       },
-      // Desktop tanpa GPS: akurasi tinggi bikin permintaan gagal; hasil kasar (IP/WiFi) sudah ditangani pesan shop.map.coarse.
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 },
+      // Desktop tanpa GPS: akurasi tinggi bikin permintaan gagal; timeout 20s + cache 1m agar provider jaringan tidak mudah timeout.
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
     );
   }
 

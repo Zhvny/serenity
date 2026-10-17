@@ -189,6 +189,10 @@ export function adminAdvanceOrder(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/advance`, "POST");
 }
 
+export function adminCancelOrder(code: string, reason?: string): Promise<{ status: string }> {
+  return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/cancel`, "POST", { reason });
+}
+
 export function adminMarkPaid(code: string, paidAmount: number): Promise<{ paid: boolean; changed: boolean; status: string | null }> {
   return adminMutate<{ paid: boolean; changed: boolean; status: string | null }>(`/admin/orders/${encodeURIComponent(code)}/mark-paid`, "POST", { paid_amount: paidAmount });
 }

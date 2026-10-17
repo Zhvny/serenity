@@ -343,6 +343,28 @@ describe("AdminPage", () => {
     await vi.waitFor(() => expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-FEE/delivery-fee") && c.body.includes("12000"))).toBe(true));
   });
 
+  it("klik order -> detail -> Batalkan Pesanan -> konfirmasi & kirim POST cancel", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("confirm", () => true);
+    const order = { id: "HP-C", unique_code: "ORD-C1", total_amount: 50000, status: "pending_payment", delivery_method: "pickup", created_at: "2026-10-02T00:00:00Z" };
+    const det = { ...order, paid_amount: null, parent_code: null, mode: "instant", scheduled_at: null, delivery_address: null, delivery_fee: null, delivery_lat: null, delivery_lng: null, items: [] };
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url); const method = init?.method ?? "GET";
+      calls.push({ url: u, method });
+      if (u.includes("/csrf")) return resp({ status: "success", data: { csrfToken: "t1" } });
+      if (u.includes("/admin/orders/ORD-C1/cancel")) return resp({ status: "success", data: { status: "cancelled" } });
+      if (u.includes("/admin/orders/ORD-C1")) return resp({ status: "success", data: det });
+      if (u.includes("/admin/orders")) return resp({ status: "success", data: [order] });
+      return resp({ status: "success", data: [] });
+    }));
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: /detail ORD-C1/i }));
+    const cancelBtn = await screen.findByRole("button", { name: "Batalkan Pesanan" });
+    await user.click(cancelBtn);
+    expect(calls.some((c) => c.method === "POST" && c.url.includes("/admin/orders/ORD-C1/cancel"))).toBe(true);
+  });
+
   it("tab Post -> arsip tampil + Kembalikan kirim POST restore", async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
