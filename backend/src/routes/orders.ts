@@ -5,10 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { getOrder, setStatus, listMine, newCode, nextOrderId } from "../services/orders.js";
 import { claimIdem, completeIdem, idemKeyOf, releaseIdem } from "../services/idempotency.js";
-
-function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
-  return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
-}
+import { cartIdOf, setCartCookie } from "./cart.js";
 
 const statusSchema = z.object({ status: z.enum(["paid", "failed", "expired"]) });
 
@@ -22,6 +19,7 @@ export function orderRoutes(pool: Pool): Hono {
     if (cartId === undefined) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
+    setCartCookie(c, cartId);
     const status = c.req.query("status");
     if (status !== undefined) {
       const allowed = new Set(["pending_payment", "paid", "underpaid", "expired", "failed", "cancelled", "preparing", "ready", "done"]);
@@ -40,6 +38,7 @@ export function orderRoutes(pool: Pool): Hono {
     if (rows.length === 0 || cartId === undefined || sess !== cartId) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
+    setCartCookie(c, cartId);
     const order = await getOrder(pool, id);
     if (order === null) {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);

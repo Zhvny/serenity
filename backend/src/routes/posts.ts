@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
+import { setCartCookie } from "./cart.js";
 
 // Daftar post publik (FunFact/News/SoftSelling), terbaru dulu. Tanpa auth.
 export function postRoutes(pool: Pool): Hono {
@@ -55,8 +56,8 @@ export function postRoutes(pool: Pool): Hono {
     let sid = c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
     if (sid === undefined) {
       sid = randomUUID();
-      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
+    setCartCookie(c, sid);
     await pool.query(
       "INSERT INTO post_views (post_id, session_id) VALUES ($1, $2) ON CONFLICT (post_id, session_id) DO NOTHING",
       [id, sid],

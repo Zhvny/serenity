@@ -16,9 +16,7 @@ let globalThrottleTrips = 0;
 // Turnstile sudah memaksa 1 solve per order; ember global menutup jendela fail-open.
 // Dibaca per-request agar test bisa override via env (default 30/mnt).
 
-function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
-  return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
-}
+import { cartIdOf, setCartCookie } from "./cart.js";
 
 export function qrisRoutes(pool: Pool): Hono {
   const r = new Hono();
@@ -38,6 +36,7 @@ export function qrisRoutes(pool: Pool): Hono {
     if (cartId === undefined) {
       return c.json({ status: "error", code: "NO_CART", message: "Keranjang tidak ditemukan" }, 400);
     }
+    setCartCookie(c, cartId);
     // Idempotency-Key (opsional) diklaim AWAL agar retry yang responsnya hilang
     // tetap replay 200 sama (melewati throttle/cek bisnis tanpa efek samping).
     // Semua return gagal di bawah melepas klaim agar retry mengulang bersih.
@@ -168,6 +167,7 @@ export function qrisRoutes(pool: Pool): Hono {
       // 404 seragam agar tak membocorkan eksistensi order milik sesi lain.
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
+    setCartCookie(c, cartId);
     // Hanya kode + nominal + QR + status + info bayar. Tanpa alamat/nama.
     return c.json({ status: "success", data: { unique_code: order.unique_code, nominal: order.total_amount, paid_amount: order.paid_amount, donation_consent: order.donation_consent, qr_url: order.qr_url, status: order.status } });
   });

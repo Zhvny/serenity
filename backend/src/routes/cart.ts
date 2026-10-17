@@ -11,8 +11,14 @@ const addSchema = z.object({ product_id: z.string().min(1), quantity: z.number()
 const updateSchema = z.object({ quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
 const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish(), delivery_lat: z.number().min(-90).max(90).nullish(), delivery_lng: z.number().min(-180).max(180).nullish() });
 
-function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
+export const CART_COOKIE_MAX_AGE = 90 * 24 * 3600;
+
+export function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
+}
+
+export function setCartCookie(c: { header: (n: string, v: string) => void }, cartId: string): void {
+  c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=${CART_COOKIE_MAX_AGE}`);
 }
 
 export function cartRoutes(pool: Pool): Hono {
@@ -26,24 +32,34 @@ export function cartRoutes(pool: Pool): Hono {
     let cartId = cartIdOf(c);
     if (cartId === undefined) {
       cartId = randomUUID();
-      c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
+    setCartCookie(c, cartId);
     const item = await addItem(pool, cartId, body.product_id, body.quantity, body.note ?? null);
     return c.json({ status: "success", data: item });
   });
   r.get("/cart", async (c) => {
-    return c.json({ status: "success", data: await getCart(pool, cartIdOf(c) ?? "") });
+    const cartId = cartIdOf(c);
+    if (cartId !== undefined) {
+      setCartCookie(c, cartId);
+    }
+    return c.json({ status: "success", data: await getCart(pool, cartId ?? "") });
   });
   r.put("/cart/items/:item_id", zValidator("json", updateSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
     const body = c.req.valid("json");
-    const item = await updateItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"), body.quantity, body.note);
+    const cartId = cartIdOf(c) ?? "";
+    if (cartId !== "") setCartCookie(c, cartId);
+    const item = await updateItem(pool, cartId, c.req.param("item_id"), body.quantity, body.note);
     return item === null ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: item });
   });
   r.delete("/cart/items/:item_id", async (c) => {
-    const ok = await removeItem(pool, cartIdOf(c) ?? "", c.req.param("item_id"));
+    const cartId = cartIdOf(c) ?? "";
+    if (cartId !== "") setCartCookie(c, cartId);
+    const ok = await removeItem(pool, cartId, c.req.param("item_id"));
     return !ok ? c.json({ status: "error", code: "CART_ITEM_NOT_FOUND", message: "Item tidak ditemukan" }, 404) : c.json({ status: "success", data: { removed: true } });
   });
   r.post("/cart/checkout", zValidator("json", checkoutSchema, (result, c) => { if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400); }), async (c) => {
+    const cartId = cartIdOf(c);
+    if (cartId !== undefined) setCartCookie(c, cartId);
     const body = c.req.valid("json");
     if (body.mode === "instant" && body.scheduled_at != null) {
       return c.json({ status: "error", code: "INVALID_SCHEDULE", message: "scheduled_at harus null untuk mode instant" }, 400);

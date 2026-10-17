@@ -4,15 +4,12 @@ import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { bestSellers, byNeed, NEEDS, type Need } from "../services/recommend.js";
+import { cartIdOf, setCartCookie } from "./cart.js";
 
 const needsSchema = z.object({
   needs: z.array(z.enum(["diet", "muscle", "diabetes", "allergy_free", "low_sugar"])).min(1).max(5)
     .refine((a) => new Set(a).size === a.length, { message: "Duplikat" }),
 });
-
-function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
-  return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
-}
 
 export function recommendRoutes(pool: Pool): Hono {
   const r = new Hono();
@@ -23,8 +20,8 @@ export function recommendRoutes(pool: Pool): Hono {
     let sid = cartIdOf(c);
     if (sid === undefined) {
       sid = randomUUID();
-      c.header("Set-Cookie", `cart_id=${sid}; HttpOnly; SameSite=None; Secure; Path=/`);
     }
+    setCartCookie(c, sid);
     await pool.query(
       `INSERT INTO user_preferences (session_id, needs, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)
        ON CONFLICT (session_id) DO UPDATE SET needs = $2, updated_at = CURRENT_TIMESTAMP`,

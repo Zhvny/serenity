@@ -24,6 +24,18 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
   }
 }
 
+async function fetchIpLocation(): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { success?: boolean; latitude?: number; longitude?: number };
+    if (!body.success || body.latitude == null || body.longitude == null) return null;
+    return { lat: body.latitude, lng: body.longitude };
+  } catch {
+    return null;
+  }
+}
+
 export function LocationPicker({ value, onChange }: { value: LatLng | null; onChange: (v: LatLng, address: string | null) => void }) {
   const t = useT();
   const mapEl = useRef<HTMLDivElement | null>(null);
@@ -84,9 +96,22 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
         void reverseGeocode(lat, lng).then((addr) => onChange({ lat, lng }, addr));
       },
       (err) => {
-        // 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
-        setGeoIssue(err.code === 1 ? "shop.map.geoDenied" : err.code === 3 ? "shop.map.geoTimeout" : "shop.map.geoUnavailable");
-        setStatus("geo-error");
+        // 1=PERMISSION_DENIED: no fallback (user chose to block).
+        if (err.code === 1) { setGeoIssue("shop.map.geoDenied"); setStatus("geo-error"); return; }
+        // 2=POSITION_UNAVAILABLE, 3=TIMEOUT: try IP geolocation fallback.
+        void fetchIpLocation().then((ip) => {
+          if (ip !== null) {
+            mapRef.current?.setView([ip.lat, ip.lng], 12);
+            markerRef.current?.setLatLng([ip.lat, ip.lng]);
+            setAccuracy(3000);
+            setGeoIssue("shop.map.ipFallback");
+            setStatus("idle");
+            void reverseGeocode(ip.lat, ip.lng).then((addr) => onChange(ip, addr));
+          } else {
+            setGeoIssue(err.code === 3 ? "shop.map.geoTimeout" : "shop.map.geoUnavailable");
+            setStatus("geo-error");
+          }
+        });
       },
       // Desktop tanpa GPS: akurasi tinggi bikin permintaan gagal; timeout 20s + cache 1m agar provider jaringan tidak mudah timeout.
       { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
@@ -110,6 +135,7 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
           : t("shop.map.hint")}
       </p>
       {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> {t(geoIssue ?? "shop.map.geoerror")}</p> : null}
+      {status === "idle" && geoIssue === "shop.map.ipFallback" ? <p className="cart-opt-note"><Icon name="warning" /> {t("shop.map.ipFallback")}</p> : null}
       {showConsent ? (
         <div role="dialog" aria-label={t("shop.map.consent.title")} aria-modal="true" className="need-popup">
           <div className="need-popup-card">
