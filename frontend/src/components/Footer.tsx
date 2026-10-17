@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { getCategories } from "../services/api.ts";
 import type { Category } from "../services/api.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { LOGO_MARK } from "../pixel/data/logo.ts";
@@ -10,10 +12,24 @@ import { useLang } from "../i18n/useLang.ts";
 import { useT } from "../i18n/t.ts";
 import { categoryLabel } from "../i18n/content.ts";
 
-export function Footer({ categories = [] }: { categories?: Pick<Category, "id" | "name">[] }) {
+export function Footer({ categories }: { categories?: Pick<Category, "id" | "name">[] }) {
+  const [cats, setCats] = useState<Pick<Category, "id" | "name">[]>(categories ?? []);
   const year = new Date().getFullYear();
   const [lang] = useLang();
   const t = useT();
+
+  useEffect(() => {
+    if (categories && categories.length > 0) {
+      setCats(categories);
+      return;
+    }
+    let alive = true;
+    void getCategories()
+      .then((c) => { if (alive) setCats(c); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [categories]);
+
   return (
     <footer className="site-footer">
       <div className="gingham-strip" aria-hidden="true" />
@@ -28,11 +44,11 @@ export function Footer({ categories = [] }: { categories?: Pick<Category, "id" |
           <Link to="/funfact">{t("shell.footer.funfact")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>
-        {categories.length > 0 ? (
+        {cats.length > 0 ? (
           <nav className="footer-col" aria-label={t("shell.footer.categories")}>
             <h3>{t("shell.footer.categories")}</h3>
-            {categories.map((c) => (
-              <Link key={c.id} to={`/menu?category=${c.id}`}>{categoryLabel(c, lang)}</Link>
+            {cats.map((c) => (
+              <Link key={c.id} to={`/menu?category=${c.id}#menu`}>{categoryLabel(c, lang)}</Link>
             ))}
           </nav>
         ) : null}

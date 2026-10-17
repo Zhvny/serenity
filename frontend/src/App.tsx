@@ -15,10 +15,18 @@ import { PostDetailPage } from "./pages/PostDetailPage.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
   useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      const el = document.getElementById(id);
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView();
+        return;
+      }
+    }
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }, [location.pathname, location.hash]);
   return null;
 }
 

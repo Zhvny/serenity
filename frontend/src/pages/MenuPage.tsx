@@ -50,6 +50,10 @@ export function MenuPage() {
       setFilter((prev) => (prev.kind === "category" ? { kind: "all" } : prev));
     } else {
       setFilter((prev) => (prev.kind === "category" && prev.id === c ? prev : { kind: "category", id: c }));
+      const el = document.getElementById("menu");
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView();
+      }
     }
   }, [searchParams]);
 

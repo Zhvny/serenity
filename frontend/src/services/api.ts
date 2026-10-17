@@ -68,8 +68,15 @@ export async function apiDelete<T>(path: string): Promise<T> {
   }
   return body.data as T;
 }
+let categoriesCache: Promise<Category[]> | null = null;
 export function getCategories(): Promise<Category[]> {
-  return apiGet<Category[]>("/categories");
+  if (!categoriesCache) {
+    categoriesCache = apiGet<Category[]>("/categories").catch((err) => {
+      categoriesCache = null;
+      throw err;
+    });
+  }
+  return categoriesCache;
 }
 
 export function getProducts(filter: { category?: string; tag?: string }): Promise<Product[]> {

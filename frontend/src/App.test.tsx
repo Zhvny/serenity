@@ -39,4 +39,35 @@ describe("ScrollToTop", () => {
 
     expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
   });
+
+  it("scroll ke elemen id jika rute membawa hash", () => {
+    const scrollIntoView = vi.fn();
+    const mockEl = document.createElement("div");
+    mockEl.id = "menu";
+    mockEl.scrollIntoView = scrollIntoView;
+    document.body.appendChild(mockEl);
+
+    function TestHashNavigator() {
+      const navigate = useNavigate();
+      return (
+        <>
+          <ScrollToTop />
+          <button type="button" onClick={() => void navigate("/menu#menu")}>Go to Menu with Hash</button>
+        </>
+      );
+    }
+
+    const { getByRole } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <TestHashNavigator />
+      </MemoryRouter>
+    );
+
+    act(() => {
+      getByRole("button", { name: "Go to Menu with Hash" }).click();
+    });
+
+    expect(scrollIntoView).toHaveBeenCalled();
+    mockEl.remove();
+  });
 });
