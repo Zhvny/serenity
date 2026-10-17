@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router";
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router";
 import { LandingPage } from "./pages/LandingPage.tsx";
 import { MenuPage } from "./pages/MenuPage.tsx";
 import { DetailPage } from "./pages/DetailPage.tsx";
@@ -13,12 +14,21 @@ import { FunFactPage } from "./pages/FunFactPage.tsx";
 import { PostDetailPage } from "./pages/PostDetailPage.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 
+export function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   // /admin hanya dibundel-terjangkau bila flag hidup (build publik SWA: false;
   // admin lokal: unset/true). Lapisan 2 setelah SWA 403 + halaman 403 statis.
   const includeAdmin = import.meta.env.VITE_INCLUDE_ADMIN !== "false";
   return (
     <ErrorBoundary>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/menu" element={<MenuPage />} />
