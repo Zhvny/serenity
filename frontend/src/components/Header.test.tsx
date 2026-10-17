@@ -105,23 +105,22 @@ describe("Header i18n + aksi", () => {
 });
 
 describe("Footer i18n", () => {
-  const cats = [{ id: "cat_dessert", name: "Dessert Sehat" }];
   it("Indonesia: teks asli + tombol suara footer", () => {
-    render(<MemoryRouter><Footer categories={cats} /></MemoryRouter>);
+    render(<MemoryRouter><Footer /></MemoryRouter>);
     expect(screen.getByText(/Pre-order dessert & minuman sehat rendah gula/)).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Tautan" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Jelajah" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Keranjang" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Dessert Sehat" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Dessert Sehat" })).toBeNull();
     expect(screen.getByRole("button", { name: "Suara mati" })).toHaveClass("sound-toggle--footer");
   });
   it("Inggris: teks, tautan dan kategori diterjemahkan", () => {
     setLang("en");
-    render(<MemoryRouter><Footer categories={cats} /></MemoryRouter>);
+    render(<MemoryRouter><Footer /></MemoryRouter>);
     expect(screen.getByRole("navigation", { name: "Links" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Explore" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cart" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Healthy Desserts" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Healthy Desserts" })).toBeNull();
     expect(screen.getByRole("button", { name: "Sound off" })).toBeInTheDocument();
   });
 });

@@ -182,7 +182,7 @@ export function MenuPage() {
           )}
         </section>
       </main>
-      <Footer categories={cats} />
+      <Footer />
     </div>
   );
 }

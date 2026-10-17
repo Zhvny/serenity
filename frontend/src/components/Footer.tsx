@@ -1,33 +1,15 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { getCategories } from "../services/api.ts";
-import type { Category } from "../services/api.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { LOGO_MARK } from "../pixel/data/logo.ts";
 import { CAT_SLEEP } from "../pixel/data/mascot.ts";
 import { SHOP_BELL, PAPER_BAG } from "../pixel/data/bakeryB.ts";
 import { BREAD_LOAF } from "../pixel/data/bakeryA.ts";
 import { SoundToggle } from "./SoundToggle.tsx";
-import { useLang } from "../i18n/useLang.ts";
 import { useT } from "../i18n/t.ts";
-import { categoryLabel } from "../i18n/content.ts";
 
-export function Footer({ categories }: { categories?: Pick<Category, "id" | "name">[] }) {
-  const [fetchedCats, setFetchedCats] = useState<Pick<Category, "id" | "name">[]>([]);
+export function Footer() {
   const year = new Date().getFullYear();
-  const [lang] = useLang();
   const t = useT();
-
-  useEffect(() => {
-    if (categories && categories.length > 0) return;
-    let alive = true;
-    void getCategories()
-      .then((c) => { if (alive) setFetchedCats(c); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, [categories]);
-
-  const cats = categories && categories.length > 0 ? categories : fetchedCats;
 
   return (
     <footer className="site-footer">
@@ -43,14 +25,6 @@ export function Footer({ categories }: { categories?: Pick<Category, "id" | "nam
           <Link to="/funfact">{t("shell.footer.funfact")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>
-        {Array.isArray(cats) && cats.length > 0 ? (
-          <nav className="footer-col" aria-label={t("shell.footer.categories")}>
-            <h3>{t("shell.footer.categories")}</h3>
-            {cats.map((c) => (
-              <Link key={c.id} to={`/menu?category=${c.id}#menu`}>{categoryLabel(c, lang)}</Link>
-            ))}
-          </nav>
-        ) : null}
       </div>
       <div className="footer-sound">
         <SoundToggle where="footer" />

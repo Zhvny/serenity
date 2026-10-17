@@ -6,14 +6,14 @@ import { Footer } from "./Footer.tsx";
 afterEach(() => cleanup());
 
 describe("Footer", () => {
-  it("tautan Menu & kategori mengarah ke /menu (beranda '/' adalah landing)", () => {
+  it("tautan Menu & Keranjang mengarah ke /menu & /cart, tanpa kolom kategori", () => {
     render(
       <MemoryRouter>
-        <Footer categories={[{ id: "cat_food", name: "Makanan Sehat" }]} />
+        <Footer />
       </MemoryRouter>,
     );
     expect(screen.getByRole("link", { name: "Menu" })).toHaveAttribute("href", "/menu");
-    expect(screen.getByRole("link", { name: "Makanan Sehat" })).toHaveAttribute("href", "/menu?category=cat_food#menu");
     expect(screen.getByRole("link", { name: "Keranjang" })).toHaveAttribute("href", "/cart");
+    expect(screen.queryByRole("navigation", { name: "Kategori" })).toBeNull();
   });
 });
