@@ -47,7 +47,8 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
       const start = value ?? { lat: DEFAULT[0], lng: DEFAULT[1] };
       const map = L.map(mapEl.current, { center: [start.lat, start.lng], zoom: value ? 16 : 12, zoomControl: false });
       L.control.zoom({ zoomInTitle: tNow("shop.map.zoomIn"), zoomOutTitle: tNow("shop.map.zoomOut") }).addTo(map);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(map);
+      // Wajib: host tanpa subdomain {s} + atribusi terlihat + Referer terkirim (lihat Referrer-Policy di staticwebapp.config.json) — pelanggaran = 403 "Access Blocked" dari OSM.
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
       const marker = L.marker([start.lat, start.lng], { icon: pin, draggable: true }).addTo(map);
       mapRef.current = map;
       markerRef.current = marker;
