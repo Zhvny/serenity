@@ -44,6 +44,22 @@ describe("cart", () => {
     const res = await createApp(pool).request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "samp_001", quantity: 2 }) });
     assert.equal(res.status, 200);
     assert.match(cookieOf(res), /cart_id=/);
+    const body = (await res.json()) as { data: { cart_id?: string } };
+    assert.ok(body.data.cart_id, "data.cart_id harus ada");
+    assert.equal(res.headers.get("x-cart-id"), body.data.cart_id, "header x-cart-id harus cocok");
+  });
+  it("GET /cart via x-cart-id header tanpa cookie → 200 + item ada", async () => {
+    const app = createApp(pool);
+    const add = await app.request("/api/v1/cart/add", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: "samp_001", quantity: 3 }) });
+    const { data } = (await add.json()) as { data: { cart_id: string } };
+    createdCarts.push(data.cart_id);
+    // Request GET tanpa cookie apapun, murni x-cart-id
+    const getRes = await app.request("/api/v1/cart", { method: "GET", headers: { "x-cart-id": data.cart_id } });
+    assert.equal(getRes.status, 200);
+    const getBody = (await getRes.json()) as { data: Array<{ product_id: string; quantity: number }> };
+    assert.equal(getBody.data.length, 1);
+    assert.equal(getBody.data[0]?.product_id, "samp_001");
+    assert.equal(getBody.data[0]?.quantity, 3);
   });
   it("PUT /cart/items/:id qty 0 → 400", async () => {
     const app = createApp(pool);

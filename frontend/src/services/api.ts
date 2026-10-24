@@ -13,10 +13,51 @@ export type CartItem = { item_id: string; product_id: string; quantity: number; 
 
 const BASE = import.meta.env.VITE_API_URL as string | undefined ?? "http://localhost:3000/api/v1";
 
+const CART_STORAGE_KEY = "serenity_cart_id";
+
+export function getStoredCartId(): string | null {
+  try {
+    return localStorage.getItem(CART_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function storeCartId(id: string | null | undefined): void {
+  if (!id) return;
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, id);
+  } catch {
+    // Abaikan jika localStorage dibatasi
+  }
+}
+
+function withCartHeader(headers: Record<string, string> = {}): Record<string, string> {
+  const cartId = getStoredCartId();
+  if (cartId) {
+    return { ...headers, "x-cart-id": cartId };
+  }
+  return headers;
+}
+
+function captureCartId(res: Response, bodyData?: unknown): void {
+  const fromHeader = res.headers.get("x-cart-id");
+  if (fromHeader) {
+    storeCartId(fromHeader);
+    return;
+  }
+  if (bodyData && typeof bodyData === "object" && "cart_id" in bodyData) {
+    const fromBody = (bodyData as { cart_id?: unknown }).cart_id;
+    if (typeof fromBody === "string") {
+      storeCartId(fromBody);
+    }
+  }
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { credentials: "include" });
+    res = await fetch(`${BASE}${path}`, { headers: withCartHeader(), credentials: "include" });
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
@@ -24,13 +65,14 @@ export async function apiGet<T>(path: string): Promise<T> {
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
+  captureCartId(res, body.data);
   return body.data as T;
 }
 
 export async function apiPost<T>(path: string, input: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input), credentials: "include" });
+    res = await fetch(`${BASE}${path}`, { method: "POST", headers: withCartHeader({ "content-type": "application/json" }), body: JSON.stringify(input), credentials: "include" });
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
@@ -38,13 +80,14 @@ export async function apiPost<T>(path: string, input: unknown): Promise<T> {
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
+  captureCartId(res, body.data);
   return body.data as T;
 }
 
 export async function apiPut<T>(path: string, input: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(input), credentials: "include" });
+    res = await fetch(`${BASE}${path}`, { method: "PUT", headers: withCartHeader({ "content-type": "application/json" }), body: JSON.stringify(input), credentials: "include" });
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
@@ -52,13 +95,14 @@ export async function apiPut<T>(path: string, input: unknown): Promise<T> {
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
+  captureCartId(res, body.data);
   return body.data as T;
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { method: "DELETE", credentials: "include" });
+    res = await fetch(`${BASE}${path}`, { method: "DELETE", headers: withCartHeader(), credentials: "include" });
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
@@ -66,6 +110,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
+  captureCartId(res, body.data);
   return body.data as T;
 }
 export function getCategories(): Promise<Category[]> {

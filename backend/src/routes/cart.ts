@@ -14,11 +14,16 @@ const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), schedu
 export const CART_COOKIE_MAX_AGE = 90 * 24 * 3600;
 
 export function cartIdOf(c: { req: { header: (n: string) => string | undefined } }): string | undefined {
+  const headerId = c.req.header("x-cart-id");
+  if (headerId !== undefined && /^[0-9a-fA-F-]{16,64}$/.test(headerId)) {
+    return headerId;
+  }
   return c.req.header("cookie")?.match(/cart_id=([^;]+)/)?.[1];
 }
 
 export function setCartCookie(c: { header: (n: string, v: string) => void }, cartId: string): void {
   c.header("Set-Cookie", `cart_id=${cartId}; HttpOnly; SameSite=None; Secure; Path=/; Max-Age=${CART_COOKIE_MAX_AGE}`);
+  c.header("x-cart-id", cartId);
 }
 
 export function cartRoutes(pool: Pool): Hono {
@@ -35,7 +40,7 @@ export function cartRoutes(pool: Pool): Hono {
     }
     setCartCookie(c, cartId);
     const item = await addItem(pool, cartId, body.product_id, body.quantity, body.note ?? null);
-    return c.json({ status: "success", data: item });
+    return c.json({ status: "success", data: { ...item, cart_id: cartId } });
   });
   r.get("/cart", async (c) => {
     const cartId = cartIdOf(c);
