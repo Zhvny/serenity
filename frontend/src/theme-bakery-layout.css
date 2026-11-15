@@ -265,3 +265,4 @@ img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4
 @media (max-width: 640px) {
   .detail-cta { width: calc(100% - var(--bw) * 2); box-sizing: border-box; }
 }
+.board-text { padding: 0 14px; box-sizing: border-box; } /* teks kapur tak menempel ke bingkai */
