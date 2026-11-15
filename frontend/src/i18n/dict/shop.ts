@@ -20,6 +20,10 @@ export const id = {
   "shop.detail.allergens": "Alergen",
   "shop.detail.add": "Tambahkan ke Keranjang",
   "shop.detail.added": "Ditambahkan ke keranjang",
+  "shop.detail.qty": "Jumlah",
+  "shop.detail.qtyDec": "Kurangi jumlah",
+  "shop.detail.qtyInc": "Tambah jumlah",
+  "shop.detail.viewCart": "Lihat keranjang",
 
   "shop.cart.title": "Keranjang",
   "shop.cart.loading": "Memuat keranjang",
@@ -118,6 +122,10 @@ export const en = {
   "shop.detail.allergens": "Allergens",
   "shop.detail.add": "Add to cart",
   "shop.detail.added": "Added to cart",
+  "shop.detail.qty": "Quantity",
+  "shop.detail.qtyDec": "Decrease quantity",
+  "shop.detail.qtyInc": "Increase quantity",
+  "shop.detail.viewCart": "View cart",
 
   "shop.cart.title": "Your cart",
   "shop.cart.loading": "Loading your cart",

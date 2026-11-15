@@ -29,7 +29,26 @@ describe("DetailPage", () => {
     renderId("p1");
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
-    expect(await screen.findByText("Ditambahkan ke keranjang")).toBeInTheDocument();
+    expect(await screen.findByText(/Ditambahkan ke keranjang/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Lihat keranjang" })).toHaveAttribute("href", "/cart");
+  });
+  it("pemilih jumlah: + dan − mengubah jumlah, batas 1..10, jumlah ikut terkirim", async () => {
+    const user = userEvent.setup();
+    const bodies: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/cart/add")) bodies.push(String(init?.body));
+      const data = String(url).includes("/cart/add") ? { item_id: "i1", product_id: "p1", quantity: 3, note: null } : prod;
+      return new Response(JSON.stringify({ status: "success", data }));
+    }));
+    renderId("p1");
+    await screen.findByText("Salad");
+    expect(screen.getByRole("button", { name: "Kurangi jumlah" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Tambah jumlah" }));
+    await user.click(screen.getByRole("button", { name: "Tambah jumlah" }));
+    expect(screen.getByRole("group", { name: "Jumlah" })).toHaveTextContent("3");
+    await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
+    await screen.findByText(/Ditambahkan ke keranjang/);
+    expect(bodies[0]).toContain('"quantity":3');
   });
   it("tambah keranjang gagal → pesan error tampil", async () => {    const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
@@ -70,7 +89,7 @@ describe("DetailPage (English)", () => {
     expect(screen.getByText("Peanuts")).toBeInTheDocument();
     expect(screen.queryByText("Informasi nutrisi")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Add to cart" }));
-    expect(await screen.findByText("Added to cart")).toBeInTheDocument();
+    expect(await screen.findByText(/Added to cart/)).toBeInTheDocument();
   });
   it("id unknown -> pesan tidak-ketemu dalam bahasa Inggris", async () => {
     setLang("en");

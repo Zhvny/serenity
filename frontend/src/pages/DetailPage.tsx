@@ -32,6 +32,7 @@ export function DetailPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [cart, setCart] = useState<"idle" | "adding" | "added" | "carterror">("idle");
   const [cartMsg, setCartMsg] = useState("");
+  const [qty, setQty] = useState(1);
 
   useEffect(() => {
     if (productId === "") return;
@@ -61,7 +62,7 @@ export function DetailPage() {
   async function handleAdd(btn: HTMLElement): Promise<void> {
     setCart("adding");
     try {
-      await addToCart({ product_id: productId, quantity: 1 });
+      await addToCart({ product_id: productId, quantity: qty });
       setCart("added");
       window.dispatchEvent(new Event("cart:changed"));
       const r = btn.getBoundingClientRect();
@@ -130,10 +131,18 @@ export function DetailPage() {
                 </>
               ) : null}
 
+              <div className="detail-qty">
+                <span id="detail-qty-label">{t("shop.detail.qty")}</span>
+                <div className="qty-ctrl" role="group" aria-labelledby="detail-qty-label">
+                  <button type="button" aria-label={t("shop.detail.qtyDec")} disabled={qty <= 1} onClick={() => { setQty((q) => Math.max(1, q - 1)); setCart("idle"); }}>−</button>
+                  <output className="detail-qty-value" aria-live="polite">{qty}</output>
+                  <button type="button" aria-label={t("shop.detail.qtyInc")} disabled={qty >= 10} onClick={() => { setQty((q) => Math.min(10, q + 1)); setCart("idle"); }}>+</button>
+                </div>
+              </div>
               <button type="button" className="btn-primary btn-lg detail-cta" disabled={cart === "adding"} onClick={(e) => void handleAdd(e.currentTarget)}>
                 <Icon name="cart" /> {t("shop.detail.add")}
               </button>
-              {cart === "added" ? <p className="detail-msg" role="status"><Icon name="check" /> {t("shop.detail.added")}</p> : null}
+              {cart === "added" ? <p className="detail-msg" role="status"><Icon name="check" /> <span>{t("shop.detail.added")} · <Link className="detail-cart-link" to="/cart">{t("shop.detail.viewCart")}</Link></span></p> : null}
               {cart === "carterror" ? <p className="detail-msg detail-msg--err" role="alert">{cartMsg}</p> : null}
             </div>
           </article>

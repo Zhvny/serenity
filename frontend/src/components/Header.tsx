@@ -44,6 +44,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
     <header className="site-header">
       <Link to="/" className="logo"><Sprite sprite={LOGO_MARK} /> <span className="logo-text">Serenity</span></Link>
       <nav aria-label={t("shell.nav.categories")}>
+        {Array.isArray(categories) && categories.length > 0 ? null : <Link to="/menu#menu">{t("shell.footer.menu")}</Link>}
         {(Array.isArray(categories) ? categories : []).map((c) => (
           <Link key={c.id} to={`/menu?category=${c.id}#menu`} aria-current={activeCategory === c.id ? "page" : undefined}>{categoryLabel(c, lang)}</Link>
         ))}
