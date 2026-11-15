@@ -34,6 +34,18 @@ describe("HistoryPage", () => {
     await screen.findByText("ORD-3");
     expect(screen.getAllByText(/donasi disetujui/i)).toHaveLength(1);
   });
+  it("status disiapkan/siap/selesai tampil dalam bahasa pengguna (bukan kata mentah Inggris)", async () => {
+    mockList([
+      { ...paid, id: "HP-5", unique_code: "ORD-5", status: "preparing" },
+      { ...paid, id: "HP-6", unique_code: "ORD-6", status: "ready" },
+      { ...paid, id: "HP-7", unique_code: "ORD-7", status: "done" },
+    ]);
+    renderRiwayat();
+    await screen.findByText("ORD-5");
+    expect(screen.getByText("Sedang disiapkan")).toBeInTheDocument();
+    expect(screen.getByText("Siap diambil / diantar")).toBeInTheDocument();
+    expect(screen.queryByText(/^preparing$/i)).toBeNull();
+  });
   it("pengunjung baru (404 ORDER_NOT_FOUND) -> keadaan kosong, bukan error", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }), { status: 404 })));
     renderRiwayat();

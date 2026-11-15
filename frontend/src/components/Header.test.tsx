@@ -21,6 +21,13 @@ describe("Header badge", () => {
     render(<MemoryRouter><Header /></MemoryRouter>);
     expect(await screen.findByText("5")).toBeInTheDocument();
   });
+  it("keranjang kosong → tidak ada badge '0'", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [] }))));
+    const { container } = render(<MemoryRouter><Header /></MemoryRouter>);
+    await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(container.querySelector(".cart-badge")).toBeNull();
+  });
   it("GET /cart gagal → badge disembunyikan", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("down"); }));
     const { container } = render(<MemoryRouter><Header /></MemoryRouter>);

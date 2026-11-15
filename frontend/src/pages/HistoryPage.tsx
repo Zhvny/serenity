@@ -27,6 +27,9 @@ const LABEL: Record<string, DictKey> = {
   paid: "orders.status.paid",
   expired: "orders.status.expired",
   cancelled: "orders.status.cancelled",
+  preparing: "orders.status.preparing",
+  ready: "orders.status.ready",
+  done: "orders.status.done",
 };
 
 function fmtDate(iso: string, locale: string): string {

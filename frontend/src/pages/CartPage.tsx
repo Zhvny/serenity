@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ApiError, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
+import { ApiError, addToCart, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
 import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
@@ -142,6 +142,13 @@ export function CartPage() {
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState<DictKey | "">("");
+  const [removed, setRemoved] = useState<{ item: CartItem; name: string } | null>(null);
+
+  useEffect(() => {
+    if (removed === null) return;
+    const timer = setTimeout(() => setRemoved(null), 8000);
+    return () => clearTimeout(timer);
+  }, [removed]);
   const isDateErr = formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" || formError === "shop.cart.err.dateFar";
   const navigate = useNavigate();
 
@@ -183,11 +190,27 @@ export function CartPage() {
     }
   }
 
+  // Urungkan hapus: tambahkan lagi produk, jumlah, dan catatan yang sama (baris baru di akhir daftar).
+  async function handleUndo(): Promise<void> {
+    if (removed === null) return;
+    const { item } = removed;
+    setRemoved(null);
+    try {
+      const back = await addToCart({ product_id: item.product_id, quantity: item.quantity, ...(item.note !== null ? { note: item.note } : {}) });
+      setItems((prev) => [...prev, back]);
+      window.dispatchEvent(new Event("cart:changed"));
+    } catch (e: unknown) {
+      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+    }
+  }
+
   async function handleRemove(item: CartItem): Promise<void> {
     setErrorMsg("");
     try {
       await removeCartItem(item.item_id);
       setItems((prev) => prev.filter((i) => i.item_id !== item.item_id));
+      const prod = byId.get(item.product_id);
+      setRemoved({ item, name: prod === undefined ? item.product_id : pickContent(lang, prod.name_en, prod.name) });
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
       setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
@@ -236,6 +259,12 @@ export function CartPage() {
       <Header />
       <main id="main" tabIndex={-1} className="cart-page">
         <h1>{t("shop.cart.title")}</h1>
+        {removed !== null ? (
+          <p className="undo-bar" role="status">
+            {t("shop.cart.removed", { name: removed.name })}{" "}
+            <button type="button" className="undo-btn" onClick={() => void handleUndo()}>{t("shop.cart.undo")}</button>
+          </p>
+        ) : null}
         {state === "loading" ? (
           <div className="skeleton" aria-label={t("shop.cart.loading")} />
         ) : state === "error" ? (

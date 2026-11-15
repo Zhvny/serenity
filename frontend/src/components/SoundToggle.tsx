@@ -11,6 +11,7 @@ export function SoundToggle({ where = "header" }: { where?: "header" | "footer" 
       type="button"
       className={`sound-toggle sound-toggle--${where}`}
       aria-label={soundOn ? t("shell.sound.on") : t("shell.sound.off")}
+      title={soundOn ? t("shell.sound.on") : t("shell.sound.off")}
       aria-pressed={soundOn}
       onClick={() => setSoundOn(!soundOn)}
     >

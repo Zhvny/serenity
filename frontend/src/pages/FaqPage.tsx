@@ -23,7 +23,7 @@ export function FaqPage() {
   return (
     <div>
       <Header />
-      <main id="main" tabIndex={-1} className="content faq-page">
+      <main id="main" tabIndex={-1} className="content content--wide faq-page">
         <div className="section-head">
           <h1>{t("faq.title")}</h1>
         </div>

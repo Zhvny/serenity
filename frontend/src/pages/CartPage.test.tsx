@@ -210,6 +210,33 @@ describe("CartPage", () => {
   });
 });
 
+describe("CartPage undo hapus", () => {
+  it("Hapus -> pesan 'dihapus' + Urungkan menambah lagi item (produk, jumlah, catatan sama)", async () => {
+    const user = userEvent.setup();
+    const calls = stubCart();
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/cart/add") && init?.method === "POST") {
+        calls.push({ url: String(url), method: "POST", body: init.body as string });
+        return new Response(JSON.stringify({ status: "success", data: { item_id: "i9", product_id: "p2", quantity: 1, note: "tanpa gula" } }));
+      }
+      return base(url, init);
+    }));
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Jus");
+    const removeButtons = screen.getAllByRole("button", { name: /hapus/i });
+    await user.click(removeButtons[1] as HTMLElement);
+    expect(await screen.findByText(/Jus dihapus dari keranjang/)).toBeInTheDocument();
+    expect(screen.queryByText("Jus")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Urungkan" }));
+    const add = calls.find((c) => c.url.includes("/cart/add"));
+    expect(add?.body).toContain('"product_id":"p2"');
+    expect(add?.body).toContain('"note":"tanpa gula"');
+    expect(await screen.findByText("Jus")).toBeInTheDocument();
+    expect(screen.queryByText(/dihapus dari keranjang/)).toBeNull();
+  });
+});
+
 describe("CartPage form (pertanyaan & galat inline)", () => {
   it("pertanyaan jelas tampil di atas pilihan waktu & cara terima", async () => {
     stubCart();

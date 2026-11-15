@@ -34,6 +34,7 @@ export function DetailPage() {
   const [cartMsg, setCartMsg] = useState("");
   const [qty, setQty] = useState(1);
   const [atCap, setAtCap] = useState(false);
+  const [addCount, setAddCount] = useState(0);
 
   useEffect(() => {
     if (productId === "") return;
@@ -65,6 +66,7 @@ export function DetailPage() {
     try {
       const line = await addToCart({ product_id: productId, quantity: qty });
       setAtCap(line.quantity >= 10);
+      setAddCount((c) => c + 1);
       setCart("added");
       window.dispatchEvent(new Event("cart:changed"));
       const r = btn.getBoundingClientRect();
@@ -144,7 +146,7 @@ export function DetailPage() {
               <button type="button" className="btn-primary btn-lg detail-cta" disabled={cart === "adding"} onClick={(e) => void handleAdd(e.currentTarget)}>
                 <Icon name="cart" /> {t("shop.detail.add")}
               </button>
-              {cart === "added" ? <p className="detail-msg" role="status"><Icon name="check" /> <span>{atCap ? t("shop.detail.addedCap") : t("shop.detail.added")} · <Link className="detail-cart-link" to="/cart">{t("shop.detail.viewCart")}</Link></span></p> : null}
+              {cart === "added" ? <p key={addCount} className="detail-msg fx-pop" role="status"><Icon name="check" /> <span>{atCap ? t("shop.detail.addedCap") : t("shop.detail.added")} · <Link className="detail-cart-link" to="/cart">{t("shop.detail.viewCart")}</Link></span></p> : null}
               {cart === "carterror" ? <p className="detail-msg detail-msg--err" role="alert">{cartMsg}</p> : null}
             </div>
           </article>

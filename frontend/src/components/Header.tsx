@@ -61,7 +61,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
         <Link to="/cart" className="header-cart" aria-label={t("shell.nav.cart")} data-cart-target>
           <Sprite sprite={PAPER_BAG} className="bag bag--closed" />
           <Sprite sprite={PAPER_BAG_OPEN} className="bag bag--open" />
-          {count !== null ? <span className="cart-badge">{count}</span> : null}
+          {count !== null && count > 0 ? <span className="cart-badge">{count}</span> : null}
         </Link>
       </div>
     </header>
