@@ -314,3 +314,6 @@ main:focus { outline: none; }
 .content--wide { max-width: var(--page-max); padding-left: var(--gutter); padding-right: var(--gutter); box-sizing: border-box; }
 .content--wide .facts-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .content--wide .btn-link { display: inline-block; padding: 10px 0; font-size: 17px; }
+@media (max-width: 520px) {
+  .how-steps { display: grid; justify-content: center; gap: 10px; text-align: left; }
+}

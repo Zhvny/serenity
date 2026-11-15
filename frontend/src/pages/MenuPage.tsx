@@ -147,7 +147,6 @@ export function MenuPage() {
 
         <section className="section" id="menu">
           <div className="section-head">
-            <span className="eyebrow">{t("menu.section.eyebrow")}</span>
             <h2>{t("menu.section.title")}</h2>
           </div>
           <FilterBar categories={cats} value={filter} onChange={handleChange} />
