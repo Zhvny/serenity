@@ -101,6 +101,24 @@ describe("CheckoutPage", () => {
       b !== undefined && b.includes('"turnstile_token":"tok-abc"') && b.includes('"website":""'))).toBe(true));
   });
 
+  it("klik Bayar beruntun hanya membuat SATU pesanan", async () => {
+    stubTurnstile();
+    let calls = 0;
+    vi.stubGlobal("fetch", withCart(async () => {
+      calls += 1;
+      return resp({ status: "success", data: { order_id: "HP-1", unique_code: "ORD-1", qr_url: "q", nominal: 30000 } });
+    }));
+    render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    fireEvent.click(screen.getByRole("checkbox"));
+    const pay = screen.getByRole("button", { name: /bayar via qris/i });
+    fireEvent.click(pay);
+    fireEvent.click(pay);
+    fireEvent.click(pay);
+    await act(async () => { await vi.advanceTimersByTimeAsync(50); });
+    expect(calls).toBe(1);
+  });
+
   it("tanpa widget (token kosong) -> tombol tetap disabled walau sudah centang", async () => {
     vi.stubGlobal("fetch", withCart(async () => resp({ status: "success", data: [] })));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);

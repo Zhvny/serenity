@@ -17,6 +17,7 @@ export const id = {
   "orders.common.topupUnavailable": "Kode untuk kekurangan tidak dapat dibuat. Muat ulang halaman.",
 
   // ThanksPage
+  "orders.common.reconnecting": "Koneksi terputus, mencoba lagi…",
   "orders.thanks.qrFailed": "QR belum bisa dimuat.",
   "orders.thanks.qrRetry": "Muat ulang QR",
   "orders.thanks.expiry": "Pesanan yang belum dibayar akan kedaluwarsa otomatis sekitar 2 jam.",
@@ -50,7 +51,6 @@ export const id = {
   "orders.thanks.step2c": ". Nominal yang berbeda membuat pesanan sulit dikonfirmasi.",
   "orders.thanks.step3a": "Selesaikan pembayaran, lalu tunggu — status berubah jadi",
   "orders.thanks.step3b": "setelah transaksi terverifikasi (sekitar 5–30 menit).",
-  "orders.thanks.saveNote": "Simpan halaman ini atau catat kode pesanan untuk konfirmasi.",
 
   // StatusPage
   "orders.status.loading": "Memuat status",
@@ -100,6 +100,7 @@ export const en = {
   "orders.common.topupFailed": "Couldn't create the code for the remaining amount.",
   "orders.common.topupUnavailable": "A code for the remaining amount can't be created. Please reload the page.",
 
+  "orders.common.reconnecting": "Connection lost, retrying…",
   "orders.thanks.qrFailed": "The QR code couldn't load.",
   "orders.thanks.qrRetry": "Reload QR",
   "orders.thanks.expiry": "Orders that aren't paid expire automatically after about 2 hours.",
@@ -133,7 +134,6 @@ export const en = {
   "orders.thanks.step2c": ". A different amount makes your order hard to confirm.",
   "orders.thanks.step3a": "Finish paying, then wait. The status changes to",
   "orders.thanks.step3b": "once the transaction is verified (about 5–30 minutes).",
-  "orders.thanks.saveNote": "Keep this page open or note down your order code to confirm later.",
 
   "orders.status.loading": "Loading status",
   "orders.status.title": "Order Status",

@@ -45,6 +45,7 @@ export function CheckoutPage() {
   const widgetHost = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
   const honeypot = useRef<HTMLInputElement | null>(null);
+  const inFlight = useRef(false);
 
   // Ringkasan pesanan: gagal memuat tidak memblokir pembayaran (server tetap sumber kebenaran).
   useEffect(() => {
@@ -126,7 +127,8 @@ export function CheckoutPage() {
   }
 
   async function handlePay(): Promise<void> {
-    if (token === "") return;
+    if (token === "" || inFlight.current) return; // cegah klik beruntun membuat beberapa pesanan
+    inFlight.current = true;
     setState("sending");
     setMsg("");
     try {
@@ -140,6 +142,7 @@ export function CheckoutPage() {
         setMsg(e instanceof ApiError ? e.message : tNow("shop.pay.error"));
       }
       setState("error");
+      inFlight.current = false;
     }
   }
 

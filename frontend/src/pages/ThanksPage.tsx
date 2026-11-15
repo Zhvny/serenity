@@ -6,10 +6,12 @@ import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 
 function QrImage({ src, alt }: { src: string; alt: string }) {
   const t = useT();
+  usePageTitle(t("orders.thanks.titleQris"));
   const [failed, setFailed] = useState(false);
   const [bust, setBust] = useState(0);
   const url = bust === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}r=${bust}`;
@@ -37,6 +39,7 @@ export function ThanksPage() {
   const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [connIssue, setConnIssue] = useState(false);
   const polls = useRef(0);
 
   useEffect(() => {
@@ -53,6 +56,7 @@ export function ThanksPage() {
         const d = await getThanks(ref);
         if (!alive) return;
         setData(d);
+        setConnIssue(false);
         setState("done");
         // Hentikan polling pada status final / batas maksimum (hindari spam BE).
         if (d.status === "paid" || d.status === "cancelled" || polls.current >= MAX_POLLS) {
@@ -60,9 +64,14 @@ export function ThanksPage() {
         }
       } catch (e: unknown) {
         if (!alive) return;
-        setState("notfound");
-        if (timer !== null) clearInterval(timer);
-        void (e as ApiError);
+        // Hanya "tidak ditemukan" sungguhan yang mengganti halaman. Gangguan jaringan/429/5xx sesaat:
+        // pertahankan data yang ada dan lanjut polling (pulih sendiri saat koneksi kembali).
+        if (e instanceof ApiError && (e.code === "NOT_FOUND" || e.code === "ORDER_NOT_FOUND")) {
+          setState("notfound");
+          if (timer !== null) clearInterval(timer);
+        } else {
+          setConnIssue(true);
+        }
       }
     }
 
@@ -73,7 +82,7 @@ export function ThanksPage() {
 
   if (state === "loading") {
     return (
-      <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.thanks.loading")} /></div></main></div>
+      <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.thanks.loading")} />{connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}</div></main></div>
     );
   }
   if (state === "notfound" || data === null) {
@@ -123,6 +132,7 @@ export function ThanksPage() {
       <Header />
       <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card">
+          {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
           <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>

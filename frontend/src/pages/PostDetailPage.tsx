@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { getPost } from "../services/api.ts";
+import { getPost, ApiError } from "../services/api.ts";
 import type { PostDetail } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
@@ -17,8 +17,9 @@ export function PostDetailPage() {
   const [lang] = useLang();
   const { id } = useParams();
   const ref = id ?? "";
-  const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
+  const [state, setState] = useState<"loading" | "notfound" | "error" | "done">("loading");
   const [post, setPost] = useState<PostDetail | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   usePageTitle(post === null ? null : pickContent(lang, post.title_en, post.title));
 
   useEffect(() => {
@@ -30,15 +31,34 @@ export function PostDetailPage() {
     let alive = true;
     getPost(ref)
       .then((p) => { if (alive) { setPost(p); setState("done"); } })
-      .catch(() => { if (alive) setState("notfound"); });
+      .catch((e: unknown) => {
+        if (!alive) return;
+        setState(e instanceof ApiError && e.code === "POST_NOT_FOUND" ? "notfound" : "error");
+      });
     return () => { alive = false; };
-  }, [ref]);
+  }, [ref, reloadKey]);
 
   if (state === "loading") {
     return (
       <div>
         <Header />
         <main id="main" tabIndex={-1} className="content"><div className="skeleton" aria-label={t("post.loading")} /></main>
+        <Footer />
+      </div>
+    );
+  }
+  if (state === "error") {
+    return (
+      <div>
+        <Header />
+        <main id="main" tabIndex={-1} className="content">
+          <div className="state" role="alert">
+            <h1>{t("post.error.title")}</h1>
+            <p>{t("post.error.text")}</p>
+            <button type="button" className="btn-primary" onClick={() => { setState("loading"); setReloadKey((k) => k + 1); }}>{t("shop.common.retry")}</button>
+            <Link className="btn-secondary" to="/funfact">{t("post.notfound.back")}</Link>
+          </div>
+        </main>
         <Footer />
       </div>
     );

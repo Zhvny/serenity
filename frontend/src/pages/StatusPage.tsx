@@ -6,6 +6,7 @@ import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { PAPER_BAG_OPEN, SHOP_BELL, CASH_REGISTER } from "../pixel/data/bakeryB.ts";
@@ -18,6 +19,7 @@ export function StatusPage() {
   const { code } = useParams();
   const navigate = useNavigate();
   const t = useT();
+  usePageTitle(t("orders.status.title"));
   const ref = code ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [data, setData] = useState<ThanksData | null>(null);

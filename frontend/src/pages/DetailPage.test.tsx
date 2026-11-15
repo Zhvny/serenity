@@ -60,6 +60,17 @@ describe("DetailPage", () => {
     await screen.findByText(/Ditambahkan ke keranjang/);
     expect(bodies[0]).toContain('"quantity":3');
   });
+  it("baris keranjang sudah 10 -> pesan 'penuh', bukan sukses biasa", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const data = String(url).includes("/cart/add") ? { item_id: "i1", product_id: "p1", quantity: 10, note: null } : prod;
+      return new Response(JSON.stringify({ status: "success", data }));
+    }));
+    renderId("p1");
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Tambahkan ke Keranjang" }));
+    expect(await screen.findByText(/maks\. 10 per menu/)).toBeInTheDocument();
+  });
   it("tambah keranjang gagal → pesan error tampil", async () => {    const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       if (String(url).includes("/cart/add")) {

@@ -18,6 +18,26 @@ const post = {
 };
 
 describe("PostDetailPage", () => {
+  it("429/gangguan -> pesan gagal-muat + tombol coba lagi (BUKAN 'tidak ditemukan')", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "RATE_LIMITED", message: "Terlalu banyak permintaan" }, 429)));
+    render(
+      <MemoryRouter initialEntries={["/posts/post-1"]}>
+        <Routes><Route path="/posts/:id" element={<PostDetailPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: "Post gagal dimuat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Coba lagi" })).toBeInTheDocument();
+    expect(screen.queryByText("Post tidak ditemukan")).toBeNull();
+  });
+  it("POST_NOT_FOUND tetap tampil 'tidak ditemukan'", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404)));
+    render(
+      <MemoryRouter initialEntries={["/posts/x"]}>
+        <Routes><Route path="/posts/:id" element={<PostDetailPage />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: "Post tidak ditemukan" })).toBeInTheDocument();
+  });
   it("tampil gambar + body + produk saran", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: post })));
     render(

@@ -45,6 +45,13 @@ describe("ThanksPage", () => {
     expect(screen.getByRole("img", { name: /qris|qr/i }).getAttribute("src")).toContain("r=1");
   });
 
+  it("gangguan jaringan TIDAK mengganti halaman jadi 'tidak ditemukan' (tampil 'mencoba lagi')", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("network down"); }));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
+    expect(await screen.findByText(/Koneksi terputus/)).toBeInTheDocument();
+    expect(screen.queryByText(/tidak ditemukan/i)).toBeNull();
+  });
+
   it("link tak berlaku -> petunjuk perangkat + tombol Riwayat", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-X"]}><ThanksPage /></MemoryRouter>);

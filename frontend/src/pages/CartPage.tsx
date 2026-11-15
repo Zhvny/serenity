@@ -29,9 +29,11 @@ function slotLabel(slot: string, lang: Lang): string {
   return new Date(2000, 0, 1, h ?? 0, m ?? 0).toLocaleTimeString(localeOf(lang), { hour: "numeric", minute: "2-digit" });
 }
 
-function tomorrowISO(): string {
+const MAX_SCHEDULE_DAYS = 60; // jadwal paling jauh yang masuk akal untuk pre-order
+
+function dayISO(offset: number): string {
   const d = new Date();
-  d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -120,6 +122,7 @@ export function CartPage() {
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState<DictKey | "">("");
+  const isDateErr = formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" || formError === "shop.cart.err.dateFar";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -146,7 +149,8 @@ export function CartPage() {
 
   const byId = new Map(prods.map((p) => [p.id, p]));
   const total = items.reduce((s, i) => s + (byId.get(i.product_id)?.price ?? 0) * i.quantity, 0);
-  const minDate = tomorrowISO();
+  const minDate = dayISO(1);
+  const maxDate = dayISO(MAX_SCHEDULE_DAYS);
 
   async function handleQty(item: CartItem, q: number): Promise<void> {
     setErrorMsg("");
@@ -180,8 +184,8 @@ export function CartPage() {
 
   async function handleCheckout(): Promise<void> {
     if (mode === "scheduled") {
-      if (date === "" || date < minDate) {
-        setFormError(date === "" ? "shop.cart.err.date" : "shop.cart.err.datePast");
+      if (date === "" || date < minDate || date > maxDate) {
+        setFormError(date === "" ? "shop.cart.err.date" : date < minDate ? "shop.cart.err.datePast" : "shop.cart.err.dateFar");
         focusField("sched-date");
         return;
       }
@@ -256,8 +260,8 @@ export function CartPage() {
                 {mode === "scheduled" ? (
                   <div>
                     <label htmlFor="sched-date">{t("shop.cart.date")}</label>
-                    <input id="sched-date" type="date" min={minDate} value={date} aria-invalid={formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast"} aria-describedby={formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" ? "form-err" : undefined} onChange={(e) => { setDate(e.target.value); setFormError(""); }} />
-                    {formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
+                    <input id="sched-date" type="date" min={minDate} max={maxDate} value={date} aria-invalid={isDateErr} aria-describedby={isDateErr ? "form-err" : undefined} onChange={(e) => { setDate(e.target.value); setFormError(""); }} />
+                    {isDateErr ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
                     <div className="chip-group" role="group" aria-label={t("shop.cart.slot.label")}>
                       {SLOTS.map((s) => (
                         <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{slotLabel(s, lang)}</button>

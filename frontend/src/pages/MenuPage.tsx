@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ApiError, getCategories, getProducts } from "../services/api.ts";
 import type { Category, Product } from "../services/api.ts";
@@ -37,6 +37,7 @@ export function MenuPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [shown, setShown] = useState(false);
+  const scrolledToMenu = useRef(false);
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "menu.hero.quote1");
 
   useEffect(() => {
@@ -100,7 +101,8 @@ export function MenuPage() {
 
   // Datang dari tombol "Lihat Menu" (/menu#menu): lompat ke daftar makanan begitu siap.
   useEffect(() => {
-    if (state !== "done" || window.location.hash !== "#menu") return;
+    if (state !== "done" || window.location.hash !== "#menu" || scrolledToMenu.current) return;
+    scrolledToMenu.current = true;
     const el = document.getElementById("menu");
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView();
   }, [state]);
