@@ -10,6 +10,7 @@ import { rupiah } from "../utils/format.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { allergenLabel, pickContent } from "../i18n/content.ts";
 import { tNow, useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { burstAt, flyToCart } from "../fx/fx.ts";
 import { playSound } from "../fx/sound.ts";
 import { BREAD_LOAF, CUPCAKE, COOKIE, CROISSANT } from "../pixel/data/bakeryA.ts";
@@ -25,6 +26,7 @@ export function DetailPage() {
   const { id } = useParams();
   const productId = id ?? "";
   const [prod, setProd] = useState<Product | null>(null);
+  usePageTitle(prod === null ? null : pickContent(lang, prod.name_en, prod.name));
   const [state, setState] = useState<"loading" | "notfound" | "error" | "done">(() => (productId === "" ? "notfound" : "loading"));
   const [errorMsg, setErrorMsg] = useState("");
   const [reloadKey, setReloadKey] = useState(0);

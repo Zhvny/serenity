@@ -4,9 +4,11 @@ import { Footer } from "../components/Footer.tsx";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { TOAST_BURNT } from "../pixel/data/mascot2.ts";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 
 export function NotFoundPage() {
   const t = useT();
+  usePageTitle(t("orders.notfound.title"));
   return (
     <div>
       <Header />

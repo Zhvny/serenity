@@ -12,7 +12,7 @@ export function LandingCard(props: Props) {
   if (props.variant === "post") {
     return (
       <Link className="fact-card fact-card--link" to={`/posts/${encodeURIComponent(props.id)}`} aria-label={props.title}>
-        <SafeImage src={props.image_url ?? null} alt="" className="fact-photo" emptyClassName="fact-photo fact-photo--empty" label />
+        <SafeImage src={props.image_url ?? null} alt="" className="fact-photo" hideIfMissing />
         <span className="fact-tag">{props.tag}</span>
         <h3>{props.title}</h3>
         <p>{props.excerpt}</p>

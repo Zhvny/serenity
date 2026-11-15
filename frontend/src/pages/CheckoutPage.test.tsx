@@ -102,6 +102,7 @@ describe("CheckoutPage", () => {
   });
 
   it("tanpa widget (token kosong) -> tombol tetap disabled walau sudah centang", async () => {
+    vi.stubGlobal("fetch", withCart(async () => resp({ status: "success", data: [] })));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
     await act(async () => { vi.advanceTimersByTime(5000); });
     fireEvent.click(screen.getByRole("checkbox"));
@@ -109,6 +110,7 @@ describe("CheckoutPage", () => {
   });
 
   it("script tak termuat 10 dtk -> pesan pemblokir", async () => {
+    vi.stubGlobal("fetch", withCart(async () => resp({ status: "success", data: [] })));
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
     await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
     expect(screen.getByRole("alert")).toHaveTextContent(/pemblokir/i);

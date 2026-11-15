@@ -7,6 +7,7 @@ import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
 import { SafeImage } from "../components/SafeImage.tsx";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
 import { pickContent } from "../i18n/content.ts";
@@ -18,6 +19,7 @@ export function PostDetailPage() {
   const ref = id ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [post, setPost] = useState<PostDetail | null>(null);
+  usePageTitle(post === null ? null : pickContent(lang, post.title_en, post.title));
 
   useEffect(() => {
     if (ref === "") {

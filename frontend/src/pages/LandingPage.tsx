@@ -7,6 +7,7 @@ import { getTrending, recordPostView, getPreference, savePreference, getRecommen
 import type { Post, Product, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 import { useT, type DictKey } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { HeroScene } from "../pixel/HeroScene.tsx";
 import { Bunting } from "../pixel/Bunting.tsx";
 import { Sprite } from "../pixel/Sprite.tsx";
@@ -32,6 +33,7 @@ const HERO_QUOTES: readonly DictKey[] = [
 
 export function LandingPage() {
   const t = useT();
+  usePageTitle(null);
   const [lang] = useLang();
   const [shown, setShown] = useState(false);
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");

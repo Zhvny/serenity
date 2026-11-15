@@ -17,6 +17,7 @@ import { CHALKBOARD } from "../pixel/data/signs.ts";
 import { OVEN, OVEN_GLOW } from "../pixel/data/bakeryB.ts";
 import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 
 // Kunci kutipan; dipilih sekali, diterjemahkan saat render.
@@ -24,6 +25,7 @@ const HERO_QUOTES: readonly DictKey[] = ["menu.hero.quote1", "menu.hero.quote2",
 
 export function MenuPage() {
   const t = useT();
+  usePageTitle(t("shell.footer.menu"));
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() => {
     const c = searchParams.get("category");

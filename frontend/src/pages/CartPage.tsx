@@ -13,6 +13,7 @@ import { Sprite } from "../pixel/Sprite.tsx";
 import { PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
 import { playSound } from "../fx/sound.ts";
 import { tNow, useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { pickContent } from "../i18n/content.ts";
@@ -103,6 +104,7 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
 
 export function CartPage() {
   const t = useT();
+  usePageTitle(t("shop.cart.title"));
   const [lang] = useLang();
   const [items, setItems] = useState<CartItem[]>([]);
   const [prods, setProds] = useState<Product[]>([]);

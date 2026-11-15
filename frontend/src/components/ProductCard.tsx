@@ -15,10 +15,12 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link className="product-card" to={`/products/${encodeURIComponent(product.id)}`} aria-label={name}>
       <ProductPhoto product={product} className="product-photo" lazy />
-      <span className="price-tag" aria-hidden="true">
-        <Sprite sprite={PRICE_TAG} />
-        <span className="price-tag-text">{product.nutrition.calories_kcal} {t("shop.detail.unit.kcal")}</span>
-      </span>
+      {typeof product.nutrition.calories_kcal === "number" ? (
+        <span className="price-tag" aria-hidden="true">
+          <Sprite sprite={PRICE_TAG} />
+          <span className="price-tag-text">{product.nutrition.calories_kcal} {t("shop.detail.unit.kcal")}</span>
+        </span>
+      ) : null}
       <h3>{name}</h3>
       <p className="price">{rupiah(product.price)}</p>
       <div className="tags">

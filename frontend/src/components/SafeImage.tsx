@@ -3,10 +3,11 @@ import { useT } from "../i18n/t.ts";
 
 // <img> yang jatuh ke placeholder bila URL kosong atau gagal dimuat (file belum ada di server).
 // `label` = tampilkan teks "No image for now" (untuk gambar besar); gambar kecil cukup panggung berpola.
-export function SafeImage({ src, alt, className, emptyClassName, label = false }: { src: string | null; alt: string; className: string; emptyClassName?: string; label?: boolean }) {
+export function SafeImage({ src, alt, className, emptyClassName, label = false, hideIfMissing = false }: { src: string | null; alt: string; className: string; emptyClassName?: string; label?: boolean; hideIfMissing?: boolean }) {
   const t = useT();
   const [ok, setOk] = useState(true);
   if (src === null || src === "" || !ok) {
+    if (hideIfMissing) return null; // kartu tanpa foto: lebih rapi daripada kotak kosong
     const stage = `${emptyClassName ?? className} product-photo--empty`;
     return label ? (
       <div className={stage} role="img" aria-label={t("menu.photo.none")}>

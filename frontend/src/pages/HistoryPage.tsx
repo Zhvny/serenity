@@ -6,6 +6,7 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
@@ -36,6 +37,7 @@ function fmtDate(iso: string, locale: string): string {
 export function HistoryPage() {
   const navigate = useNavigate();
   const t = useT();
+  usePageTitle(t("orders.history.title"));
   const [lang] = useLang();
   const locale = localeOf(lang);
   const [filter, setFilter] = useState<Filter>("semua");

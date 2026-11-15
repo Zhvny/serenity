@@ -6,6 +6,7 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { tNow, useT } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { pickContent } from "../i18n/content.ts";
 import { rupiah } from "../utils/format.ts";
@@ -29,6 +30,7 @@ function getTurnstile(): TurnstileApi | undefined {
 
 export function CheckoutPage() {
   const t = useT();
+  usePageTitle(t("shop.pay.title"));
   const [lang] = useLang();
   const navigate = useNavigate();
   const [cart, setCart] = useState<{ items: CartItem[]; products: Product[] } | null>(null);

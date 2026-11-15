@@ -5,6 +5,7 @@ import { Footer } from "../components/Footer.tsx";
 import { getPosts } from "../services/api.ts";
 import type { Post } from "../services/api.ts";
 import { useT, type DictKey } from "../i18n/t.ts";
+import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { localeOf } from "../i18n/store.ts";
 import { pickContent } from "../i18n/content.ts";
@@ -17,6 +18,7 @@ const FALLBACK: Array<{ title: DictKey; body: DictKey; tag: DictKey }> = [
 
 export function FunFactPage() {
   const t = useT();
+  usePageTitle(t("funfact.title"));
   const [lang] = useLang();
   const [posts, setPosts] = useState<Post[]>([]);
   const [state, setState] = useState<"loading" | "done">("loading");
