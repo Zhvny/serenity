@@ -45,6 +45,70 @@ async function seedCart(): Promise<string> {
 }
 
 describe("qris generate-code + thanks (ADR-0001)", () => {
+  it("pilihan /cart/checkout (terjadwal + diantar) ikut tersimpan ke order", async () => {
+    const cartId = await seedCart();
+    const ip = `qris-ip-${randomUUID()}`;
+    const when = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
+    const co = await createApp(pool).request("/api/v1/cart/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: JSON.stringify({ mode: "scheduled", scheduled_at: when, delivery_method: "delivery", delivery_address: "Jl. Kebon Jeruk No. 9, dekat masjid", delivery_lat: -6.2, delivery_lng: 106.8 }),
+    });
+    assert.equal(co.status, 200);
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at, delivery_method, delivery_address, delivery_lat::float AS lat, delivery_lng::float AS lng FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "scheduled");
+    assert.equal(new Date(rows[0].scheduled_at).toISOString(), when);
+    assert.equal(rows[0].delivery_method, "delivery");
+    assert.equal(rows[0].delivery_address, "Jl. Kebon Jeruk No. 9, dekat masjid");
+    assert.equal(rows[0].lat, -6.2);
+    assert.equal(rows[0].lng, 106.8);
+    // Pilihan dibersihkan setelah order terbentuk (PII tidak tersisa di keranjang).
+    const left = await pool.query("SELECT checkout_choice FROM carts WHERE id = $1", [cartId]);
+    assert.equal(left.rows[0].checkout_choice, null);
+  });
+
+  it("tanpa /cart/checkout -> order tetap instant + pickup (perilaku lama)", async () => {
+    const cartId = await seedCart();
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": `qris-ip-${randomUUID()}` },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "instant");
+    assert.equal(rows[0].scheduled_at, null);
+    assert.equal(rows[0].delivery_method, "pickup");
+    assert.equal(rows[0].delivery_address, null);
+  });
+
+  it("jadwal yang sudah lewat saat generate-code -> jatuh ke instant (tidak gagal)", async () => {
+    const cartId = await seedCart();
+    const past = new Date(Date.now() - 3600 * 1000).toISOString();
+    await pool.query("UPDATE carts SET checkout_choice = $2 WHERE id = $1", [cartId, JSON.stringify({ mode: "scheduled", scheduled_at: past, delivery_method: "pickup" })]);
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": `qris-ip-${randomUUID()}` },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "instant");
+    assert.equal(rows[0].scheduled_at, null);
+  });
+
   it("generate-code: hitung total server dari cart, balik unique_code + qr_url + nominal", async () => {
     const cartId = await seedCart();
     const res = await createApp(pool).request("/api/v1/orders/generate-code", {
