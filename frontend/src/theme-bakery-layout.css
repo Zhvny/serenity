@@ -302,3 +302,9 @@ main:focus { outline: none; }
 .how-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border: var(--bw) solid currentColor; background: var(--butter, #f6d27a); color: #3b2a24; font-weight: 700; }
 .how-note { margin: 10px 0 0; font-size: 15px; opacity: 0.85; }
 .need-hint { margin: 6px 0 0; font-size: 15px; opacity: 0.85; }
+
+/* ---------- Poles: footer rapat, foto produk ikut gulir di desktop ---------- */
+.footer-col a { padding: 5px 0; }
+@media (min-width: 900px) {
+  .detail-grid > .detail-media { position: sticky; top: 96px; align-self: start; }
+}
