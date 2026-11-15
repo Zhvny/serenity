@@ -21,17 +21,17 @@ describe("LandingPage", () => {
     expect(urls.some((u) => u.includes("/products") && !u.includes("/recommendations"))).toBe(false);
   });
 
-  it("preferensi kosong -> popup kebutuhan muncul sekali", async () => {
+  it("preferensi kosong -> kartu kebutuhan muncul di halaman (bukan modal)", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);
       if (u.includes("/preferences")) return new Response(JSON.stringify({ status: "success", data: null }));
       return new Response(JSON.stringify({ status: "success", data: [] }));
     }));
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
-    expect(await screen.findByRole("dialog", { name: /kebutuhan/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /apa kebutuhanmu/i })).toBeInTheDocument();
   });
 
-  it("preferensi ada -> popup tak muncul + rekomendasi tampil", async () => {
+  it("preferensi ada -> kartu tak muncul + rekomendasi tampil", async () => {
     const recs = [{ id: "samp_001", name: "Salad", category_id: "cat_food", price: 45000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 320, protein_g: 28, carbs_g: 22, fat_g: 12, fiber_g: 6, sugar_g: 4 }, allergens: [] }];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);
@@ -41,7 +41,7 @@ describe("LandingPage", () => {
     }));
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByText("Salad")).toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: /kebutuhan/i })).toBeNull();
+    expect(screen.queryByRole("region", { name: /apa kebutuhanmu/i })).toBeNull();
     expect(screen.queryByRole("group", { name: /pilih kebutuhan/i })).toBeNull();
   });
 
@@ -56,7 +56,7 @@ describe("LandingPage", () => {
       return new Response(JSON.stringify({ status: "success", data: u.includes("/preferences") ? null : [] }));
     }));
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
-    await screen.findByRole("dialog", { name: /kebutuhan/i });
+    await screen.findByRole("region", { name: /apa kebutuhanmu/i });
     fireEvent.click(screen.getByRole("checkbox", { name: "Diet" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Bangun otot" }));
     fireEvent.click(screen.getByRole("button", { name: /^simpan$/i }));
@@ -77,7 +77,7 @@ describe("LandingPage", () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: /sweet treats that love/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /see the menu/i })).toHaveAttribute("href", "/menu");
-    expect(await screen.findByRole("dialog", { name: /what do you need/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /what do you need/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Build muscle" })).toBeInTheDocument();
   });
   it("lang en -> rekomendasi + bacaan pakai teks Inggris", async () => {

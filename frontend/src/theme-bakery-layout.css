@@ -227,3 +227,11 @@ html { scroll-padding-top: 110px; } /* anchor #menu tidak tertutup header sticky
 img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4 / 3; object-fit: cover; }
 .fact-photo--empty { gap: 6px; }
 .mini-card-body { display: block; padding: 0; }
+
+/* Kartu kebutuhan di landing (pengganti modal): muncul di bawah hero, tidak menutup halaman. */
+.need-inline { box-sizing: border-box; width: 100%; max-width: var(--page-max); margin: 0 auto; padding: 4px var(--gutter) 12px; }
+.need-popup-card--inline { width: 100%; max-width: none; max-height: none; overflow: visible; margin: var(--bw); box-sizing: border-box; }
+@media (min-width: 700px) {
+  .need-popup-card--inline > div[role="group"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); column-gap: 24px; }
+}
+@media (max-width: 480px) { .need-popup-card--inline { padding: 18px; } }
