@@ -61,10 +61,9 @@ export function FunFactPage() {
   return (
     <div>
       <Header />
-      <main id="main" tabIndex={-1} className="content">
+      <main id="main" tabIndex={-1} className="content content--wide">
         <p><Link className="btn-link" to="/">{t("funfact.home")}</Link></p>
         <div className="section-head">
-          <span className="eyebrow">{t("funfact.eyebrow")}</span>
           <h1>{t("funfact.title")}</h1>
         </div>
         <p className="subtitle">{t("funfact.subtitle")}</p>

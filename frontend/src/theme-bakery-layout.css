@@ -308,3 +308,9 @@ main:focus { outline: none; }
 @media (min-width: 900px) {
   .detail-grid > .detail-media { position: sticky; top: 96px; align-self: start; }
 }
+
+/* ---------- Poles desain: sejajarkan judul bagian, Fun Fact selebar halaman lain ---------- */
+.section--boxed > .section-head { padding-left: var(--gutter); padding-right: var(--gutter); }
+.content--wide { max-width: var(--page-max); padding-left: var(--gutter); padding-right: var(--gutter); box-sizing: border-box; }
+.content--wide .facts-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.content--wide .btn-link { display: inline-block; padding: 10px 0; font-size: 17px; }
