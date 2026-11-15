@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ApiError, getMyOrders, topupOrder } from "../services/api.ts";
 import type { HistoryOrder } from "../services/api.ts";
+import { apiMessage } from "../utils/apiMessage.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
@@ -69,7 +70,7 @@ export function HistoryPage() {
           setState("done");
           return;
         }
-        setErrorMsg(e instanceof ApiError ? e.message : null);
+        setErrorMsg(apiMessage(e));
         setState("error");
       });
     return () => {
@@ -158,6 +159,7 @@ export function HistoryPage() {
                       </ul>
                     ) : null}
                     <span className="history-code">{o.unique_code}</span>
+                    {o.delivery_method === "delivery" ? <span className="tag">{t("orders.method.delivery")}</span> : o.delivery_method === "pickup" ? <span className="tag">{t("orders.method.pickup")}</span> : null}
                     {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}
                   </div>
                   <div className="history-side">

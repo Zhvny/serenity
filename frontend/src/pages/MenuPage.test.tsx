@@ -13,6 +13,21 @@ function mockOk() {
   vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? cats : prods }))));
 }
 
+describe("MenuPage papan spesial", () => {
+  it("bahasa Inggris -> papan memakai nama Inggris (bukan nama Indonesia)", async () => {
+    setLang("en");
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/categories")) return new Response(JSON.stringify({ status: "success", data: cats }));
+      return new Response(JSON.stringify({ status: "success", data: [{ ...prods[0], name: "Salad Ayam", name_en: "Chicken Salad" }] }));
+    }));
+    render(<MemoryRouter><MenuPage /></MemoryRouter>);
+    const board = await screen.findByRole("link", { name: "Today's special: Chicken Salad" });
+    expect(board.textContent).toContain("Chicken Salad");
+    expect(board.textContent).not.toContain("Salad Ayam");
+  });
+});
+
 describe("MenuPage chip kategori tanpa lompatan", () => {
   it("chip kategori sudah tampil sebelum data server tiba (fetch masih menggantung)", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => { /* tak pernah selesai */ })));

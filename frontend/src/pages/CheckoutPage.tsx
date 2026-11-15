@@ -5,11 +5,12 @@ import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { tNow, useT } from "../i18n/t.ts";
+import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { pickContent } from "../i18n/content.ts";
 import { rupiah } from "../utils/format.ts";
+import { apiMessage } from "../utils/apiMessage.ts";
 
 // Jeda paksa baca sebelum checkbox aktif (detik).
 export const CONSENT_DELAY_S = 5;
@@ -139,7 +140,7 @@ export function CheckoutPage() {
       if (e instanceof ApiError && (e.code === "TURNSTILE_FAILED" || e.code === "RATE_LIMITED")) {
         setMsg(t("shop.pay.retryHistory"));
       } else {
-        setMsg(e instanceof ApiError ? e.message : tNow("shop.pay.error"));
+        setMsg(apiMessage(e, "shop.pay.error"));
       }
       setState("error");
       inFlight.current = false;

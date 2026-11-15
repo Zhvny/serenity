@@ -16,18 +16,26 @@ function QrImage({ src, alt }: { src: string; alt: string }) {
   usePageTitle(t("orders.thanks.titleQris"));
   const [failed, setFailed] = useState(false);
   const [bust, setBust] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  // Gambar yang tak kunjung termuat (jaringan lambat/host mati) -> tampilkan fallback + tombol coba lagi.
+  useEffect(() => {
+    if (loaded || failed) return;
+    const timer = setTimeout(() => setFailed(true), 8000);
+    return () => clearTimeout(timer);
+  }, [loaded, failed, bust]);
   const url = bust === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}r=${bust}`;
   if (failed) {
     return (
       <div className="qris-fallback" role="alert">
         <p>{t("orders.thanks.qrFailed")}</p>
-        <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setBust((b) => b + 1); }}>{t("orders.thanks.qrRetry")}</button>
+        <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setLoaded(false); setBust((b) => b + 1); }}>{t("orders.thanks.qrRetry")}</button>
       </div>
     );
   }
   return (
     <>
-      <img className="qris-img" src={url} alt={alt} onError={() => setFailed(true)} />
+      <img className="qris-img" src={url} alt={alt} onLoad={() => setLoaded(true)} onError={() => setFailed(true)} />
       <p className="qr-save">
         <a className="btn-secondary" href={url} target="_blank" rel="noopener noreferrer" download>{t("orders.thanks.saveQr")}</a>
       </p>

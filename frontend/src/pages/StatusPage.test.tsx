@@ -50,6 +50,12 @@ describe("StatusPage polling", () => {
     expect(await screen.findByText("Menunggu pembayaran")).toBeInTheDocument();
     expect(screen.queryByRole("list", { name: "Tahap pesanan" })).toBeNull();
   });
+  it("gangguan jaringan -> pesan 'mencoba lagi' (bukan halaman kosong) dan bukan 'tidak ditemukan'", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("network down"); }));
+    render(<MemoryRouter initialEntries={["/status/ORD-1"]}><Routes><Route path="/status/:code" element={<StatusPage />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText(/Koneksi terputus/)).toBeInTheDocument();
+    expect(screen.queryByText(/tidak ditemukan/i)).toBeNull();
+  });
   it("ref/code tidak ada order -> 404 tidak ditemukan", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
     render(

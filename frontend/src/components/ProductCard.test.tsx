@@ -18,7 +18,7 @@ describe("ProductCard", () => {
     // Tag gantung: kalori, bukan harga ganda (aria-hidden, garnish visual).
     expect(container.querySelector(".price-tag-text")?.textContent).toBe("320 kkal");
   });
-  it("alergen tampil di kartu (ID) dan diterjemahkan (EN); tanpa alergen -> tanpa baris", () => {
+  it("alergen tampil di kartu (ID) dan diterjemahkan (EN); tanpa data -> 'belum ada info'", () => {
     const withAllergens: Product = { ...product, allergens: ["kacang", "susu"] };
     const idRender = render(<MemoryRouter><ProductCard product={withAllergens} /></MemoryRouter>);
     expect(idRender.container.querySelector(".card-allergens")).toHaveTextContent("Alergen: kacang, susu");
@@ -27,8 +27,14 @@ describe("ProductCard", () => {
     const enRender = render(<MemoryRouter><ProductCard product={withAllergens} /></MemoryRouter>);
     expect(enRender.container.querySelector(".card-allergens")).toHaveTextContent("Allergens: Peanuts, Milk");
     enRender.unmount();
+    setLang("id");
     const none = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
-    expect(none.container.querySelector(".card-allergens")).toBeNull();
+    // Tanpa data alergen: jangan diam (bisa terbaca "bebas alergen"); tandai bahwa infonya belum ada.
+    expect(none.container.querySelector(".card-allergens")).toHaveTextContent("Alergen: belum ada info");
+    none.unmount();
+    setLang("en");
+    const noneEn = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
+    expect(noneEn.container.querySelector(".card-allergens")).toHaveTextContent("Allergens: no info yet");
   });
   it("image null → placeholder id/en, bukan img rusak", () => {
     const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);

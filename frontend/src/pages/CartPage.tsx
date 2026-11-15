@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ApiError, addToCart, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
+import { addToCart, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
 import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
@@ -8,11 +8,13 @@ import { Icon } from "../components/Icon.tsx";
 import { ProductPhoto } from "../components/ProductPhoto.tsx";
 import { LocationPicker, type LatLng } from "../components/LocationPicker.tsx";
 import { rupiah } from "../utils/format.ts";
+import { apiMessage } from "../utils/apiMessage.ts";
+import { shouldFillAddress } from "../utils/address.ts";
 import { burstAt } from "../fx/fx.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
 import { playSound } from "../fx/sound.ts";
-import { tNow, useT } from "../i18n/t.ts";
+import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
@@ -60,15 +62,26 @@ function CartRow({ item, product, onQty, onRemove }: { item: CartItem; product: 
     playSound("click");
     onQty(q);
   }
+  const sentQty = useRef(item.quantity);
+
   // Sinkronkan input bila qty berubah dari luar (mis. gagal update -> balik ke nilai lama).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkron state eksternal (prop qty) ke draft lokal
-  useEffect(() => { setDraft(String(item.quantity)); }, [item.quantity]);
+  useEffect(() => { setDraft(String(item.quantity)); sentQty.current = item.quantity; }, [item.quantity]);
+
+  // Ketikan angka berlaku otomatis setelah jeda singkat (tanpa harus keluar dari kolom).
+  useEffect(() => {
+    const n = Number.parseInt(draft, 10);
+    if (!Number.isFinite(n) || n === item.quantity) return;
+    const timer = setTimeout(() => commit(draft), 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya jadwal ulang saat ketikan berubah
+  }, [draft]);
 
   function commit(raw: string): void {
     const n = Number.parseInt(raw, 10);
     if (!Number.isFinite(n)) { setDraft(String(item.quantity)); return; }
     const clamped = Math.min(10, Math.max(1, n));
-    if (clamped !== item.quantity) changeQty(clamped);
+    if (clamped !== item.quantity && clamped !== sentQty.current) { sentQty.current = clamped; changeQty(clamped); }
     setDraft(String(clamped));
   }
 
@@ -142,6 +155,7 @@ export function CartPage() {
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState<DictKey | "">("");
+  const [addressEdited, setAddressEdited] = useState(typeof saved.address === "string" && saved.address.trim() !== "");
   const [removed, setRemoved] = useState<{ item: CartItem; name: string } | null>(null);
 
   useEffect(() => {
@@ -166,7 +180,7 @@ export function CartPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+        setErrorMsg(apiMessage(e));
         setState("error");
       });
     return () => {
@@ -186,7 +200,7 @@ export function CartPage() {
       setItems((prev) => prev.map((i) => (i.item_id === item.item_id ? updated : i)));
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
-      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+      setErrorMsg(apiMessage(e));
     }
   }
 
@@ -200,7 +214,7 @@ export function CartPage() {
       setItems((prev) => [...prev, back]);
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
-      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+      setErrorMsg(apiMessage(e));
     }
   }
 
@@ -213,7 +227,7 @@ export function CartPage() {
       setRemoved({ item, name: prod === undefined ? item.product_id : pickContent(lang, prod.name_en, prod.name) });
       window.dispatchEvent(new Event("cart:changed"));
     } catch (e: unknown) {
-      setErrorMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+      setErrorMsg(apiMessage(e));
     }
   }
 
@@ -249,7 +263,7 @@ export function CartPage() {
       // Validasi server lolos -> lanjut ke halaman pembayaran QRIS.
       navigate("/checkout");
     } catch (e: unknown) {
-      setCheckoutMsg(e instanceof ApiError ? e.message : tNow("shop.common.error"));
+      setCheckoutMsg(apiMessage(e));
       setCheckout("fail");
     }
   }
@@ -328,8 +342,8 @@ export function CartPage() {
                   <div>
                     <label htmlFor="delivery-address">{t("shop.cart.address.label")}</label>
                     <p className="cart-opt-note">{t("shop.cart.address.hint")}</p>
-                    <LocationPicker value={coords} onChange={(v, addr) => { setCoords(v); if (addr !== null) setAddress(addr); }} />
-                    <textarea id="delivery-address" maxLength={500} value={address} aria-invalid={formError === "shop.cart.err.address"} aria-describedby={formError === "shop.cart.err.address" ? "form-err" : undefined} onChange={(e) => { setAddress(e.target.value); setFormError(""); }} placeholder={t("shop.cart.address.placeholder")} />
+                    <LocationPicker value={coords} onChange={(v, addr) => { setCoords(v); if (addr !== null && shouldFillAddress(address, addressEdited)) setAddress(addr); }} />
+                    <textarea id="delivery-address" maxLength={500} value={address} aria-invalid={formError === "shop.cart.err.address"} aria-describedby={formError === "shop.cart.err.address" ? "form-err" : undefined} onChange={(e) => { setAddress(e.target.value); setAddressEdited(e.target.value.trim() !== ""); setFormError(""); }} placeholder={t("shop.cart.address.placeholder")} />
                     {formError === "shop.cart.err.address" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
                     <p className="cart-opt-note"><Icon name="warning" /> {t("shop.cart.address.note")}</p>
                   </div>
@@ -337,7 +351,7 @@ export function CartPage() {
                 <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>{t("shop.cart.checkout")} <Icon name="arrow-right" /></button>
                 {checkout === "fail" ? (
                   <div role="alert">
-                    <p>{checkoutMsg}</p>
+                    <p className="field-error"><Icon name="warning" /> {checkoutMsg}</p>
                     <button type="button" className="btn-secondary" onClick={() => void handleCheckout()}>{t("shop.common.retry")}</button>
                   </div>
                 ) : null}

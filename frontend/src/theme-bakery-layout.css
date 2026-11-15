@@ -384,3 +384,6 @@ html, body { overflow-x: clip; } /* jaring pengaman: tak pernah ada gulir sampin
 .facts-grid > div { display: flex; }
 .facts-grid > div > .fact-card { flex: 1; }
 .cart-more { padding-left: 18px; }
+
+.detail-none { display: flex; gap: 6px; align-items: center; margin: 6px 0 14px; font-size: 15px; color: var(--ink-mute); }
+.card-allergens--none { opacity: 0.85; }

@@ -26,7 +26,9 @@ export function ProductCard({ product }: { product: Product }) {
       <p className="price">{rupiah(product.price)}</p>
       {product.allergens.length > 0 ? (
         <p className="card-allergens"><Icon name="warning" /> {t("menu.allergens", { list: product.allergens.map((a) => allergenLabel(a, lang)).join(", ") })}</p>
-      ) : null}
+      ) : (
+        <p className="card-allergens card-allergens--none">{t("menu.allergens.none")}</p>
+      )}
       <div className="tags">
         {product.tags.map((tg) => (
           <span key={tg} className="tag">{tagLabel(tg, lang)}</span>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { CartPage } from "./CartPage.tsx";
@@ -216,6 +216,18 @@ describe("CartPage lanjut belanja", () => {
     render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
     expect(screen.getByRole("link", { name: "+ Tambah menu lagi" })).toHaveAttribute("href", "/menu#menu");
+  });
+});
+
+describe("CartPage jumlah diketik", () => {
+  it("ketikan jumlah berlaku otomatis setelah jeda (tanpa keluar dari kolom)", async () => {
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "3" } }); // diketik, tanpa blur
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT" && String(c.body).includes('"quantity":3'))).toBe(true), { timeout: 8000 });
+    expect(calls.filter((c) => c.method === "PUT")).toHaveLength(1);
   });
 });
 

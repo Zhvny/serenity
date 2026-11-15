@@ -3,6 +3,13 @@
 export const id = {
   "shop.common.error": "Terjadi kesalahan",
   "shop.common.retry": "Coba lagi",
+  "shop.common.rate": "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.",
+  "shop.common.network": "Tidak dapat menghubungi server. Cek koneksimu lalu coba lagi.",
+  "shop.common.invalid": "Isian belum sesuai. Periksa lagi lalu coba lagi.",
+  "shop.common.cartEmpty": "Keranjangmu masih kosong.",
+  "shop.common.notFound": "Data tidak ditemukan.",
+  "shop.detail.allergenNone": "Info alergen belum tercantum untuk menu ini.",
+  "shop.detail.nutritionNone": "Info nutrisi belum tersedia untuk menu ini.",
 
   "shop.detail.loading": "Memuat produk",
   "shop.detail.notfound.title": "Produk tidak ditemukan",
@@ -116,6 +123,13 @@ export const id = {
 export const en = {
   "shop.common.error": "Something went wrong",
   "shop.common.retry": "Try again",
+  "shop.common.rate": "Too many requests. Please wait a moment and try again.",
+  "shop.common.network": "Can't reach the server. Check your connection and try again.",
+  "shop.common.invalid": "Some details look off. Please check and try again.",
+  "shop.common.cartEmpty": "Your cart is still empty.",
+  "shop.common.notFound": "Not found.",
+  "shop.detail.allergenNone": "No allergen info is listed for this item.",
+  "shop.detail.nutritionNone": "Nutrition info isn't available for this item yet.",
 
   "shop.detail.loading": "Loading product",
   "shop.detail.notfound.title": "Product not found",

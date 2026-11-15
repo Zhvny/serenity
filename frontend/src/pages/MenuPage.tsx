@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ApiError, getCategories, getProducts } from "../services/api.ts";
+import { getCategories, getProducts } from "../services/api.ts";
 import type { Category, Product } from "../services/api.ts";
+import { apiMessage } from "../utils/apiMessage.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { FilterBar } from "../components/FilterBar.tsx";
@@ -15,8 +16,10 @@ import { Sprite } from "../pixel/Sprite.tsx";
 import { CAT_HEAD } from "../pixel/data/mascot.ts";
 import { CHALKBOARD } from "../pixel/data/signs.ts";
 import { OVEN, OVEN_GLOW } from "../pixel/data/bakeryB.ts";
-import { rupiah } from "../utils/format.ts";
+import { rupiah, fmtNutrient } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { pickContent } from "../i18n/content.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 
@@ -33,6 +36,7 @@ const DEFAULT_CATS: Category[] = [
 
 export function MenuPage() {
   const t = useT();
+  const [lang] = useLang();
   usePageTitle(t("shell.footer.menu"));
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() => {
@@ -99,7 +103,7 @@ export function MenuPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setErrorMsg(e instanceof ApiError ? e.message : null);
+        setErrorMsg(apiMessage(e));
         setState("error");
       });
     return () => {
@@ -133,13 +137,13 @@ export function MenuPage() {
           <div className="hero-visual">
             <HeroScene />
             {featured !== null ? (
-              <Link to={`/products/${encodeURIComponent(featured.id)}`} className="hero-card hero-card--board" aria-label={t("menu.board.label", { name: featured.name })}>
+              <Link to={`/products/${encodeURIComponent(featured.id)}`} className="hero-card hero-card--board" aria-label={t("menu.board.label", { name: pickContent(lang, featured.name_en, featured.name) })}>
                 <Sprite sprite={CHALKBOARD} className="board-frame" />
                 <div className="board-text">
                   <p className="board-kicker">{t("menu.board.kicker")}</p>
-                  <h3>{featured.name}</h3>
+                  <h3>{pickContent(lang, featured.name_en, featured.name)}</h3>
                   <p className="price">{rupiah(featured.price)}</p>
-                  <p className="board-stats">{t("menu.board.stats", { kcal: featured.nutrition.calories_kcal, protein: featured.nutrition.protein_g })}</p>
+                  <p className="board-stats">{t("menu.board.stats", { kcal: fmtNutrient(featured.nutrition.calories_kcal), protein: fmtNutrient(featured.nutrition.protein_g) })}</p>
                 </div>
               </Link>
             ) : (

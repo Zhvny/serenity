@@ -30,6 +30,22 @@ describe("DetailPage", () => {
     expect(screen.getByRole("link", { name: "Lewati ke konten" })).toHaveAttribute("href", "#main");
     expect(document.querySelector("main#main")).not.toBeNull();
   });
+  it("tanpa data gizi & alergen -> pernyataan jelas, tanpa kotak kosong", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: { ...prod, allergens: [], nutrition: { calories_kcal: null, protein_g: null, carbs_g: null, fat_g: null, fiber_g: null, sugar_g: null } } }))));
+    renderId("p1");
+    await screen.findByText("Salad");
+    expect(screen.getByText("Info nutrisi belum tersedia untuk menu ini.")).toBeInTheDocument();
+    expect(screen.getByText(/Info alergen belum tercantum/)).toBeInTheDocument();
+    expect(document.querySelector("dl.stat-grid")).toBeNull();
+  });
+  it("angka gizi dirapikan (28.00 -> 28)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: { ...prod, nutrition: { calories_kcal: 320, protein_g: "28.00", carbs_g: "22.50", fat_g: "12.00", fiber_g: "6.00", sugar_g: "4.00" } } }))));
+    renderId("p1");
+    await screen.findByText("Salad");
+    expect(screen.getByText("28")).toBeInTheDocument();
+    expect(screen.getByText("22.5")).toBeInTheDocument();
+    expect(screen.queryByText("28.00")).toBeNull();
+  });
   it("tambah keranjang → success", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {

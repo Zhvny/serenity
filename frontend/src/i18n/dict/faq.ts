@@ -20,7 +20,7 @@ export const id = {
   "faq.q8": "Bagaimana dengan ongkos kirim?",
   "faq.a8": "Ongkir mengikuti tarif GoSend atau layanan kurir lain, dibayar tunai dan terpisah dari nominal QRIS. Untuk ambil sendiri tidak ada ongkir.",
   "faq.q9": "Bagaimana dengan alergi dan kebutuhan diet?",
-  "faq.a9": "Setiap menu menampilkan alergen dan informasi nutrisinya. Di halaman Menu kamu bisa menyaring menu (misalnya Vegan, Bebas gluten, Tinggi protein), dan di beranda kamu bisa memilih kebutuhanmu untuk mendapat rekomendasi.",
+  "faq.a9": "Setiap menu menampilkan alergen dan informasi nutrisinya bila datanya tersedia; kalau belum ada, kami menandainya. Di halaman Menu kamu bisa menyaring menu (misalnya Vegan, Bebas gluten, Tinggi protein), dan di beranda kamu bisa memilih kebutuhanmu untuk mendapat rekomendasi.",
   "faq.cta": "Lihat menu",
 } as const;
 
@@ -44,6 +44,6 @@ export const en = {
   "faq.q8": "What about delivery fees?",
   "faq.a8": "The delivery fee follows GoSend or other courier rates, is paid in cash, and is separate from the QRIS amount. Pickup has no delivery fee.",
   "faq.q9": "What about allergies and diets?",
-  "faq.a9": "Every item shows its allergens and nutrition facts. On the Menu page you can filter items (for example Vegan, Gluten-free, High protein), and on the home page you can choose your needs to get recommendations.",
+  "faq.a9": "Every item shows its allergens and nutrition facts when we have the data; if we don't yet, it says so. On the Menu page you can filter items (for example Vegan, Gluten-free, High protein), and on the home page you can choose your needs to get recommendations.",
   "faq.cta": "View menu",
 } satisfies Record<keyof typeof id, string>;

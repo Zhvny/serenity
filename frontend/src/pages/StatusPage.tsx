@@ -28,6 +28,7 @@ export function StatusPage() {
   const [data, setData] = useState<ThanksData | null>(null);
   const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
+  const [connIssue, setConnIssue] = useState(false);
   const polls = useRef(0);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function StatusPage() {
         const d = await getThanks(ref);
         if (!alive) return;
         setData(d);
+        setConnIssue(false);
         setState("done");
         // Berhenti polling pada status final atau batas maksimum.
         if (d.status === "done" || d.status === "cancelled" || d.status === "expired" || polls.current >= MAX_POLLS) {
@@ -51,6 +53,8 @@ export function StatusPage() {
         if (e instanceof ApiError && e.code === "NOT_FOUND") {
           setState("notfound");
           if (timer !== null) clearInterval(timer);
+        } else {
+          setConnIssue(true); // gangguan sesaat/429: tetap coba lagi, jangan biarkan halaman kosong
         }
       }
     }
@@ -61,7 +65,7 @@ export function StatusPage() {
   }, [ref]);
 
   if (state === "loading") {
-    return <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.status.loading")} /></div></main></div>;
+    return <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.status.loading")} />{connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}</div></main></div>;
   }
   if (state === "notfound") {
     return (
@@ -124,6 +128,7 @@ export function StatusPage() {
       <Header />
       <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card" role="status">
+          {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <Sprite sprite={stageSprite} className="status-sprite" />
           <h1>{t("orders.status.title")}</h1>
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
