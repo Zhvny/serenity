@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
-import { ApiError, generateCode } from "../services/api.ts";
+import { Link, useNavigate } from "react-router";
+import { ApiError, generateCode, getCart, getProducts } from "../services/api.ts";
+import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { tNow, useT } from "../i18n/t.ts";
+import { useLang } from "../i18n/useLang.ts";
+import { pickContent } from "../i18n/content.ts";
+import { rupiah } from "../utils/format.ts";
 
 // Jeda paksa baca sebelum checkbox aktif (detik).
 export const CONSENT_DELAY_S = 5;
@@ -14,7 +18,7 @@ const SCRIPT_TIMEOUT_MS = 10000; // tunable
 const SITEKEY = (import.meta.env.VITE_TURNSTILE_SITEKEY as string | undefined) ?? "0x4AAAAAAFQoHTp5aZtkc3hI";
 
 type TurnstileApi = {
-  render: (el: HTMLElement, opts: { sitekey: string; callback: (t: string) => void; "expired-callback": () => void }) => string;
+  render: (el: HTMLElement, opts: { sitekey: string; callback: (t: string) => void; "expired-callback": () => void; "error-callback": () => void }) => string;
   reset: (id: string) => void;
   remove: (id: string) => void;
 };
@@ -25,7 +29,10 @@ function getTurnstile(): TurnstileApi | undefined {
 
 export function CheckoutPage() {
   const t = useT();
+  const [lang] = useLang();
   const navigate = useNavigate();
+  const [cart, setCart] = useState<{ items: CartItem[]; products: Product[] } | null>(null);
+  const [widgetErr, setWidgetErr] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const [msg, setMsg] = useState("");
   const [consent, setConsent] = useState(false);
@@ -36,6 +43,15 @@ export function CheckoutPage() {
   const widgetHost = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
   const honeypot = useRef<HTMLInputElement | null>(null);
+
+  // Ringkasan pesanan: gagal memuat tidak memblokir pembayaran (server tetap sumber kebenaran).
+  useEffect(() => {
+    let alive = true;
+    Promise.all([getCart(), getProducts({})])
+      .then(([items, products]) => { if (alive && Array.isArray(items) && Array.isArray(products)) setCart({ items, products }); })
+      .catch(() => { /* tanpa ringkasan */ });
+    return () => { alive = false; };
+  }, []);
 
   // Interval tunggal (bukan timeout berantai): tiap detik kurang 1 hingga 0.
   // Interval tak bergantung effect re-run sehingga aman di fake-timer.
@@ -86,6 +102,7 @@ export function CheckoutPage() {
         setToken("");
         if (widgetId.current !== null) ts.reset(widgetId.current);
       },
+      "error-callback": () => setWidgetErr(true),
     });
   }, [consent, script]);
 
@@ -124,6 +141,19 @@ export function CheckoutPage() {
     }
   }
 
+  function retryWidget(): void {
+    const ts = getTurnstile();
+    setWidgetErr(false);
+    setToken("");
+    if (widgetId.current !== null && ts !== undefined) ts.reset(widgetId.current);
+  }
+
+  const lines = cart === null ? [] : cart.items.map((it) => {
+    const p = cart.products.find((x) => x.id === it.product_id);
+    return { id: it.item_id, qty: it.quantity, name: p === undefined ? it.product_id : pickContent(lang, p.name_en, p.name), sub: p === undefined ? 0 : p.price * it.quantity };
+  });
+  const total = lines.reduce((a, l) => a + l.sub, 0);
+  const emptyCart = cart !== null && cart.items.length === 0;
   const blocked = script === "blocked";
   const canPay = consent && token !== "" && state !== "sending" && !blocked;
 
@@ -134,7 +164,22 @@ export function CheckoutPage() {
         <div className="pay-card">
           <span className="pay-icon"><Icon name="spark" /></span>
           <h1>{t("shop.pay.title")}</h1>
+          {emptyCart ? (
+            <div className="state" role="status">
+              <h2>{t("shop.cart.empty.title")}</h2>
+              <p>{t("shop.pay.emptyHint")}</p>
+              <Link className="btn-primary" to="/menu">{t("shop.pay.toMenu")}</Link>
+            </div>
+          ) : (<>
           <p>{t("shop.pay.intro")}</p>
+          {lines.length > 0 ? (
+            <div className="pay-summary" aria-label={t("shop.pay.summary")}>
+              <h2>{t("shop.pay.summary")}</h2>
+              <ul>{lines.map((l) => <li key={l.id}><span>{l.qty}× {l.name}</span><span>{rupiah(l.sub)}</span></li>)}</ul>
+              <p className="pay-total"><span>{t("shop.pay.total")}</span><strong>{rupiah(total)}</strong></p>
+              <Link className="pay-edit" to="/cart">{t("shop.pay.edit")}</Link>
+            </div>
+          ) : null}
           <label className="pay-consent" htmlFor="donation-consent">
             <input id="donation-consent" type="checkbox" checked={consent} disabled={waitLeft > 0} onChange={(e) => handleConsent(e.target.checked)} />
             {t("shop.pay.consent.a")}<strong>{t("shop.pay.consent.b")}</strong>{t("shop.pay.consent.c")}<strong>{t("shop.pay.consent.d")}</strong>{t("shop.pay.consent.e")}
@@ -146,12 +191,18 @@ export function CheckoutPage() {
               <div ref={widgetHost} />
             </div>
           ) : null}
+          {widgetErr ? (
+            <p className="detail-msg detail-msg--err" role="alert">
+              {t("shop.pay.widgetErr")} <button type="button" className="pay-retry" onClick={retryWidget}>{t("shop.pay.widgetRetry")}</button>
+            </p>
+          ) : null}
           {blocked ? <p className="detail-msg detail-msg--err" role="alert">{t("shop.pay.blocked")}</p> : null}
           <input ref={honeypot} name="website" type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" defaultValue="" style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px" }} />
           <button type="button" className="btn-primary btn-lg pay-cta" disabled={!canPay} onClick={() => void handlePay()}>
             {state === "sending" ? t("shop.pay.sending") : t("shop.pay.cta")}
           </button>
           {state === "error" ? <p className="detail-msg detail-msg--err" role="alert">{msg}</p> : null}
+          </>)}
         </div>
       </main>
       <Footer />

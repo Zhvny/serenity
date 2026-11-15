@@ -96,6 +96,13 @@ export function MenuPage() {
     };
   }, [filter, reloadKey]);
 
+  // Datang dari tombol "Lihat Menu" (/menu#menu): lompat ke daftar makanan begitu siap.
+  useEffect(() => {
+    if (state !== "done" || window.location.hash !== "#menu") return;
+    const el = document.getElementById("menu");
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView();
+  }, [state]);
+
   const featured = prods[0] ?? null;
   return (
     <div>

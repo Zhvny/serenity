@@ -58,6 +58,12 @@ export function HistoryPage() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
+        // Belum ada sesi/keranjang = belum pernah memesan: tampilkan keadaan kosong, bukan error.
+        if (e instanceof ApiError && e.code === "ORDER_NOT_FOUND") {
+          setOrders([]);
+          setState("done");
+          return;
+        }
         setErrorMsg(e instanceof ApiError ? e.message : null);
         setState("error");
       });

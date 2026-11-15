@@ -235,3 +235,33 @@ img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4
   .need-popup-card--inline > div[role="group"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); column-gap: 24px; }
 }
 @media (max-width: 480px) { .need-popup-card--inline { padding: 18px; } }
+
+/* ---------- Ringkasan pesanan di halaman bayar ---------- */
+.pay-summary { text-align: left; margin: 14px 0 18px; padding: 14px 16px; border: var(--bw) solid var(--bc, currentColor); background: var(--surface, transparent); }
+.pay-summary h2 { margin: 0 0 8px; font-size: 18px; }
+.pay-summary ul { list-style: none; margin: 0; padding: 0; }
+.pay-summary li, .pay-total { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.pay-total { margin: 8px 0 6px; padding-top: 8px; border-top: 2px dashed currentColor; font-size: 18px; }
+.pay-edit, .pay-retry { font: inherit; color: inherit; text-decoration: underline wavy 1px; text-underline-offset: 4px; background: none; border: 0; padding: 4px 2px; cursor: pointer; }
+
+/* ---------- Layar sentuh: target ketuk >= 44px, tombol tambah-keranjang menempel di bawah ---------- */
+@media (max-width: 640px), (pointer: coarse) {
+  .chip, .chip-toggle { min-height: 44px; }
+  .qty-ctrl button { min-width: 44px; min-height: 44px; }
+  .cart-remove { padding: 12px 8px; min-height: 44px; }
+  .need-popup-card label { min-height: 44px; display: flex; align-items: center; }
+  .need-popup-actions button { min-height: 44px; }
+}
+@media (max-width: 480px) {
+  .lang-toggle { height: 40px; }
+  .lang-toggle button { width: 30px; }
+  .site-header .header-link { width: 40px; }
+}
+@media (max-width: 640px) {
+  .detail-cta { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 0 0 var(--bw) var(--canvas); }
+}
+.pay-summary li span:last-child, .pay-total strong { white-space: nowrap; }
+.history-page h1 { margin-bottom: 16px; }
+@media (max-width: 640px) {
+  .detail-cta { width: calc(100% - var(--bw) * 2); box-sizing: border-box; }
+}

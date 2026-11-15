@@ -27,6 +27,12 @@ function renderRiwayat() {
 }
 
 describe("HistoryPage", () => {
+  it("pengunjung baru (404 ORDER_NOT_FOUND) -> keadaan kosong, bukan error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }), { status: 404 })));
+    renderRiwayat();
+    expect(await screen.findByRole("heading", { name: /belum ada pesanan/i })).toBeInTheDocument();
+    expect(screen.queryByText(/gagal dimuat/i)).toBeNull();
+  });
   it("loading → skeleton", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
     const { container } = render(<MemoryRouter><HistoryPage /></MemoryRouter>);

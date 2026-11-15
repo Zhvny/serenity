@@ -12,7 +12,7 @@ describe("LandingPage", () => {
     vi.stubGlobal("fetch", spy);
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: /manis yang menyayangi/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu");
+    expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu#menu");
     expect(screen.getByRole("link", { name: /fun fact/i })).toHaveAttribute("href", "/funfact");
     // Hero tinggal 1 CTA; satu-satunya link Fun Fact ada di footer.
     expect(screen.getAllByRole("link", { name: /fun fact/i })).toHaveLength(1);
@@ -74,7 +74,7 @@ describe("LandingPage", () => {
     }));
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: /sweet treats that love/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /see the menu/i })).toHaveAttribute("href", "/menu");
+    expect(screen.getByRole("link", { name: /see the menu/i })).toHaveAttribute("href", "/menu#menu");
     expect(await screen.findByRole("region", { name: /what do you need/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Build muscle" })).toBeInTheDocument();
   });
