@@ -3,8 +3,8 @@ import { Link } from "react-router";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { getTrending, recordPostView, getPreference, savePreference, getRecommendations } from "../services/api.ts";
-import type { Post, Recommendation, Need } from "../services/api.ts";
+import { getTrending, recordPostView, getPreference, savePreference, getRecommendations, getProducts } from "../services/api.ts";
+import type { Post, Product, Recommendation, Need } from "../services/api.ts";
 import { LandingCard } from "../components/LandingCard.tsx";
 import { useT, type DictKey } from "../i18n/t.ts";
 import { HeroScene } from "../pixel/HeroScene.tsx";
@@ -36,7 +36,8 @@ export function LandingPage() {
   const [shown, setShown] = useState(false);
   const [quoteKey] = useState<DictKey>(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)] ?? "landing.hero.quote1");
   const [trending, setTrending] = useState<Post[]>([]);
-  const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [recs, setRecs]= useState<Recommendation[]>([]);
   const [, setNeeds] = useState<Need[] | null>(null);
   const [showNeed, setShowNeed] = useState(false);
   const [draft, setDraft] = useState<Need[]>([]);
@@ -54,6 +55,9 @@ export function LandingPage() {
     let alive = true;
     getTrending()
       .then((p) => { if (alive) setTrending(p.slice(0, 3)); })
+      .catch(() => { /* sembunyikan section bila gagal */ });
+    getProducts({})
+      .then((ps) => { if (alive) setFeatured(ps.filter((p) => p.is_active).slice(0, 3)); })
       .catch(() => { /* sembunyikan section bila gagal */ });
     getPreference()
       .then((p) => {
@@ -99,6 +103,19 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+        {featured.length > 0 ? (
+          <section className="section section--boxed" aria-label={t("landing.featured.title")}>
+            <div className="section-head">
+              <span className="eyebrow">{t("landing.featured.eyebrow")}</span>
+              <h2>{t("landing.featured.title")}</h2>
+            </div>
+            <div className="facts-grid">
+              {featured.map((p) => (
+                <LandingCard key={p.id} variant="product" id={p.id} title={pickContent(lang, p.name_en, p.name)} price={p.price} image_url={p.image_url} category_id={p.category_id} />
+              ))}
+            </div>
+          </section>
+        ) : null}
         {showNeed ? (
           <section className="need-inline" aria-label={t("landing.need.title")}>
             <div className="need-popup-card need-popup-card--inline">

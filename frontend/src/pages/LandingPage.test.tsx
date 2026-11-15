@@ -7,7 +7,7 @@ import { setLang } from "../i18n/store.ts";
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 
 describe("LandingPage", () => {
-  it("tanpa fetch menu: hero + CTA ke /menu", async () => {
+  it("hero + CTA ke /menu (menu pilihan boleh dimuat, tanpa kategori)", async () => {
     const spy = vi.fn(async (url: string) => { void url; return new Response(JSON.stringify({ status: "success", data: [] })); });
     vi.stubGlobal("fetch", spy);
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
@@ -17,8 +17,6 @@ describe("LandingPage", () => {
     // Hero tinggal 1 CTA; satu-satunya link Fun Fact ada di footer.
     expect(screen.getAllByRole("link", { name: /fun fact/i })).toHaveLength(1);
     expect(screen.queryByRole("link", { name: /jelajahi kategori/i })).toBeNull();
-    const urls = spy.mock.calls.map((c) => String(c[0]));
-    expect(urls.some((u) => u.includes("/products") && !u.includes("/recommendations"))).toBe(false);
   });
 
   it("preferensi kosong -> kartu kebutuhan muncul di halaman (bukan modal)", async () => {
