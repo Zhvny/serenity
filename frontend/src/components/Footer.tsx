@@ -23,6 +23,7 @@ export function Footer() {
           <h3>{t("shell.footer.explore")}</h3>
           <Link to="/menu#menu">{t("shell.footer.menu")}</Link>
           <Link to="/funfact">{t("shell.footer.funfact")}</Link>
+          <Link to="/faq">{t("shell.footer.faq")}</Link>
           <Link to="/riwayat">{t("shell.nav.history")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>
         </nav>

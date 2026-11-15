@@ -18,6 +18,18 @@ describe("ProductCard", () => {
     // Tag gantung: kalori, bukan harga ganda (aria-hidden, garnish visual).
     expect(container.querySelector(".price-tag-text")?.textContent).toBe("320 kkal");
   });
+  it("alergen tampil di kartu (ID) dan diterjemahkan (EN); tanpa alergen -> tanpa baris", () => {
+    const withAllergens: Product = { ...product, allergens: ["kacang", "susu"] };
+    const idRender = render(<MemoryRouter><ProductCard product={withAllergens} /></MemoryRouter>);
+    expect(idRender.container.querySelector(".card-allergens")).toHaveTextContent("Alergen: kacang, susu");
+    idRender.unmount();
+    setLang("en");
+    const enRender = render(<MemoryRouter><ProductCard product={withAllergens} /></MemoryRouter>);
+    expect(enRender.container.querySelector(".card-allergens")).toHaveTextContent("Allergens: Peanuts, Milk");
+    enRender.unmount();
+    const none = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
+    expect(none.container.querySelector(".card-allergens")).toBeNull();
+  });
   it("image null → placeholder id/en, bukan img rusak", () => {
     const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
     expect(container.querySelector("img")).toBeNull();

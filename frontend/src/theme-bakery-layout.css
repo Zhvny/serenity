@@ -333,3 +333,15 @@ main:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { .stepper li.is-current .step-dot { animation: none; } }
 .qr-save { margin: 8px 0 0; }
 .qr-hint { margin-top: 6px; }
+
+/* ---------- Poles: foto tajam alami (bukan pixelated), placeholder terbaca, alergen di kartu, FAQ ---------- */
+img:not(.qris-img) { image-rendering: auto; } /* pixelated hanya untuk QR; foto makanan diperkecil tetap halus */
+input::placeholder, textarea::placeholder { color: var(--ink-mute); opacity: 0.9; }
+.card-allergens { display: flex; gap: 6px; align-items: center; margin: 4px 0 6px; padding: 0 16px; font-size: 14px; color: var(--ink-mute); }
+.faq-page { max-width: 820px; }
+.faq-list { display: grid; gap: 12px; margin-top: 8px; }
+.faq-item { border: var(--bw) solid var(--outline, currentColor); background: var(--surface); }
+.faq-item summary { cursor: pointer; padding: 14px 16px; min-height: 44px; box-sizing: border-box; font-weight: 700; list-style-position: inside; }
+.faq-item summary:focus-visible { outline: 2px dashed var(--focus, currentColor); outline-offset: -5px; }
+.faq-item p { margin: 0; padding: 0 16px 16px; }
+.faq-cta { margin-top: 22px; }

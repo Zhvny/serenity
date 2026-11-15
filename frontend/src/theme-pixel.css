@@ -22,7 +22,7 @@
   --on-dark: #fff9ea;
   --warning: #f6ce6b;
   --success: #4f8f4a;
-  --error: #c8444f;
+  --error: #b0343f; /* >= 4.5:1 di atas krem (sebelumnya #c8444f = 4.26) */
 
   --outline: #3b2a24; /* garis tepi pixel */
   --drop: #d3b887; /* bayangan keras */

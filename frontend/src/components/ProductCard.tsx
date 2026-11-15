@@ -6,7 +6,8 @@ import { Sprite } from "../pixel/Sprite.tsx";
 import { PRICE_TAG } from "../pixel/data/signs.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { useT } from "../i18n/t.ts";
-import { pickContent, tagLabel } from "../i18n/content.ts";
+import { pickContent, tagLabel, allergenLabel } from "../i18n/content.ts";
+import { Icon } from "./Icon.tsx";
 
 export function ProductCard({ product }: { product: Product }) {
   const [lang] = useLang();
@@ -23,9 +24,12 @@ export function ProductCard({ product }: { product: Product }) {
       ) : null}
       <h3>{name}</h3>
       <p className="price">{rupiah(product.price)}</p>
+      {product.allergens.length > 0 ? (
+        <p className="card-allergens"><Icon name="warning" /> {t("menu.allergens", { list: product.allergens.map((a) => allergenLabel(a, lang)).join(", ") })}</p>
+      ) : null}
       <div className="tags">
-        {product.tags.map((t) => (
-          <span key={t} className="tag">{tagLabel(t, lang)}</span>
+        {product.tags.map((tg) => (
+          <span key={tg} className="tag">{tagLabel(tg, lang)}</span>
         ))}
       </div>
     </Link>
