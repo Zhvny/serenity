@@ -20,6 +20,13 @@ describe("StatusPage polling", () => {
     expect(await screen.findByText(/dibayar|lunas/i)).toBeInTheDocument();
   });
 
+  it("menunggu pembayaran -> penjelasan + tombol Bayar sekarang ke halaman QR", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-1", nominal: 1000, qr_url: "q", status: "pending_payment" } })));
+    render(<MemoryRouter initialEntries={["/status/ORD-1"]}><Routes><Route path="/status/:code" element={<StatusPage />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText(/status berubah sendiri/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Bayar sekarang" })).toHaveAttribute("href", "/thanks?ref=ORD-1");
+    expect(screen.getByRole("link", { name: "Riwayat pesanan" })).toHaveAttribute("href", "/riwayat");
+  });
   it("ref/code tidak ada order -> 404 tidak ditemukan", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
     render(

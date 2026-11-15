@@ -27,6 +27,13 @@ function renderRiwayat() {
 }
 
 describe("HistoryPage", () => {
+  it("tag donasi tak tampil pada pesanan yang belum dibayar", async () => {
+    const pending = { ...paid, id: "HP-3", unique_code: "ORD-3", status: "pending_payment", paid_amount: null, donation_consent: true };
+    mockList([pending, paid]);
+    renderRiwayat();
+    await screen.findByText("ORD-3");
+    expect(screen.getAllByText(/donasi disetujui/i)).toHaveLength(1);
+  });
   it("pengunjung baru (404 ORDER_NOT_FOUND) -> keadaan kosong, bukan error", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }), { status: 404 })));
     renderRiwayat();

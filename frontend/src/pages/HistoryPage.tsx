@@ -155,7 +155,7 @@ export function HistoryPage() {
                       </ul>
                     ) : null}
                     <span className="history-code">{o.unique_code}</span>
-                    {o.donation_consent ? <span className="tag">{t("orders.history.donation")}</span> : null}
+                    {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}
                   </div>
                   <div className="history-side">
                     <span className="history-total">{rupiah(o.total_amount)}</span>

@@ -203,6 +203,7 @@ export function CheckoutPage() {
           <button type="button" className="btn-primary btn-lg pay-cta" disabled={!canPay} onClick={() => void handlePay()}>
             {state === "sending" ? t("shop.pay.sending") : t("shop.pay.cta")}
           </button>
+          {!canPay && state !== "sending" && !blocked && waitLeft === 0 ? <p className="pay-hint">{t(!consent ? "shop.pay.needConsent" : "shop.pay.needHuman")}</p> : null}
           {state === "error" ? <p className="detail-msg detail-msg--err" role="alert">{msg}</p> : null}
           </>)}
         </div>

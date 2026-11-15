@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { ThanksPage } from "./ThanksPage.tsx";
@@ -23,6 +23,33 @@ describe("ThanksPage", () => {
     expect(await screen.findByText(/ORD-ABC/)).toBeInTheDocument();
     expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("img", { name: /qris|qr/i })).toBeInTheDocument();
+  });
+
+  it("tautan Lacak pesanan + Riwayat + Salin kode tampil, dan catatan kedaluwarsa", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
+    expect(await screen.findByRole("link", { name: "Lacak pesanan" })).toHaveAttribute("href", "/status/ORD-ABC");
+    expect(screen.getByRole("link", { name: "Riwayat pesanan" })).toHaveAttribute("href", "/riwayat");
+    expect(screen.getByRole("button", { name: "Salin kode" })).toBeInTheDocument();
+    expect(screen.getByText(/kedaluwarsa otomatis sekitar 2 jam/i)).toBeInTheDocument();
+  });
+
+  it("gambar QR gagal dimuat -> pesan + tombol muat ulang (bukan celah kosong)", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
+    const img = await screen.findByRole("img", { name: /qris|qr/i });
+    fireEvent.error(img);
+    expect(await screen.findByText(/QR belum bisa dimuat/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Muat ulang QR" }));
+    expect(screen.getByRole("img", { name: /qris|qr/i }).getAttribute("src")).toContain("r=1");
+  });
+
+  it("link tak berlaku -> petunjuk perangkat + tombol Riwayat", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-X"]}><ThanksPage /></MemoryRouter>);
+    expect(await screen.findByText(/hanya terlihat di perangkat/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Buka Riwayat" })).toHaveAttribute("href", "/riwayat");
   });
 
   it("underpaid -> Kurang + Buat kode top-up -> ref anak", async () => {

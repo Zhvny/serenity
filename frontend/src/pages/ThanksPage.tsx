@@ -8,6 +8,22 @@ import { rupiah } from "../utils/format.ts";
 import { useT } from "../i18n/t.ts";
 import type { DictKey } from "../i18n/t.ts";
 
+function QrImage({ src, alt }: { src: string; alt: string }) {
+  const t = useT();
+  const [failed, setFailed] = useState(false);
+  const [bust, setBust] = useState(0);
+  const url = bust === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}r=${bust}`;
+  if (failed) {
+    return (
+      <div className="qris-fallback" role="alert">
+        <p>{t("orders.thanks.qrFailed")}</p>
+        <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setBust((b) => b + 1); }}>{t("orders.thanks.qrRetry")}</button>
+      </div>
+    );
+  }
+  return <img className="qris-img" src={url} alt={alt} onError={() => setFailed(true)} />;
+}
+
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
 
@@ -20,6 +36,7 @@ export function ThanksPage() {
   const [data, setData] = useState<ThanksData | null>(null);
   const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const polls = useRef(0);
 
   useEffect(() => {
@@ -68,6 +85,8 @@ export function ThanksPage() {
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
             <p>{t("orders.thanks.notFoundText")}</p>
+            <p>{t("orders.common.notFoundHint")}</p>
+            <Link className="btn-primary" to="/riwayat">{t("orders.common.toHistory")}</Link>
             <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
           </div>
         </main>
@@ -78,6 +97,14 @@ export function ThanksPage() {
   const paid = data.status === "paid";
   const underpaid = data.status === "underpaid";
   const sisa = data.paid_amount === null || data.paid_amount === undefined ? null : data.nominal - data.paid_amount;
+
+  async function copyCode(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(data?.unique_code ?? ref);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard tak tersedia: kode tetap terlihat di layar */ }
+  }
 
   async function handleTopup(): Promise<void> {
     setTopupBusy(true);
@@ -115,17 +142,23 @@ export function ThanksPage() {
             </>
           ) : (
             <>
-              {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt={t("orders.thanks.qrAlt")} /> : null}
+              {data.qr_url !== null ? <QrImage src={data.qr_url} alt={t("orders.thanks.qrAlt")} /> : null}
               <ol className="pay-steps">
                 <li>{t("orders.thanks.step1")}</li>
                 <li>{t("orders.thanks.step2a")} <strong>{t("orders.thanks.step2b", { amount: rupiah(data.nominal) })}</strong>{t("orders.thanks.step2c")}</li>
                 <li>{t("orders.thanks.step3a")} <strong>{t("orders.status.paid")}</strong> {t("orders.thanks.step3b")}</li>
               </ol>
               <p className="status-badge">{t("orders.status.pending")}</p>
-              <p className="pay-note">{t("orders.thanks.saveNote")}</p>
+              <p className="pay-note">{t("orders.thanks.expiry")}</p>
             </>
           )}
-          <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
+          <p className="pay-note">{t("orders.thanks.deviceNote")}</p>
+          <div className="pay-links">
+            <Link className="btn-primary" to={`/status/${encodeURIComponent(data.unique_code)}`}>{t("orders.thanks.track")}</Link>
+            <Link className="btn-secondary" to="/riwayat">{t("orders.thanks.history")}</Link>
+            <button type="button" className="btn-secondary" onClick={() => void copyCode()}>{copied ? t("orders.thanks.copied") : t("orders.thanks.copy")}</button>
+          </div>
+          <Link className="btn-link" to="/">{t("orders.common.backHome")}</Link>
         </div>
       </main>
       <Footer />

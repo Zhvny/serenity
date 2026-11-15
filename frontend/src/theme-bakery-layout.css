@@ -271,3 +271,10 @@ img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4
 .detail-qty { display: flex; align-items: center; gap: 14px; margin: 18px 0 12px var(--bw); }
 .detail-qty-value { min-width: 44px; text-align: center; font-family: var(--font-pixel, inherit); font-size: 22px; }
 .detail-cart-link { color: inherit; text-decoration: underline wavy 1px; text-underline-offset: 4px; }
+
+/* ---------- Halaman bayar: QR gagal, tautan lanjut, petunjuk tombol ---------- */
+.qris-fallback { margin: 12px auto; padding: 18px; border: var(--bw) dashed currentColor; max-width: 280px; }
+.pay-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 14px 0 6px; }
+.pay-links > * { min-height: 44px; }
+.pay-hint { margin: 8px 0 0; font-size: 15px; opacity: 0.85; }
+.status-badge + .pay-note { margin-top: 8px; }

@@ -66,6 +66,8 @@ export function StatusPage() {
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
+            <p>{t("orders.common.notFoundHint")}</p>
+            <Link className="btn-primary" to="/riwayat">{t("orders.common.toHistory")}</Link>
             <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
           </div>
         </main>
@@ -81,6 +83,8 @@ export function StatusPage() {
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
+            <p>{t("orders.common.notFoundHint")}</p>
+            <Link className="btn-primary" to="/riwayat">{t("orders.common.toHistory")}</Link>
             <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
           </div>
         </main>
@@ -94,6 +98,7 @@ export function StatusPage() {
   const sisa = data?.paid_amount === null || data?.paid_amount === undefined || data === null ? null : data.nominal - data.paid_amount;
   const label = paid ? t("orders.status.paidFull") : status === "cancelled" ? t("orders.status.cancelled") : underpaid ? t("orders.status.underpaid") : t("orders.status.pending");
   // Ilustrasi status: kantong terbuka (lunas), kasir (kurang bayar), roti gosong (batal), lonceng (menunggu).
+  const explain: DictKey = paid ? "orders.status.explain.paid" : status === "cancelled" ? "orders.status.explain.cancelled" : status === "expired" ? "orders.status.explain.expired" : underpaid ? "orders.status.explain.underpaid" : "orders.status.explain.pending";
   const stageSprite = paid ? PAPER_BAG_OPEN : status === "cancelled" ? TOAST_BURNT : underpaid ? CASH_REGISTER : SHOP_BELL;
 
   async function handleTopup(): Promise<void> {
@@ -118,6 +123,8 @@ export function StatusPage() {
           <h1>{t("orders.status.title")}</h1>
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
+          <p className="pay-note">{t(explain)}</p>
+          {status === "pending_payment" ? <Link className="btn-primary" to={`/thanks?ref=${encodeURIComponent(ref)}`}>{t("orders.status.payNow")}</Link> : null}
           {underpaid && sisa !== null && sisa > 0 ? (
             <>
               <p className="pay-meta">{t("orders.common.shortBy", { amount: rupiah(sisa) })}</p>
@@ -125,7 +132,8 @@ export function StatusPage() {
               {topupMsg !== "" ? <p className="detail-msg detail-msg--err" role="alert">{t(topupMsg)}</p> : null}
             </>
           ) : null}
-          <Link className="btn-secondary" to="/">{t("orders.common.backHome")}</Link>
+          <Link className="btn-secondary" to="/riwayat">{t("orders.thanks.history")}</Link>
+          <Link className="btn-link" to="/">{t("orders.common.backHome")}</Link>
         </div>
       </main>
       <Footer />
