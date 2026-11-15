@@ -11,10 +11,10 @@ export const id = {
   // Bersama
   "orders.common.backHome": "Kembali ke beranda",
   "orders.common.notFoundTitle": "Pesanan tidak ditemukan",
-  "orders.common.topup": "Buat kode top-up",
+  "orders.common.topup": "Bayar kekurangan (kode QRIS baru)",
   "orders.common.shortBy": "Kurang {amount}",
-  "orders.common.topupFailed": "Gagal membuat kode top-up.",
-  "orders.common.topupUnavailable": "Top-up tidak dapat dibuat. Muat ulang halaman.",
+  "orders.common.topupFailed": "Gagal membuat kode untuk kekurangan.",
+  "orders.common.topupUnavailable": "Kode untuk kekurangan tidak dapat dibuat. Muat ulang halaman.",
 
   // ThanksPage
   "orders.thanks.qrFailed": "QR belum bisa dimuat.",
@@ -34,13 +34,13 @@ export const id = {
   "orders.common.notFoundHint": "Pesanan hanya terlihat di perangkat/browser tempat kamu memesan. Coba buka Riwayat di perangkat itu.",
   "orders.common.toHistory": "Buka Riwayat",
   "orders.thanks.loading": "Memuat",
-  "orders.thanks.notFoundText": "Tautan tidak berlaku untuk sesi ini.",
-  "orders.thanks.topupExists": "Kode top-up sudah ada. Hubungi admin.",
+  "orders.thanks.notFoundText": "Tautan ini tidak bisa dibuka di perangkat ini.",
+  "orders.thanks.topupExists": "Kode QRIS untuk kekurangan sudah dibuat. Lihat di Riwayat pesanan.",
   "orders.thanks.titlePaid": "Pembayaran diterima",
   "orders.thanks.titleQris": "Pembayaran QRIS",
   "orders.thanks.codeLabel": "Kode pesanan:",
   "orders.thanks.payExactly": "Bayar tepat",
-  "orders.thanks.thanksNote": "Terima kasih! Pesanan Anda sedang kami proses.",
+  "orders.thanks.thanksNote": "Terima kasih! Pesananmu sedang kami siapkan.",
   "orders.thanks.received": "Masuk {paid} dari {total} — Kurang {rest}",
   "orders.thanks.contactAdmin": "Atau hubungi admin untuk bantuan.",
   "orders.thanks.qrAlt": "QRIS pembayaran Serenity",
@@ -77,7 +77,7 @@ export const id = {
 
   // NotFoundPage
   "orders.notfound.title": "Halaman tidak ditemukan",
-  "orders.notfound.text": "Waduh, rotinya gosong! Kode: 404 — halaman yang Anda cari tidak ada atau sudah dipindahkan.",
+  "orders.notfound.text": "Waduh, rotinya gosong! Kode: 404 — halaman yang kamu cari tidak ada atau sudah dipindahkan.",
 
   // ErrorBoundary
   "orders.error.title": "Terjadi kesalahan",
@@ -95,10 +95,10 @@ export const en = {
 
   "orders.common.backHome": "Back to home",
   "orders.common.notFoundTitle": "Order not found",
-  "orders.common.topup": "Create top-up code",
+  "orders.common.topup": "Pay the remaining amount (new QRIS code)",
   "orders.common.shortBy": "{amount} short",
-  "orders.common.topupFailed": "Couldn't create the top-up code.",
-  "orders.common.topupUnavailable": "A top-up can't be created. Please reload the page.",
+  "orders.common.topupFailed": "Couldn't create the code for the remaining amount.",
+  "orders.common.topupUnavailable": "A code for the remaining amount can't be created. Please reload the page.",
 
   "orders.thanks.qrFailed": "The QR code couldn't load.",
   "orders.thanks.qrRetry": "Reload QR",
@@ -117,8 +117,8 @@ export const en = {
   "orders.common.notFoundHint": "Orders are only visible on the device/browser you ordered from. Try opening History on that device.",
   "orders.common.toHistory": "Open History",
   "orders.thanks.loading": "Loading",
-  "orders.thanks.notFoundText": "This link isn't valid for this session.",
-  "orders.thanks.topupExists": "A top-up code already exists. Please contact the admin.",
+  "orders.thanks.notFoundText": "This link can't be opened on this device.",
+  "orders.thanks.topupExists": "A QRIS code for the remaining amount already exists. See it in Order history.",
   "orders.thanks.titlePaid": "Payment received",
   "orders.thanks.titleQris": "QRIS payment",
   "orders.thanks.codeLabel": "Order code:",

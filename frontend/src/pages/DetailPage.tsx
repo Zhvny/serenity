@@ -8,7 +8,7 @@ import { Icon } from "../components/Icon.tsx";
 import { ProductPhoto } from "../components/ProductPhoto.tsx";
 import { rupiah } from "../utils/format.ts";
 import { useLang } from "../i18n/useLang.ts";
-import { allergenLabel, pickContent } from "../i18n/content.ts";
+import { allergenLabel, pickContent, tagLabel } from "../i18n/content.ts";
 import { tNow, useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import { burstAt, flyToCart } from "../fx/fx.ts";
@@ -78,7 +78,7 @@ export function DetailPage() {
   return (
     <div>
       <Header />
-      <main>
+      <main id="main" tabIndex={-1}>
         {state === "loading" ? (
           <div className="skeleton" aria-label={t("shop.detail.loading")} />
         ) : state === "notfound" ? (
@@ -103,22 +103,12 @@ export function DetailPage() {
             <div className="detail-body">
               <div className="tags">
                 {prod.tags.map((tag) => (
-                  <span key={tag} className="tag">{tag}</span>
+                  <span key={tag} className="tag">{tagLabel(tag, lang)}</span>
                 ))}
               </div>
               <h1>{pickContent(lang, prod.name_en, prod.name)}</h1>
               <p className="detail-price">{rupiah(prod.price)}</p>
               {pickContent(lang, prod.description_en, prod.description ?? "") !== "" ? <p className="detail-desc">{pickContent(lang, prod.description_en, prod.description ?? "")}</p> : null}
-
-              <h2 className="detail-subhead">{t("shop.detail.nutrition")}</h2>
-              <dl className="stat-grid" aria-label={t("shop.detail.nutrition")}>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.calories_kcal}<span className="unit">{t("shop.detail.unit.kcal")}</span></dd><dt className="stat-label">{t("shop.detail.calories")}</dt></div>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.protein_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.protein")}</dt></div>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.carbs_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.carbs")}</dt></div>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.fat_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.fat")}</dt></div>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.fiber_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.fiber")}</dt></div>
-                <div className="stat"><dd className="stat-num">{prod.nutrition.sugar_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.sugar")}</dt></div>
-              </dl>
 
               {prod.allergens.length > 0 ? (
                 <>
@@ -130,6 +120,16 @@ export function DetailPage() {
                   </ul>
                 </>
               ) : null}
+
+              <h2 className="detail-subhead">{t("shop.detail.nutrition")}</h2>
+              <dl className="stat-grid" aria-label={t("shop.detail.nutrition")}>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.calories_kcal}<span className="unit">{t("shop.detail.unit.kcal")}</span></dd><dt className="stat-label">{t("shop.detail.calories")}</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.protein_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.protein")}</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.carbs_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.carbs")}</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.fat_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.fat")}</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.fiber_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.fiber")}</dt></div>
+                <div className="stat"><dd className="stat-num">{prod.nutrition.sugar_g}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.sugar")}</dt></div>
+              </dl>
 
               <div className="detail-qty">
                 <span id="detail-qty-label">{t("shop.detail.qty")}</span>

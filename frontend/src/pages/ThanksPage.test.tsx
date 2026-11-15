@@ -52,7 +52,7 @@ describe("ThanksPage", () => {
     expect(screen.getByRole("link", { name: "Buka Riwayat" })).toHaveAttribute("href", "/riwayat");
   });
 
-  it("underpaid -> Kurang + Buat kode top-up -> ref anak", async () => {
+  it("underpaid -> Kurang + Bayar kekurangan -> ref anak", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);
@@ -62,7 +62,7 @@ describe("ThanksPage", () => {
     }));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-U"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText(/Kurang Rp/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /top-up/i }));
+    await user.click(screen.getByRole("button", { name: /bayar kekurangan/i }));
     expect(await screen.findByText(/ORD-CHILD/)).toBeInTheDocument();
   });
 });

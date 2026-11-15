@@ -15,11 +15,12 @@ export const id = {
   "shell.lang.en": "English",
   "shell.footer.tagline": "Pre-order dessert & minuman sehat rendah gula, dibuat segar. Pesan, bayar QRIS, ambil atau antar.",
   "shell.footer.links": "Tautan",
+  "shell.skip": "Lewati ke konten",
   "shell.footer.explore": "Jelajah",
   "shell.footer.menu": "Menu",
   "shell.footer.funfact": "Fun Fact",
   "shell.footer.categories": "Kategori",
-  "shell.footer.base": "Healthy Pre-Order",
+  "shell.footer.base": "Pre-order Sehat",
 } as const;
 
 export const en = {
@@ -37,6 +38,7 @@ export const en = {
   "shell.lang.en": "English",
   "shell.footer.tagline": "Pre-order low-sugar healthy desserts & drinks, made fresh. Order, pay with QRIS, then pick up or get it delivered.",
   "shell.footer.links": "Links",
+  "shell.skip": "Skip to content",
   "shell.footer.explore": "Explore",
   "shell.footer.menu": "Menu",
   "shell.footer.funfact": "Fun Facts",

@@ -109,7 +109,7 @@ export function MenuPage() {
   return (
     <div>
       <Header categories={cats} />
-      <main>
+      <main id="main" tabIndex={-1}>
         <Bunting />
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">

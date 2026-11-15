@@ -56,13 +56,13 @@ export function StatusPage() {
   }, [ref]);
 
   if (state === "loading") {
-    return <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.status.loading")} /></div></main></div>;
+    return <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.status.loading")} /></div></main></div>;
   }
   if (state === "notfound") {
     return (
       <div>
         <Header />
-        <main className="pay-wrap">
+        <main id="main" tabIndex={-1} className="pay-wrap">
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
@@ -79,7 +79,7 @@ export function StatusPage() {
     return (
       <div>
         <Header />
-        <main className="pay-wrap">
+        <main id="main" tabIndex={-1} className="pay-wrap">
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
@@ -117,7 +117,7 @@ export function StatusPage() {
   return (
     <div>
       <Header />
-      <main className="pay-wrap">
+      <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card" role="status">
           <Sprite sprite={stageSprite} className="status-sprite" />
           <h1>{t("orders.status.title")}</h1>

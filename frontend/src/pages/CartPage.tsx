@@ -210,7 +210,7 @@ export function CartPage() {
   return (
     <div>
       <Header />
-      <main className="cart-page">
+      <main id="main" tabIndex={-1} className="cart-page">
         <h1>{t("shop.cart.title")}</h1>
         {state === "loading" ? (
           <div className="skeleton" aria-label={t("shop.cart.loading")} />

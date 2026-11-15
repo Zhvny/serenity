@@ -13,7 +13,7 @@ export const id = {
   "funfact.fallback.tag2": "News",
   "funfact.fallback.title3": "Pre-order = lebih segar",
   "funfact.fallback.body3": "Karena dibuat berdasarkan pesanan (bukan stok), makanan lebih segar dan sesuai preferensi Anda — dari pelaku diet hingga atlet.",
-  "funfact.fallback.tag3": "Soft Selling",
+  "funfact.fallback.tag3": "Info",
 } as const;
 export const en = {
   "funfact.loading": "Loading fun facts",
@@ -29,5 +29,5 @@ export const en = {
   "funfact.fallback.tag2": "News",
   "funfact.fallback.title3": "Pre-order = fresher",
   "funfact.fallback.body3": "Because it's made to order (not stocked), food is fresher and matches your preferences — from dieters to athletes.",
-  "funfact.fallback.tag3": "Soft Selling",
+  "funfact.fallback.tag3": "Info",
 } satisfies Record<keyof typeof id, string>;

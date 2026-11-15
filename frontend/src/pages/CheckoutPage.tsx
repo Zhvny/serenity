@@ -162,7 +162,7 @@ export function CheckoutPage() {
   return (
     <div>
       <Header />
-      <main className="pay-wrap">
+      <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card">
           <span className="pay-icon"><Icon name="spark" /></span>
           <h1>{t("shop.pay.title")}</h1>

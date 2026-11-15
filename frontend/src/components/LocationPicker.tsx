@@ -45,6 +45,19 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
   const [geoIssue, setGeoIssue] = useState<DictKey | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [showConsent, setShowConsent] = useState(false);
+  const agreeBtn = useRef<HTMLButtonElement | null>(null);
+  const consentOpener = useRef<HTMLElement | null>(null);
+
+  // Dialog persetujuan lokasi: fokus pindah ke tombol setuju saat dibuka, kembali ke pemicu saat ditutup.
+  useEffect(() => {
+    if (showConsent) {
+      consentOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      agreeBtn.current?.focus();
+    } else if (consentOpener.current !== null) {
+      consentOpener.current.focus();
+      consentOpener.current = null;
+    }
+  }, [showConsent]);
 
   // Init map sekali — Leaflet di-import DINAMIS (runtime browser) agar tidak dieval di jsdom (OOM).
   useEffect(() => {
@@ -137,13 +150,13 @@ export function LocationPicker({ value, onChange }: { value: LatLng | null; onCh
       {status === "geo-error" ? <p className="cart-opt-note" role="alert"><Icon name="warning" /> {t(geoIssue ?? "shop.map.geoerror")}</p> : null}
       {status === "idle" && geoIssue === "shop.map.ipFallback" ? <p className="cart-opt-note"><Icon name="warning" /> {t("shop.map.ipFallback")}</p> : null}
       {showConsent ? (
-        <div role="dialog" aria-label={t("shop.map.consent.title")} aria-modal="true" className="need-popup">
+        <div role="dialog" aria-label={t("shop.map.consent.title")} aria-modal="true" className="need-popup" onKeyDown={(e) => { if (e.key === "Escape") setShowConsent(false); }}>
           <div className="need-popup-card">
             <h2>{t("shop.map.consent.title")}</h2>
             <p>{t("shop.map.consent.a")}</p>
             <p>{t("shop.map.consent.b")}</p>
             <div className="need-popup-actions">
-              <button type="button" onClick={() => { setShowConsent(false); requestMyLocation(); }}>{t("shop.map.consent.agree")}</button>
+              <button type="button" ref={agreeBtn} onClick={() => { setShowConsent(false); requestMyLocation(); }}>{t("shop.map.consent.agree")}</button>
               <button type="button" onClick={() => setShowConsent(false)}>{t("shop.map.consent.cancel")}</button>
             </div>
           </div>

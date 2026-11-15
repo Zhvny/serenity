@@ -53,7 +53,7 @@ export function FunFactPage() {
     return (
       <div>
         <Header />
-        <main className="content"><div className="skeleton" aria-label={t("funfact.loading")} /></main>
+        <main id="main" tabIndex={-1} className="content"><div className="skeleton" aria-label={t("funfact.loading")} /></main>
         <Footer />
       </div>
     );
@@ -61,7 +61,7 @@ export function FunFactPage() {
   return (
     <div>
       <Header />
-      <main className="content">
+      <main id="main" tabIndex={-1} className="content">
         <p><Link className="btn-link" to="/">{t("funfact.home")}</Link></p>
         <div className="section-head">
           <span className="eyebrow">{t("funfact.eyebrow")}</span>

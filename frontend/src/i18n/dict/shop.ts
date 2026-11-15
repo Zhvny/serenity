@@ -60,11 +60,11 @@ export const id = {
   "shop.cart.address.hint": "Tulis lengkap: nama jalan, nomor rumah, dan patokan agar kurir mudah menemukan.",
   "shop.cart.ask.when": "Kapan pesananmu disiapkan?",
   "shop.cart.ask.how": "Diambil sendiri atau diantar?",
-  "shop.cart.err.address": "Tandai lokasi di peta atau pakai lokasi saat ini (alamat minimal 10 karakter)",
+  "shop.cart.err.address": "Alamat belum lengkap. Tandai lokasi di peta, lalu tulis nama jalan dan nomor rumah (minimal 10 karakter).",
   "shop.cart.checkout": "Lanjut ke Pembayaran",
 
   "shop.pay.title": "Pembayaran",
-  "shop.pay.intro": "Buat kode QRIS untuk menyelesaikan pesanan dari keranjang Anda.",
+  "shop.pay.intro": "Kamu akan mendapat kode QRIS, yaitu kode QR yang bisa dipindai dari GoPay, OVO, DANA, atau aplikasi bank apa pun.",
   "shop.pay.consent.a": "Saya mengerti: kalau transfer lebih dari total pesanan, kelebihannya menjadi ",
   "shop.pay.consent.b": "donasi",
   "shop.pay.consent.c": " (tidak dikembalikan). Agar tidak lebih, transfer ",
@@ -83,7 +83,7 @@ export const id = {
   "shop.pay.cta": "Bayar via QRIS",
   "shop.pay.sending": "Memproses…",
   "shop.pay.error": "Gagal membuat pembayaran",
-  "shop.pay.human": "Verifikasi manusia",
+  "shop.pay.human": "Pastikan kamu bukan robot",
   "shop.pay.blocked": "Skrip verifikasi tak termuat. Matikan pemblokir iklan lalu muat ulang, atau coba browser lain.",
   "shop.pay.retryHistory": "Gagal membuat pembayaran. Bila pesanan sudah terbentuk, cek halaman Riwayat.",
 
@@ -172,7 +172,7 @@ export const en = {
   "shop.cart.checkout": "Continue to payment",
 
   "shop.pay.title": "Payment",
-  "shop.pay.intro": "Create a QRIS code to complete the order from your cart.",
+  "shop.pay.intro": "You'll get a QRIS code: a QR you can scan with GoPay, OVO, DANA or any banking app.",
   "shop.pay.consent.a": "I understand: if I transfer more than the order total, the extra becomes a ",
   "shop.pay.consent.b": "donation",
   "shop.pay.consent.c": " (non-refundable). To avoid that, transfer ",
@@ -191,7 +191,7 @@ export const en = {
   "shop.pay.cta": "Pay with QRIS",
   "shop.pay.sending": "Processing…",
   "shop.pay.error": "Couldn't create the payment",
-  "shop.pay.human": "Human verification",
+  "shop.pay.human": "Quick check: are you human?",
   "shop.pay.blocked": "Verification script didn't load. Turn off your ad blocker, reload, or try another browser.",
   "shop.pay.retryHistory": "Couldn't create the payment. If the order already went through, check the History page.",
 

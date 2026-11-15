@@ -19,6 +19,16 @@ describe("LandingPage", () => {
     expect(screen.queryByRole("link", { name: /jelajahi kategori/i })).toBeNull();
   });
 
+  it("langkah 'Cara pesan' tampil di bawah hero (3 langkah + catatan lacak)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [] }))));
+    render(<MemoryRouter><LandingPage /></MemoryRouter>);
+    const region = await screen.findByRole("region", { name: "Cara pesan" });
+    expect(region).toHaveTextContent("Pilih menu");
+    expect(region).toHaveTextContent("Bayar lewat QRIS");
+    expect(region).toHaveTextContent("Ambil sendiri atau diantar");
+    expect(region).toHaveTextContent(/Riwayat/);
+  });
+
   it("preferensi kosong -> kartu kebutuhan muncul di halaman (bukan modal)", async () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
       const u = String(url);

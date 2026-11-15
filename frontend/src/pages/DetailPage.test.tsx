@@ -20,6 +20,16 @@ describe("DetailPage", () => {
     expect(await screen.findByText("Produk tidak ditemukan")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Kembali ke Menu" })).toBeInTheDocument();
   });
+  it("alergen tampil sebelum tabel nutrisi, dan skip-link menunjuk ke konten utama", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "success", data: prod }))));
+    renderId("p1");
+    await screen.findByText("Salad");
+    const al = screen.getByRole("heading", { name: "Alergen" });
+    const nu = screen.getByRole("heading", { name: "Informasi nutrisi" });
+    expect(al.compareDocumentPosition(nu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Lewati ke konten" })).toHaveAttribute("href", "#main");
+    expect(document.querySelector("main#main")).not.toBeNull();
+  });
   it("tambah keranjang → success", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {

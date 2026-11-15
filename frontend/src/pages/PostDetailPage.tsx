@@ -38,7 +38,7 @@ export function PostDetailPage() {
     return (
       <div>
         <Header />
-        <main className="content"><div className="skeleton" aria-label={t("post.loading")} /></main>
+        <main id="main" tabIndex={-1} className="content"><div className="skeleton" aria-label={t("post.loading")} /></main>
         <Footer />
       </div>
     );
@@ -47,7 +47,7 @@ export function PostDetailPage() {
     return (
       <div>
         <Header />
-        <main className="content">
+        <main id="main" tabIndex={-1} className="content">
           <div className="state" role="alert">
             <h1>{t("post.notfound.title")}</h1>
             <Link className="btn-secondary" to="/funfact">{t("post.notfound.back")}</Link>
@@ -64,7 +64,7 @@ export function PostDetailPage() {
   return (
     <div>
       <Header />
-      <main className="content">
+      <main id="main" tabIndex={-1} className="content">
         <p><Link className="btn-link" to="/funfact">{t("post.back")}</Link></p>
         <div className="detail-grid">
           <div>

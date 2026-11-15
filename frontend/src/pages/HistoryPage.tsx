@@ -109,7 +109,7 @@ export function HistoryPage() {
   return (
     <div>
       <Header />
-      <main className="history-page">
+      <main id="main" tabIndex={-1} className="history-page">
         <h1>{t("orders.history.title")}</h1>
         <div className="filter-bar" role="group" aria-label={t("orders.history.filterLabel")}>
           {FILTERS.map((f) => (

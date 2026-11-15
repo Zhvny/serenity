@@ -286,3 +286,19 @@ img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4
 .cart-panel input[aria-invalid="true"], .cart-panel textarea[aria-invalid="true"] { outline: 3px solid var(--error, #b3261e); outline-offset: 1px; }
 
 .menu-count { margin: 10px 0 14px; font-size: 15px; opacity: 0.85; }
+
+/* ---------- Poles: lewati-ke-konten, hitungan menu, langkah pesan, petunjuk ---------- */
+.skip-link { position: absolute; left: 8px; top: -64px; z-index: 200; padding: 10px 14px; background: var(--primary); color: var(--on-primary, #fff); border: 2px solid currentColor; }
+.skip-link:focus { top: 8px; }
+main:focus { outline: none; }
+.menu-count { box-sizing: border-box; max-width: var(--page-max); margin-inline: auto; padding-inline: var(--gutter); }
+.price-tag-text { font-size: 12px; }
+@media (max-width: 640px) { .price-tag-text { font-size: 12px; } }
+
+.how { box-sizing: border-box; max-width: var(--page-max); margin: 0 auto; padding: 8px var(--gutter) 4px; text-align: center; }
+.how-title { margin: 0 0 12px; font-size: 20px; }
+.how-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: center; }
+.how-steps li { display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.how-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border: var(--bw) solid currentColor; background: var(--butter, #f6d27a); color: #3b2a24; font-weight: 700; }
+.how-note { margin: 10px 0 0; font-size: 15px; opacity: 0.85; }
+.need-hint { margin: 6px 0 0; font-size: 15px; opacity: 0.85; }

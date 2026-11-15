@@ -12,7 +12,7 @@ export function NotFoundPage() {
   return (
     <div>
       <Header />
-      <main className="pay-wrap">
+      <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card">
           <Sprite sprite={TOAST_BURNT} className="mascot" />
           <h1>{t("orders.notfound.title")}</h1>

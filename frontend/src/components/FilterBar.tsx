@@ -1,6 +1,6 @@
 import { useT } from "../i18n/t.ts";
 import { useLang } from "../i18n/useLang.ts";
-import { categoryLabel } from "../i18n/content.ts";
+import { categoryLabel, tagLabel } from "../i18n/content.ts";
 
 export type Filter = { kind: "all" } | { kind: "category"; id: string } | { kind: "tag"; tag: string };
 export function FilterBar({ categories, value, onChange }: { categories: { id: string; name: string }[]; value: Filter; onChange: (f: Filter) => void }) {
@@ -14,7 +14,7 @@ export function FilterBar({ categories, value, onChange }: { categories: { id: s
     <div className="filter-bar" role="toolbar" aria-label={t("menu.filter.label")}>
       {chip(t("menu.filter.all"), value.kind === "all", () => onChange({ kind: "all" }))}
       {categories.map((c) => chip(categoryLabel(c, lang), value.kind === "category" && value.id === c.id, () => onChange({ kind: "category", id: c.id })))}
-      {tags.map((tg) => chip(tg, value.kind === "tag" && value.tag === tg.toLowerCase(), () => onChange({ kind: "tag", tag: tg.toLowerCase() })))}
+      {tags.map((tg) => chip(tagLabel(tg, lang), value.kind === "tag" && value.tag === tg.toLowerCase(), () => onChange({ kind: "tag", tag: tg.toLowerCase() })))}
     </div>
   );
 }

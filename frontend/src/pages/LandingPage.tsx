@@ -86,7 +86,7 @@ export function LandingPage() {
   return (
     <div>
       <Header />
-      <main>
+      <main id="main" tabIndex={-1}>
         <Bunting />
         <section className={`hero reveal${shown ? " is-in" : ""}`}>
           <div className="hero-copy">
@@ -105,10 +105,18 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+        <section className="how" aria-label={t("landing.how.title")}>
+          <h2 className="how-title">{t("landing.how.title")}</h2>
+          <ol className="how-steps">
+            <li><span className="how-num" aria-hidden="true">1</span>{t("landing.how.1")}</li>
+            <li><span className="how-num" aria-hidden="true">2</span>{t("landing.how.2")}</li>
+            <li><span className="how-num" aria-hidden="true">3</span>{t("landing.how.3")}</li>
+          </ol>
+          <p className="how-note">{t("landing.how.note")}</p>
+        </section>
         {featured.length > 0 ? (
           <section className="section section--boxed" aria-label={t("landing.featured.title")}>
             <div className="section-head">
-              <span className="eyebrow">{t("landing.featured.eyebrow")}</span>
               <h2>{t("landing.featured.title")}</h2>
             </div>
             <div className="facts-grid">
@@ -131,6 +139,7 @@ export function LandingPage() {
                   </label>
                 ))}
               </div>
+              {draft.length === 0 ? <p className="need-hint">{t("landing.need.hint")}</p> : null}
               <div className="need-popup-actions">
                 <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>{t("landing.need.simpan")}</button>
                 <button type="button" onClick={() => setShowNeed(false)}>{t("landing.need.lewati")}</button>

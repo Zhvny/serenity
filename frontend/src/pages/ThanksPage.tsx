@@ -73,14 +73,14 @@ export function ThanksPage() {
 
   if (state === "loading") {
     return (
-      <div><Header /><main className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.thanks.loading")} /></div></main></div>
+      <div><Header /><main id="main" tabIndex={-1} className="pay-wrap"><div className="pay-card"><div className="skeleton" aria-label={t("orders.thanks.loading")} /></div></main></div>
     );
   }
   if (state === "notfound" || data === null) {
     return (
       <div>
         <Header />
-        <main className="pay-wrap">
+        <main id="main" tabIndex={-1} className="pay-wrap">
           <div className="pay-card" role="alert">
             <span className="pay-icon pay-icon--warn"><Icon name="warning" /></span>
             <h1>{t("orders.common.notFoundTitle")}</h1>
@@ -121,7 +121,7 @@ export function ThanksPage() {
   return (
     <div>
       <Header />
-      <main className="pay-wrap">
+      <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card">
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>

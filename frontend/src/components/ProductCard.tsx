@@ -6,7 +6,7 @@ import { Sprite } from "../pixel/Sprite.tsx";
 import { PRICE_TAG } from "../pixel/data/signs.ts";
 import { useLang } from "../i18n/useLang.ts";
 import { useT } from "../i18n/t.ts";
-import { pickContent } from "../i18n/content.ts";
+import { pickContent, tagLabel } from "../i18n/content.ts";
 
 export function ProductCard({ product }: { product: Product }) {
   const [lang] = useLang();
@@ -25,7 +25,7 @@ export function ProductCard({ product }: { product: Product }) {
       <p className="price">{rupiah(product.price)}</p>
       <div className="tags">
         {product.tags.map((t) => (
-          <span key={t} className="tag">{t}</span>
+          <span key={t} className="tag">{tagLabel(t, lang)}</span>
         ))}
       </div>
     </Link>

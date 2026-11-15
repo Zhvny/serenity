@@ -14,7 +14,7 @@ describe("ProductCard", () => {
     const { container } = render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
     expect(screen.getByText("Salad Quinoa")).toBeInTheDocument();
     expect(screen.getByText("Rp 45.000")).toBeInTheDocument();
-    expect(screen.getByText("high-protein")).toBeInTheDocument();
+    expect(screen.getByText("Tinggi protein")).toBeInTheDocument();
     // Tag gantung: kalori, bukan harga ganda (aria-hidden, garnish visual).
     expect(container.querySelector(".price-tag-text")?.textContent).toBe("320 kkal");
   });
@@ -36,7 +36,7 @@ describe("ProductCard", () => {
     setLang("en");
     render(<MemoryRouter><ProductCard product={product} /></MemoryRouter>);
     expect(screen.getByRole("img", { name: "No image for now" })).toBeInTheDocument();
-    expect(screen.getByText("high-protein")).toBeInTheDocument();
+    expect(screen.getByText("High protein")).toBeInTheDocument();
     expect(screen.getByText("Rp 45.000")).toBeInTheDocument();
   });
 });

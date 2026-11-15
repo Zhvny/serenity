@@ -42,6 +42,7 @@ export function Header({ categories = [] }: { categories?: Pick<Category, "id" |
 
   return (
     <header className="site-header">
+      <a className="skip-link" href="#main">{t("shell.skip")}</a>
       <Link to="/" className="logo"><Sprite sprite={LOGO_MARK} /> <span className="logo-text">Serenity</span></Link>
       <nav aria-label={t("shell.nav.categories")}>
         {Array.isArray(categories) && categories.length > 0 ? null : <Link to="/menu#menu">{t("shell.footer.menu")}</Link>}
