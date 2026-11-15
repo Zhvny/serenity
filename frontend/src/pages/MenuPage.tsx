@@ -183,11 +183,14 @@ export function MenuPage() {
               </button>
             </div>
           ) : (
+            <>
+            <p className="menu-count" role="status">{t("menu.count", { n: prods.length })}</p>
             <div className="grid-menu">
               {prods.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
+            </>
           )}
         </section>
       </main>

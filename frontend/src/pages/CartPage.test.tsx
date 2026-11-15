@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { CartPage } from "./CartPage.tsx";
@@ -206,6 +206,41 @@ describe("CartPage", () => {
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("minimal 10 karakter");
     expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+});
+
+describe("CartPage form (pertanyaan & galat inline)", () => {
+  it("pertanyaan jelas tampil di atas pilihan waktu & cara terima", async () => {
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    expect(screen.getByText("Kapan pesananmu disiapkan?")).toBeInTheDocument();
+    expect(screen.getByText("Diambil sendiri atau diantar?")).toBeInTheDocument();
+  });
+  it("terjadwal tanpa tanggal -> galat di bawah kolom tanggal, kolom ditandai & fokus", async () => {
+    const user = userEvent.setup();
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Terjadwal" }));
+    await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pilih tanggal dulu");
+    const input = screen.getByLabelText("Tanggal");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveFocus();
+    expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+  it("tanggal yang sudah lewat -> pesan khusus, dan galat hilang saat tanggal diganti", async () => {
+    const user = userEvent.setup();
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Terjadwal" }));
+    fireEvent.change(screen.getByLabelText("Tanggal"), { target: { value: "2020-01-01" } });
+    await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("sudah lewat");
+    fireEvent.change(screen.getByLabelText("Tanggal"), { target: { value: "2099-01-01" } });
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 

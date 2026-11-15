@@ -278,3 +278,11 @@ img.fact-photo { display: block; background: var(--canvas-soft); aspect-ratio: 4
 .pay-links > * { min-height: 44px; }
 .pay-hint { margin: 8px 0 0; font-size: 15px; opacity: 0.85; }
 .status-badge + .pay-note { margin-top: 8px; }
+
+/* ---------- Form keranjang: pertanyaan jelas + galat tepat di kolomnya ---------- */
+.cart-field-label { margin: 14px 0 6px; font-weight: 700; }
+.field-error { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; padding: 8px 10px; border: 2px solid var(--error, #b3261e); background: color-mix(in srgb, var(--error, #b3261e) 12%, transparent); color: var(--error, #b3261e); font-size: 15px; }
+[data-theme="dark"] .field-error { color: #ffb4a8; border-color: #ffb4a8; }
+.cart-panel input[aria-invalid="true"], .cart-panel textarea[aria-invalid="true"] { outline: 3px solid var(--error, #b3261e); outline-offset: 1px; }
+
+.menu-count { margin: 10px 0 14px; font-size: 15px; opacity: 0.85; }

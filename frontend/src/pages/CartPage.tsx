@@ -170,15 +170,25 @@ export function CartPage() {
     }
   }
 
+  // Bawa pengguna ke kolom yang salah (kesalahan tampil tepat di bawahnya).
+  function focusField(id: string): void {
+    const el = document.getElementById(id);
+    if (el === null) return;
+    if (typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "center" });
+    el.focus({ preventScroll: true });
+  }
+
   async function handleCheckout(): Promise<void> {
     if (mode === "scheduled") {
       if (date === "" || date < minDate) {
-        setFormError("shop.cart.err.date");
+        setFormError(date === "" ? "shop.cart.err.date" : "shop.cart.err.datePast");
+        focusField("sched-date");
         return;
       }
     }
     if (delivery === "delivery" && address.trim().length < 10) {
       setFormError("shop.cart.err.address");
+      focusField("delivery-address");
       return;
     }
     setFormError("");
@@ -238,6 +248,7 @@ export function CartPage() {
               </div>
               <div className="cart-panel">
                 <h2 className="cart-panel-title">{t("shop.cart.when.title")}</h2>
+                <p className="cart-field-label" id="cart-ask-when">{t("shop.cart.ask.when")}</p>
                 <div className="chip-group" role="group" aria-label={t("shop.cart.mode.label")}>
                   <button type="button" className={mode === "instant" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "instant"} onClick={() => setMode("instant")}>{t("shop.cart.mode.instant")}</button>
                   <button type="button" className={mode === "scheduled" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={mode === "scheduled"} onClick={() => setMode("scheduled")}>{t("shop.cart.mode.scheduled")}</button>
@@ -245,7 +256,8 @@ export function CartPage() {
                 {mode === "scheduled" ? (
                   <div>
                     <label htmlFor="sched-date">{t("shop.cart.date")}</label>
-                    <input id="sched-date" type="date" min={minDate} value={date} onChange={(e) => setDate(e.target.value)} />
+                    <input id="sched-date" type="date" min={minDate} value={date} aria-invalid={formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast"} aria-describedby={formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" ? "form-err" : undefined} onChange={(e) => { setDate(e.target.value); setFormError(""); }} />
+                    {formError === "shop.cart.err.date" || formError === "shop.cart.err.datePast" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
                     <div className="chip-group" role="group" aria-label={t("shop.cart.slot.label")}>
                       {SLOTS.map((s) => (
                         <button key={s} type="button" className={slot === s ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={slot === s} onClick={() => setSlot(s)}>{slotLabel(s, lang)}</button>
@@ -253,6 +265,7 @@ export function CartPage() {
                     </div>
                   </div>
                 ) : null}
+                <p className="cart-field-label" id="cart-ask-how">{t("shop.cart.ask.how")}</p>
                 <div className="chip-group" role="group" aria-label={t("shop.cart.method.label")}>
                   <button type="button" className={delivery === "pickup" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "pickup"} onClick={() => setDelivery("pickup")}>{t("shop.cart.method.pickup")}</button>
                   <button type="button" className={delivery === "delivery" ? "chip-toggle chip-toggle--active" : "chip-toggle"} aria-pressed={delivery === "delivery"} onClick={() => setDelivery("delivery")}>{t("shop.cart.method.delivery")}</button>
@@ -260,12 +273,13 @@ export function CartPage() {
                 {delivery === "delivery" ? (
                   <div>
                     <label htmlFor="delivery-address">{t("shop.cart.address.label")}</label>
+                    <p className="cart-opt-note">{t("shop.cart.address.hint")}</p>
                     <LocationPicker value={coords} onChange={(v, addr) => { setCoords(v); if (addr !== null) setAddress(addr); }} />
-                    <textarea id="delivery-address" maxLength={500} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("shop.cart.address.placeholder")} />
+                    <textarea id="delivery-address" maxLength={500} value={address} aria-invalid={formError === "shop.cart.err.address"} aria-describedby={formError === "shop.cart.err.address" ? "form-err" : undefined} onChange={(e) => { setAddress(e.target.value); setFormError(""); }} placeholder={t("shop.cart.address.placeholder")} />
+                    {formError === "shop.cart.err.address" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
                     <p className="cart-opt-note"><Icon name="warning" /> {t("shop.cart.address.note")}</p>
                   </div>
                 ) : null}
-                {formError !== "" ? <p role="alert">{t(formError)}</p> : null}
                 <button type="button" className="btn-primary btn-lg cart-checkout" disabled={checkout === "sending"} onClick={() => void handleCheckout()}>{t("shop.cart.checkout")} <Icon name="arrow-right" /></button>
                 {checkout === "fail" ? (
                   <div role="alert">
