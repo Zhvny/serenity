@@ -13,6 +13,16 @@ function mockOk() {
   vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify({ status: "success", data: String(url).includes("/categories") ? cats : prods }))));
 }
 
+describe("MenuPage chip kategori tanpa lompatan", () => {
+  it("chip kategori sudah tampil sebelum data server tiba (fetch masih menggantung)", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => { /* tak pernah selesai */ })));
+    render(<MemoryRouter><MenuPage /></MemoryRouter>);
+    expect(screen.getAllByRole("button", { name: "Dessert Sehat" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("button", { name: "Makanan Sehat" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("button", { name: "Minuman Sehat" }).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe("MenuPage", () => {
   it("error backend → pesan + Coba lagi", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ status: "error", code: "X", message: "Rusak" }), { status: 500 })));

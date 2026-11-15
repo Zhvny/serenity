@@ -167,7 +167,7 @@ export function CheckoutPage() {
       <Header />
       <main id="main" tabIndex={-1} className="pay-wrap">
         <div className="pay-card">
-          <span className="pay-icon"><Icon name="spark" /></span>
+          <span className="pay-icon"><Icon name="qr" /></span>
           <h1>{t("shop.pay.title")}</h1>
           {emptyCart ? (
             <div className="state" role="status">

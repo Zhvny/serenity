@@ -23,6 +23,14 @@ import type { DictKey } from "../i18n/t.ts";
 // Kunci kutipan; dipilih sekali, diterjemahkan saat render.
 const HERO_QUOTES: readonly DictKey[] = ["menu.hero.quote1", "menu.hero.quote2", "menu.hero.quote3", "menu.hero.quote4", "menu.hero.quote5"];
 
+// Kategori tetap ditampilkan segera (id-nya baku) agar deretan chip & nav header tak melompat saat data tiba;
+// daftar dari server menggantikannya setelah dimuat.
+const DEFAULT_CATS: Category[] = [
+  { id: "cat_dessert", name: "Dessert Sehat", description: null },
+  { id: "cat_food", name: "Makanan Sehat", description: null },
+  { id: "cat_drink", name: "Minuman Sehat", description: null },
+];
+
 export function MenuPage() {
   const t = useT();
   usePageTitle(t("shell.footer.menu"));
@@ -31,7 +39,7 @@ export function MenuPage() {
     const c = searchParams.get("category");
     return c === null ? { kind: "all" } : { kind: "category", id: c };
   });
-  const [cats, setCats] = useState<Category[]>([]);
+  const [cats, setCats] = useState<Category[]>(DEFAULT_CATS);
   const [prods, setProds] = useState<Product[]>([]);
   const [state, setState] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

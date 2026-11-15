@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ApiError, addToCart, checkoutCart, getCart, getProducts, removeCartItem, updateCartItem } from "../services/api.ts";
 import type { CartItem, Product } from "../services/api.ts";
 import { Header } from "../components/Header.tsx";
@@ -289,6 +289,7 @@ export function CartPage() {
                   <CartRow key={i.item_id} item={i} product={byId.get(i.product_id)} onQty={(q) => void handleQty(i, q)} onRemove={() => void handleRemove(i)} />
                 ))}
               </ul>
+              <p className="cart-more"><Link className="btn-link" to="/menu#menu">{t("shop.cart.more")}</Link></p>
             </div>
             <aside className="cart-aside">
               <div className="cart-panel">

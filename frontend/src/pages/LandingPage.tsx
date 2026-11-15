@@ -150,7 +150,6 @@ export function LandingPage() {
         {recs.length > 0 ? (
           <section className="section section--boxed" aria-label={t("landing.recs.title")}>
             <div className="section-head">
-              <span className="eyebrow">{t("landing.recs.eyebrow")}</span>
               <h2>{t("landing.recs.title")}</h2>
             </div>
             <div className="facts-grid">
@@ -163,7 +162,6 @@ export function LandingPage() {
         {trending.length > 0 ? (
           <section className="section section--boxed" aria-label={t("landing.reading.title")}>
             <div className="section-head">
-              <span className="eyebrow">{t("landing.reading.eyebrow")}</span>
               <h2>{t("landing.reading.title")}</h2>
             </div>
             <div className="facts-grid">

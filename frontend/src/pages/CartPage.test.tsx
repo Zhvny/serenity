@@ -210,6 +210,15 @@ describe("CartPage", () => {
   });
 });
 
+describe("CartPage lanjut belanja", () => {
+  it("tautan 'Tambah menu lagi' menuju daftar makanan", async () => {
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    expect(screen.getByRole("link", { name: "+ Tambah menu lagi" })).toHaveAttribute("href", "/menu#menu");
+  });
+});
+
 describe("CartPage undo hapus", () => {
   it("Hapus -> pesan 'dihapus' + Urungkan menambah lagi item (produk, jumlah, catatan sama)", async () => {
     const user = userEvent.setup();

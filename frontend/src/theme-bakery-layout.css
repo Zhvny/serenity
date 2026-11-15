@@ -373,3 +373,14 @@ html, body { overflow-x: clip; } /* jaring pengaman: tak pernah ada gulir sampin
 
 .undo-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 0 0 14px; padding: 10px 14px; border: 2px solid currentColor; background: var(--surface); }
 .undo-btn { font: inherit; font-weight: 700; color: inherit; text-decoration: underline wavy 1px; text-underline-offset: 4px; background: none; border: 0; cursor: pointer; padding: 8px 4px; min-height: 44px; }
+
+/* ---------- Poles 3: kartu sama tinggi, keranjang, tombol bayar menempel di ponsel ---------- */
+.facts-grid { align-items: stretch; }
+.cart-more { margin: 14px 0 0; }
+.cart-more .btn-link { display: inline-block; padding: 10px 0; font-size: 17px; }
+@media (max-width: 640px) {
+  .cart-checkout { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 0 0 var(--bw) var(--canvas); }
+}
+.facts-grid > div { display: flex; }
+.facts-grid > div > .fact-card { flex: 1; }
+.cart-more { padding-left: 18px; }
