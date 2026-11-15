@@ -5,6 +5,8 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
+import { OrderStepper } from "../components/OrderStepper.tsx";
+import { STATUS_LABEL, fulfilIndex } from "../utils/orderFlow.ts";
 import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
@@ -23,7 +25,15 @@ function QrImage({ src, alt }: { src: string; alt: string }) {
       </div>
     );
   }
-  return <img className="qris-img" src={url} alt={alt} onError={() => setFailed(true)} />;
+  return (
+    <>
+      <img className="qris-img" src={url} alt={alt} onError={() => setFailed(true)} />
+      <p className="qr-save">
+        <a className="btn-secondary" href={url} target="_blank" rel="noopener noreferrer" download>{t("orders.thanks.saveQr")}</a>
+      </p>
+      <p className="pay-note qr-hint">{t("orders.thanks.saveQrHint")}</p>
+    </>
+  );
 }
 
 const POLL_MS = 5000;
@@ -59,7 +69,7 @@ export function ThanksPage() {
         setConnIssue(false);
         setState("done");
         // Hentikan polling pada status final / batas maksimum (hindari spam BE).
-        if (d.status === "paid" || d.status === "cancelled" || polls.current >= MAX_POLLS) {
+        if (d.status === "done" || d.status === "cancelled" || d.status === "expired" || polls.current >= MAX_POLLS) {
           if (timer !== null) clearInterval(timer);
         }
       } catch (e: unknown) {
@@ -103,7 +113,7 @@ export function ThanksPage() {
       </div>
     );
   }
-  const paid = data.status === "paid";
+  const paid = fulfilIndex(data.status) >= 0;
   const underpaid = data.status === "underpaid";
   const sisa = data.paid_amount === null || data.paid_amount === undefined ? null : data.nominal - data.paid_amount;
 
@@ -139,7 +149,8 @@ export function ThanksPage() {
           <p className="pay-nominal">{t("orders.thanks.payExactly")} <strong>{rupiah(data.nominal)}</strong></p>
           {paid ? (
             <>
-              <p className="status-badge status-badge--ok">{t("orders.status.paid")}</p>
+              <p className="status-badge status-badge--ok">{t(STATUS_LABEL[data.status] ?? "orders.status.paid")}</p>
+              <OrderStepper status={data.status} />
               <p className="pay-note">{t("orders.thanks.thanksNote")}</p>
             </>
           ) : underpaid && sisa !== null && sisa > 0 ? (

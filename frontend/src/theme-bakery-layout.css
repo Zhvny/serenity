@@ -317,3 +317,19 @@ main:focus { outline: none; }
 @media (max-width: 520px) {
   .how-steps { display: grid; justify-content: center; gap: 10px; text-align: left; }
 }
+
+/* ---------- Stepper tahap pesanan (pixel) ---------- */
+.stepper { list-style: none; display: flex; margin: 18px 0 10px; padding: 0; }
+.stepper li { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 14px; }
+.stepper li::before { content: ""; position: absolute; top: 13px; left: -50%; width: 100%; height: 4px; background: currentColor; opacity: 0.22; }
+.stepper li:first-child::before { display: none; }
+.stepper li.is-done::before, .stepper li.is-current::before { opacity: 1; background: var(--primary); }
+.step-dot { position: relative; z-index: 1; box-sizing: border-box; display: grid; place-items: center; width: 30px; height: 30px; border: var(--bw) solid currentColor; background: var(--canvas); font-weight: 700; font-size: 15px; }
+.stepper li.is-done .step-dot { background: var(--primary); color: var(--on-primary, #fff); }
+.stepper li.is-current .step-dot { background: var(--butter, #f6d27a); color: #3b2a24; animation: step-pulse 1.1s steps(2) infinite; }
+.stepper li.is-todo { opacity: 0.7; }
+.stepper li.is-current .step-label { font-weight: 700; }
+@keyframes step-pulse { 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .stepper li.is-current .step-dot { animation: none; } }
+.qr-save { margin: 8px 0 0; }
+.qr-hint { margin-top: 6px; }

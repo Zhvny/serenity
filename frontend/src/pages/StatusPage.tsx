@@ -9,8 +9,11 @@ import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
-import { PAPER_BAG_OPEN, SHOP_BELL, CASH_REGISTER } from "../pixel/data/bakeryB.ts";
+import { PAPER_BAG_OPEN, SHOP_BELL, CASH_REGISTER, OVEN } from "../pixel/data/bakeryB.ts";
 import { TOAST_BURNT } from "../pixel/data/mascot2.ts";
+import { CAT_HEAD } from "../pixel/data/mascot.ts";
+import { OrderStepper } from "../components/OrderStepper.tsx";
+import { STATUS_LABEL, fulfilIndex } from "../utils/orderFlow.ts";
 
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
@@ -40,7 +43,7 @@ export function StatusPage() {
         setData(d);
         setState("done");
         // Berhenti polling pada status final atau batas maksimum.
-        if (d.status === "paid" || d.status === "cancelled" || polls.current >= MAX_POLLS) {
+        if (d.status === "done" || d.status === "cancelled" || d.status === "expired" || polls.current >= MAX_POLLS) {
           if (timer !== null) clearInterval(timer);
         }
       } catch (e: unknown) {
@@ -95,13 +98,13 @@ export function StatusPage() {
     );
   }
   const status = data?.status ?? "";
-  const paid = status === "paid";
+  const paid = fulfilIndex(status) >= 0;
   const underpaid = status === "underpaid";
   const sisa = data?.paid_amount === null || data?.paid_amount === undefined || data === null ? null : data.nominal - data.paid_amount;
-  const label = paid ? t("orders.status.paidFull") : status === "cancelled" ? t("orders.status.cancelled") : underpaid ? t("orders.status.underpaid") : t("orders.status.pending");
+  const label = t(STATUS_LABEL[status] ?? "orders.status.pending");
   // Ilustrasi status: kantong terbuka (lunas), kasir (kurang bayar), roti gosong (batal), lonceng (menunggu).
-  const explain: DictKey = paid ? "orders.status.explain.paid" : status === "cancelled" ? "orders.status.explain.cancelled" : status === "expired" ? "orders.status.explain.expired" : underpaid ? "orders.status.explain.underpaid" : "orders.status.explain.pending";
-  const stageSprite = paid ? PAPER_BAG_OPEN : status === "cancelled" ? TOAST_BURNT : underpaid ? CASH_REGISTER : SHOP_BELL;
+  const explain: DictKey = status === "preparing" ? "orders.status.explain.preparing" : status === "ready" ? "orders.status.explain.ready" : status === "done" ? "orders.status.explain.done" : paid ? "orders.status.explain.paid" : status === "cancelled" ? "orders.status.explain.cancelled" : status === "expired" ? "orders.status.explain.expired" : underpaid ? "orders.status.explain.underpaid" : "orders.status.explain.pending";
+  const stageSprite = status === "preparing" ? OVEN : status === "done" ? CAT_HEAD : paid ? PAPER_BAG_OPEN : status === "cancelled" || status === "expired" ? TOAST_BURNT : underpaid ? CASH_REGISTER : SHOP_BELL;
 
   async function handleTopup(): Promise<void> {
     setTopupBusy(true);
@@ -125,6 +128,7 @@ export function StatusPage() {
           <h1>{t("orders.status.title")}</h1>
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
+          <OrderStepper status={status} />
           <p className="pay-note">{t(explain)}</p>
           {status === "pending_payment" ? <Link className="btn-primary" to={`/thanks?ref=${encodeURIComponent(ref)}`}>{t("orders.status.payNow")}</Link> : null}
           {underpaid && sisa !== null && sisa > 0 ? (

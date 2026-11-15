@@ -17,7 +17,7 @@ describe("StatusPage polling", () => {
         <Routes><Route path="/status/:code" element={<StatusPage />} /></Routes>
       </MemoryRouter>,
     );
-    expect(await screen.findByText(/dibayar|lunas/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/dibayar|lunas/i)).length).toBeGreaterThanOrEqual(1);
   });
 
   it("menunggu pembayaran -> penjelasan + tombol Bayar sekarang ke halaman QR", async () => {
@@ -26,6 +26,29 @@ describe("StatusPage polling", () => {
     expect(await screen.findByText(/status berubah sendiri/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bayar sekarang" })).toHaveAttribute("href", "/thanks?ref=ORD-1");
     expect(screen.getByRole("link", { name: "Riwayat pesanan" })).toHaveAttribute("href", "/riwayat");
+  });
+  it("sedang disiapkan -> stepper tahap 'Disiapkan' aktif (bukan 'Menunggu pembayaran')", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-1", nominal: 1000, qr_url: null, status: "preparing" } })));
+    render(<MemoryRouter initialEntries={["/status/ORD-1"]}><Routes><Route path="/status/:code" element={<StatusPage />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText("Sedang disiapkan")).toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "Tahap pesanan" });
+    const current = list.querySelector('[aria-current="step"]');
+    expect(current).toHaveTextContent("Disiapkan");
+    expect(list.querySelectorAll("li.is-done")).toHaveLength(1);
+    expect(screen.queryByText("Menunggu pembayaran")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Bayar sekarang" })).toBeNull();
+  });
+  it("kedaluwarsa -> label kedaluwarsa, tanpa stepper", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-1", nominal: 1000, qr_url: null, status: "expired" } })));
+    render(<MemoryRouter initialEntries={["/status/ORD-1"]}><Routes><Route path="/status/:code" element={<StatusPage />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText("Kedaluwarsa")).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Tahap pesanan" })).toBeNull();
+  });
+  it("menunggu pembayaran -> tanpa stepper", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-1", nominal: 1000, qr_url: "q", status: "pending_payment" } })));
+    render(<MemoryRouter initialEntries={["/status/ORD-1"]}><Routes><Route path="/status/:code" element={<StatusPage />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText("Menunggu pembayaran")).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Tahap pesanan" })).toBeNull();
   });
   it("ref/code tidak ada order -> 404 tidak ditemukan", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
