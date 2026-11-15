@@ -12,7 +12,7 @@ describe("Footer", () => {
         <Footer />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "Menu" })).toHaveAttribute("href", "/menu");
+    expect(screen.getByRole("link", { name: "Menu" })).toHaveAttribute("href", "/menu#menu");
     expect(screen.getByRole("link", { name: "Keranjang" })).toHaveAttribute("href", "/cart");
     expect(screen.queryByRole("navigation", { name: "Kategori" })).toBeNull();
   });

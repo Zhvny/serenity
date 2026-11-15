@@ -21,7 +21,7 @@ export function Footer() {
         </div>
         <nav className="footer-col" aria-label={t("shell.footer.links")}>
           <h3>{t("shell.footer.explore")}</h3>
-          <Link to="/menu">{t("shell.footer.menu")}</Link>
+          <Link to="/menu#menu">{t("shell.footer.menu")}</Link>
           <Link to="/funfact">{t("shell.footer.funfact")}</Link>
           <Link to="/riwayat">{t("shell.nav.history")}</Link>
           <Link to="/cart">{t("shell.nav.cart")}</Link>

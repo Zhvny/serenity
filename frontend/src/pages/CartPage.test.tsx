@@ -6,6 +6,7 @@ import { CartPage } from "./CartPage.tsx";
 import { setLang } from "../i18n/store.ts";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
+afterEach(() => { window.sessionStorage.clear(); });
 
 const p1 = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
 const p2 = { id: "p2", name: "Jus", category_id: "cat_drink", price: 20000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
@@ -241,6 +242,34 @@ describe("CartPage form (pertanyaan & galat inline)", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("sudah lewat");
     fireEvent.change(screen.getByLabelText("Tanggal"), { target: { value: "2099-01-01" } });
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("CartPage form persistence", () => {
+  it("pilihan Diantar + alamat diingat setelah halaman dibuka ulang (tombol Kembali)", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    stubCart();
+    const first = render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Diantar" }));
+    await user.type(screen.getByLabelText("Alamat pengiriman"), "Jl. Mawar No. 5 dekat pos satpam");
+    first.unmount();
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    expect(screen.getByRole("button", { name: "Diantar" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Alamat pengiriman")).toHaveValue("Jl. Mawar No. 5 dekat pos satpam");
+    window.sessionStorage.clear();
+  });
+  it("data tersimpan rusak/kedaluwarsa diabaikan (tanggal lewat tidak dipakai)", async () => {
+    window.sessionStorage.setItem("serenity-cart-form", JSON.stringify({ mode: "scheduled", date: "2020-01-01", delivery: "bukan-valid" }));
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    expect(screen.getByLabelText("Tanggal")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Ambil sendiri" })).toHaveAttribute("aria-pressed", "true");
+    window.sessionStorage.clear();
   });
 });
 

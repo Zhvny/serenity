@@ -29,6 +29,19 @@ function slotLabel(slot: string, lang: Lang): string {
   return new Date(2000, 0, 1, h ?? 0, m ?? 0).toLocaleTimeString(localeOf(lang), { hour: "numeric", minute: "2-digit" });
 }
 
+const FORM_KEY = "serenity-cart-form";
+type SavedForm = { mode?: "instant" | "scheduled"; date?: string; slot?: string; delivery?: "pickup" | "delivery"; address?: string; coords?: LatLng | null };
+
+// Pilihan waktu & pengambilan diingat selama sesi tab, agar tombol Kembali dari pembayaran tak menghapusnya.
+function loadForm(): SavedForm {
+  try {
+    const raw = window.sessionStorage.getItem(FORM_KEY);
+    return raw === null ? {} : (JSON.parse(raw) as SavedForm);
+  } catch {
+    return {};
+  }
+}
+
 const MAX_SCHEDULE_DAYS = 60; // jadwal paling jauh yang masuk akal untuk pre-order
 
 function dayISO(offset: number): string {
@@ -113,12 +126,19 @@ export function CartPage() {
   const [state, setState] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-  const [mode, setMode] = useState<"instant" | "scheduled">("instant");
-  const [date, setDate] = useState("");
-  const [slot, setSlot] = useState("12:00");
-  const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
-  const [address, setAddress] = useState("");
-  const [coords, setCoords] = useState<LatLng | null>(null);
+  const [saved] = useState<SavedForm>(loadForm);
+  const [mode, setMode] = useState<"instant" | "scheduled">(saved.mode === "scheduled" ? "scheduled" : "instant");
+  const [date, setDate] = useState(typeof saved.date === "string" && saved.date >= dayISO(1) && saved.date <= dayISO(MAX_SCHEDULE_DAYS) ? saved.date : "");
+  const [slot, setSlot] = useState(typeof saved.slot === "string" && SLOTS.includes(saved.slot) ? saved.slot : "12:00");
+  const [delivery, setDelivery] = useState<"pickup" | "delivery">(saved.delivery === "delivery" ? "delivery" : "pickup");
+  const [address, setAddress] = useState(typeof saved.address === "string" ? saved.address.slice(0, 500) : "");
+  const [coords, setCoords] = useState<LatLng | null>(saved.coords !== undefined && saved.coords !== null && Number.isFinite(saved.coords.lat) && Number.isFinite(saved.coords.lng) ? saved.coords : null);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(FORM_KEY, JSON.stringify({ mode, date, slot, delivery, address, coords } satisfies SavedForm));
+    } catch { /* penyimpanan tak tersedia: abaikan */ }
+  }, [mode, date, slot, delivery, address, coords]);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState<DictKey | "">("");

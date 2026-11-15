@@ -45,7 +45,7 @@ describe("CheckoutPage", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     expect(screen.getByRole("heading", { name: /keranjang kosong/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /bayar/i })).toBeNull();
-    expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu");
+    expect(screen.getByRole("link", { name: /lihat menu/i })).toHaveAttribute("href", "/menu#menu");
   });
   it("angka detik berdetak tiap detik sampai checkbox aktif", async () => {
     vi.stubGlobal("fetch", withCart(async () => resp({ status: "success", data: [] })));

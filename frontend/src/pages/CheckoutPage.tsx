@@ -173,7 +173,7 @@ export function CheckoutPage() {
             <div className="state" role="status">
               <h2>{t("shop.cart.empty.title")}</h2>
               <p>{t("shop.pay.emptyHint")}</p>
-              <Link className="btn-primary" to="/menu">{t("shop.pay.toMenu")}</Link>
+              <Link className="btn-primary" to="/menu#menu">{t("shop.pay.toMenu")}</Link>
             </div>
           ) : (<>
           <p>{t("shop.pay.intro")}</p>
