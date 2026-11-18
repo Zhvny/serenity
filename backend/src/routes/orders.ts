@@ -14,10 +14,10 @@ export function orderRoutes(pool: Pool): Hono {
   // Catatan: POST /orders (legacy, tanpa Turnstile/throttle) DIHAPUS.
   // Satu-satunya jalur create: POST /orders/generate-code (checkout + Turnstile).
   r.get("/orders/mine", async (c) => {
-    // Terikat sesi (ADR-0001); tanpa cookie -> 404 seragam. Daftarkan SEBELUM /:order_id.
+    // Terikat sesi (ADR-0001); tanpa cookie/x-cart-id -> kembalikan [] (bukan 404). Daftarkan SEBELUM /:order_id.
     const cartId = cartIdOf(c);
     if (cartId === undefined) {
-      return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
+      return c.json({ status: "success", data: [] });
     }
     setCartCookie(c, cartId);
     const status = c.req.query("status");

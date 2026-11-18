@@ -106,13 +106,15 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     assert.equal(g.nominal, 90000);
     assert.ok(g.qr_url.includes(g.unique_code), "qr_url harus memuat ref unique_code");
 
-    // 4) thanks pemilik -> 200 pending, tanpa PII
+    // 4) thanks pemilik -> 200 pending, status & metode pengiriman
     const th1 = await app.request(`/api/v1/thanks?ref=${g.unique_code}`, { headers: { cookie, ...base } });
     assert.equal(th1.status, 200);
     const t1 = ((await th1.json()) as { data: { status: string; nominal: number } & Record<string, unknown> }).data;
     assert.equal(t1.status, "pending_payment");
     assert.equal(t1.nominal, 90000);
-    assert.equal(t1["delivery_address"], undefined, "PII bocor di thanks");
+    assert.equal(t1["delivery_address"], null);
+    assert.equal(t1["delivery_method"], "pickup");
+    assert.equal(t1["mode"], "instant");
 
     // 5) thanks sesi lain -> 404 seragam
     const thOther = await app.request(`/api/v1/thanks?ref=${g.unique_code}`, { headers: { cookie: "cart_id=penyusup", ...base } });

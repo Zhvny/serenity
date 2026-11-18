@@ -188,8 +188,12 @@ export function qrisRoutes(pool: Pool): Hono {
     if (ref === undefined || ref === "" || cartId === undefined) {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
-    const { rows } = await pool.query<{ unique_code: string; total_amount: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null }>(
-      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id FROM orders WHERE unique_code = $1",
+    const { rows } = await pool.query<{
+      unique_code: string; total_amount: number; paid_amount: number | null;
+      donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null;
+      mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null;
+    }>(
+      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -198,8 +202,21 @@ export function qrisRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
     setCartCookie(c, cartId);
-    // Hanya kode + nominal + QR + status + info bayar. Tanpa alamat/nama.
-    return c.json({ status: "success", data: { unique_code: order.unique_code, nominal: order.total_amount, paid_amount: order.paid_amount, donation_consent: order.donation_consent, qr_url: order.qr_url, status: order.status } });
+    return c.json({
+      status: "success",
+      data: {
+        unique_code: order.unique_code,
+        nominal: order.total_amount,
+        paid_amount: order.paid_amount,
+        donation_consent: order.donation_consent,
+        qr_url: order.qr_url,
+        status: order.status,
+        mode: order.mode,
+        scheduled_at: order.scheduled_at === null ? null : order.scheduled_at.toISOString(),
+        delivery_method: order.delivery_method,
+        delivery_address: order.delivery_address,
+      },
+    });
   });
 
   return r;

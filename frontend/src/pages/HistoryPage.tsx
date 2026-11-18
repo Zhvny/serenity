@@ -148,6 +148,9 @@ export function HistoryPage() {
                     ) : null}
                     <span className="history-code">{o.unique_code}</span>
                     {o.donation_consent ? <span className="tag">{t("orders.history.donation")}</span> : null}
+                    {o.delivery_method ? <span className="tag">{o.delivery_method === "delivery" ? t("shop.cart.method.delivery") : t("shop.cart.method.pickup")}</span> : null}
+                    {o.mode === "scheduled" && o.scheduled_at ? <p className="history-sub">{t("orders.thanks.schedule")} {new Date(o.scheduled_at).toLocaleString()}</p> : null}
+                    {o.delivery_method === "delivery" && o.delivery_address ? <p className="history-sub">{o.delivery_address}</p> : null}
                   </div>
                   <div className="history-side">
                     <span className="history-total">{rupiah(o.total_amount)}</span>

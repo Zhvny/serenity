@@ -99,6 +99,21 @@ export function ThanksPage() {
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
           <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>
+          {data.delivery_method ? (
+            <p className="pay-meta">
+              {t("orders.thanks.method")} <strong>{data.delivery_method === "delivery" ? t("shop.cart.method.delivery") : t("shop.cart.method.pickup")}</strong>
+            </p>
+          ) : null}
+          {data.mode === "scheduled" && data.scheduled_at ? (
+            <p className="pay-meta">
+              {t("orders.thanks.schedule")} <strong>{new Date(data.scheduled_at).toLocaleString()}</strong>
+            </p>
+          ) : null}
+          {data.delivery_method === "delivery" && data.delivery_address ? (
+            <p className="pay-meta">
+              {t("orders.thanks.address")} <strong>{data.delivery_address}</strong>
+            </p>
+          ) : null}
           <p className="pay-nominal">{t("orders.thanks.payExactly")} <strong>{rupiah(data.nominal)}</strong></p>
           {paid ? (
             <>

@@ -48,11 +48,13 @@ export function recommendRoutes(pool: Pool): Hono {
     if (valid.length === 0) {
       return c.json({ status: "success", data: await bestSellers(pool, 3) });
     }
+    const isAllergyFree = valid.includes("allergy_free");
     // 1 produk terbaik per need + best-seller pengisi hingga 3, dedupe.
-    const perNeed = await Promise.all(valid.map((n) => byNeed(pool, n, 1)));
+    // Jika allergy_free dipilih, pastikan produk pengisi & need lain bebas alergen.
+    const perNeed = await Promise.all(valid.map((n) => byNeed(pool, n, 1, isAllergyFree)));
     const matched = perNeed.flat();
     const have = new Set(matched.map((m) => m.id));
-    const top = (await bestSellers(pool, 3)).filter((b) => !have.has(b.id));
+    const top = (await bestSellers(pool, 3, isAllergyFree)).filter((b) => !have.has(b.id));
     return c.json({ status: "success", data: [...matched, ...top].slice(0, 3) });
   });
   return r;

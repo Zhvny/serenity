@@ -81,9 +81,10 @@ describe("orders mine + topup (sesi)", () => {
     });
   }
 
-  it("GET /orders/mine tanpa cookie -> 404 seragam", async () => {
+  it("GET /orders/mine tanpa cookie -> 200 kosong", async () => {
     const res = await req("/orders/mine", "GET");
-    assert.equal(res.status, 404);
+    assert.equal(res.status, 200);
+    assert.deepEqual(((await res.json()) as { data: unknown[] }).data, []);
   });
   it("GET /orders/mine sesi lain -> 200 kosong (tak bocor)", async () => {
     await seedMine(10000, null, "pending_payment");
@@ -97,7 +98,7 @@ describe("orders mine + topup (sesi)", () => {
     assert.equal(res.status, 200);
     const body = (await res.json()) as { data: Array<{ unique_code: string } & Record<string, unknown>> };
     assert.ok(body.data.length >= 1);
-    assert.ok(body.data.every((o) => o["delivery_address"] === undefined));
+    assert.ok(body.data.every((o) => "delivery_address" in o));
   });
   it("POST /:code/topup underpaid -> anak nominal sisa", async () => {
     const { code } = await seedMine(50000, 30000, "underpaid");

@@ -154,6 +154,8 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const body = (await owner.json()) as { data: Record<string, unknown> };
     assert.equal(body.data["paid_amount"], 50000);
     assert.equal(body.data["donation_consent"], true);
+    assert.equal(body.data["mode"], "instant");
+    assert.equal(body.data["delivery_method"], "pickup");
   });
 
   it("generate-code: keranjang dikosongkan setelah order dibuat", async () => {
@@ -178,8 +180,8 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(body.data.unique_code, data.unique_code);
     assert.equal(body.data.nominal, 90000);
     assert.equal(typeof body.data.qr_url, "string");
-    // tanpa alamat/nama lengkap
-    assert.equal((body.data as Record<string, unknown>)["delivery_address"], undefined);
+    assert.equal((body.data as Record<string, unknown>)["delivery_address"], null);
+    assert.equal((body.data as Record<string, unknown>)["delivery_method"], "pickup");
 
     const other = await createApp(pool).request(`/api/v1/thanks?ref=${data.unique_code}`, { headers: { cookie: "cart_id=penyusup-lain", "x-forwarded-for": XFF } });
     assert.equal(other.status, 404);

@@ -83,4 +83,18 @@ describe("recommend", () => {
     const body = await res.json() as { status: string; data: Array<{ id: string }> };
     assert.deepEqual(body.data.map((d) => d.id), ["b1"]);
   });
+  it("need allergy_free → query bestSellers & byNeed harus mengecualikan alergen", async () => {
+    const seenQueries: string[] = [];
+    const shaped = {
+      query: async (text: string) => {
+        seenQueries.push(String(text));
+        if (String(text).includes("FROM user_preferences")) return { rows: [{ needs: ["allergy_free"] }], rowCount: 1 };
+        return { rows: [{ id: "b-clean", name: "Clean", price: 10, image_url: null }], rowCount: 1 };
+      },
+    } as unknown as Pool;
+    const res = await createApp(shaped).request("/api/v1/products/recommendations", { headers: { cookie: "cart_id=sess-allergy" } });
+    assert.equal(res.status, 200);
+    const sqlCheck = seenQueries.filter((q) => q.includes("product_allergens"));
+    assert.ok(sqlCheck.length >= 2, "query byNeed dan bestSellers wajib memfilter product_allergens saat allergy_free aktif");
+  });
 });
