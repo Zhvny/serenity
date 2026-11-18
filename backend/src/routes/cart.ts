@@ -77,6 +77,19 @@ export function cartRoutes(pool: Pool): Hono {
     if (dErr !== null) {
       return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
     }
+    // Simpan pilihan pada keranjang; generate-code memakainya saat order dibuat.
+    if (cartId !== undefined) {
+      const choice = {
+        mode: body.mode,
+        scheduled_at: body.mode === "scheduled" ? body.scheduled_at ?? null : null,
+        delivery_method: body.delivery_method,
+        delivery_address: body.delivery_method === "delivery" ? delivery_address : null,
+        delivery_lat: body.delivery_method === "delivery" ? body.delivery_lat ?? null : null,
+        delivery_lng: body.delivery_method === "delivery" ? body.delivery_lng ?? null : null,
+      };
+      await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
+      await pool.query("UPDATE carts SET checkout_choice = $2 WHERE id = $1", [cartId, JSON.stringify(choice)]);
+    }
     return c.json({ status: "success", data: { mode: body.mode, delivery_method: body.delivery_method, delivery_address, delivery_lat: body.delivery_lat ?? null, delivery_lng: body.delivery_lng ?? null, items: await getCart(pool, cartIdOf(c) ?? "") } });
   });
   return r;
