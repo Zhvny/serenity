@@ -99,6 +99,26 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+        {showNeed ? (
+          <section className="need-inline" aria-label={t("landing.need.title")}>
+            <div className="need-popup-card need-popup-card--inline">
+              <h2>{t("landing.need.title")}</h2>
+              <p>{t("landing.need.intro")}</p>
+              <div role="group" aria-label={t("landing.need.title")}>
+                {NEEDS.map((n) => (
+                  <label key={n.key}>
+                    <input type="checkbox" checked={draft.includes(n.key)} onChange={() => toggleDraft(n.key)} aria-label={t(n.dict)} />
+                    {t(n.dict)}
+                  </label>
+                ))}
+              </div>
+              <div className="need-popup-actions">
+                <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>{t("landing.need.simpan")}</button>
+                <button type="button" onClick={() => setShowNeed(false)}>{t("landing.need.lewati")}</button>
+              </div>
+            </div>
+          </section>
+        ) : null}
         {recs.length > 0 ? (
           <section className="section section--boxed" aria-label={t("landing.recs.title")}>
             <div className="section-head">
@@ -128,26 +148,6 @@ export function LandingPage() {
           </section>
         ) : null}
       </main>
-      {showNeed ? (
-        <div role="dialog" aria-label={t("landing.need.title")} aria-modal="true" className="need-popup">
-          <div className="need-popup-card">
-          <h2>{t("landing.need.title")}</h2>
-          <p>{t("landing.need.intro")}</p>
-          <div role="group" aria-label={t("landing.need.title")}>
-            {NEEDS.map((n) => (
-              <label key={n.key}>
-                <input type="checkbox" checked={draft.includes(n.key)} onChange={() => toggleDraft(n.key)} aria-label={t(n.dict)} />
-                {t(n.dict)}
-              </label>
-            ))}
-          </div>
-          <div className="need-popup-actions">
-            <button type="button" disabled={draft.length === 0} onClick={() => void chooseNeed(draft)}>{t("landing.need.simpan")}</button>
-            <button type="button" onClick={() => setShowNeed(false)}>{t("landing.need.lewati")}</button>
-          </div>
-          </div>
-        </div>
-      ) : null}
       <Footer />
     </div>
   );
