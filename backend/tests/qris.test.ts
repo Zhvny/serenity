@@ -40,7 +40,7 @@ async function seedCart(): Promise<string> {
   const cartId = `qris-cart-${randomUUID()}`;
   createdCarts.push(cartId);
   await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
-  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_001', 2, NULL)", [randomUUID(), cartId]);
+  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_pb_bar', 2, NULL)", [randomUUID(), cartId]);
   return cartId;
 }
 
@@ -121,7 +121,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     createdOrders.push(data.order_id);
     assert.match(data.unique_code, /^ORD-[0-9A-F]{12,}$/);
     assert.equal(data.qr_url.includes("qr.example"), true);
-    assert.equal(data.nominal, 90000); // samp_001 45000 x 2
+    assert.equal(data.nominal, 36000); // prod_pb_bar 18000 x 2
     // Detail pesanan: cart item tersalin ke order_items.
     const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.n;
     assert.equal(Number(n), 1);
@@ -178,7 +178,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(owner.status, 200);
     const body = (await owner.json()) as { data: { unique_code: string; nominal: number; qr_url: string } };
     assert.equal(body.data.unique_code, data.unique_code);
-    assert.equal(body.data.nominal, 90000);
+    assert.equal(body.data.nominal, 36000);
     assert.equal(typeof body.data.qr_url, "string");
     assert.equal((body.data as Record<string, unknown>)["delivery_address"], null);
     assert.equal((body.data as Record<string, unknown>)["delivery_method"], "pickup");
@@ -244,7 +244,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const first = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
     assert.equal(first.status, 200);
     createdOrders.push((((await first.json()) as { data: { order_id: string } }).data).order_id);
-    await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+    await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_roasted_milktea', 1, NULL)", [randomUUID(), cartId]);
     const second = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
     assert.equal(second.status, 429);
     assert.equal(((await second.json()) as { code: string }).code, "RATE_LIMITED");
@@ -259,7 +259,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
       assert.equal(gen.status, 200);
       const id = (((await gen.json()) as { data: { order_id: string } }).data).order_id;
       createdOrders.push(id);
-      await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+      await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_roasted_milktea', 1, NULL)", [randomUUID(), cartId]);
       await pool.query("UPDATE orders SET created_at = CURRENT_TIMESTAMP - INTERVAL '61 seconds' WHERE id = $1", [id]);
     }
     const fourth = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
