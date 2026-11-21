@@ -20,7 +20,17 @@ export function ThanksPage() {
   const [data, setData] = useState<ThanksData | null>(null);
   const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const polls = useRef(0);
+
+  function handleCopyAccount(): void {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText("7615560677").then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
 
   useEffect(() => {
     if (ref === "") {
@@ -130,7 +140,25 @@ export function ThanksPage() {
             </>
           ) : (
             <>
-              {data.qr_url !== null ? <img className="qris-img" src={data.qr_url} alt={t("orders.thanks.qrAlt")} /> : null}
+              <div className="bank-box" aria-label="Informasi Transfer Rekening BCA">
+                <div className="bank-row">
+                  <span className="bank-label">Bank</span>
+                  <strong className="bank-val">BCA</strong>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">{t("orders.thanks.bankAccountLabel")}</span>
+                  <div className="bank-val-wrap">
+                    <strong className="bank-val">7615560677</strong>
+                    <button type="button" className="btn-secondary btn-sm btn-copy" onClick={handleCopyAccount}>
+                      {copied ? t("orders.thanks.copied") : t("orders.thanks.copy")}
+                    </button>
+                  </div>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">{t("orders.thanks.bankAccountName")}</span>
+                  <strong className="bank-val">Fransiskus Xaverius Kevin</strong>
+                </div>
+              </div>
               <ol className="pay-steps">
                 <li>{t("orders.thanks.step1")}</li>
                 <li>{t("orders.thanks.step2a")} <strong>{t("orders.thanks.step2b", { amount: rupiah(data.nominal) })}</strong>{t("orders.thanks.step2c")}</li>

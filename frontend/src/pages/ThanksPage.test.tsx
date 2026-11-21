@@ -17,12 +17,14 @@ describe("ThanksPage", () => {
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
   });
 
-  it("ref valid -> tampil nominal + QR", async () => {
+  it("ref valid -> tampil nominal + info transfer rekening BCA", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText(/ORD-ABC/)).toBeInTheDocument();
     expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("img", { name: /qris|qr/i })).toBeInTheDocument();
+    expect(screen.getByText("7615560677")).toBeInTheDocument();
+    expect(screen.getByText("Fransiskus Xaverius Kevin")).toBeInTheDocument();
+    expect(screen.getByText("BCA")).toBeInTheDocument();
   });
 
   it("underpaid -> Kurang + Buat kode top-up -> ref anak", async () => {
