@@ -41,6 +41,8 @@ frontend/public/images/*.png
 !frontend/public/images/samp_003.jpg
 !frontend/public/images/samp_004.jpg
 !frontend/public/images/samp_005.jpg
+!frontend/public/images/peanut-chocolate-bar.jpg
+!frontend/public/images/osmanthus-milktea.jpg
 
 # AI/project docs
 *.md
