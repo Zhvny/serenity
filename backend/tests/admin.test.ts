@@ -534,16 +534,20 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(Number(n), 1);
     await pool.query("DELETE FROM audit_logs WHERE action='cancel_order' AND detail::text LIKE $1", [`%${code}%`]);
 
-    // 3. Batalkan lagi yang sudah cancelled -> 409
-    const again = await app.request(`/api/v1/admin/orders/${code}/cancel`, { method: "POST", headers: h, body: "{}" });
+    // 3. Batalkan lagi yang sudah cancelled -> 409 (reason wajib ada agar lolos validasi)
+    const again = await app.request(`/api/v1/admin/orders/${code}/cancel`, { method: "POST", headers: h, body: JSON.stringify({ reason: "Coba batalkan ulang" }) });
     assert.equal(again.status, 409);
 
-    // 4. Batalkan order done -> 409
+    // 3b. Tanpa reason -> 400 VALIDATION_ERROR (bukan 409)
+    const noReason = await app.request(`/api/v1/admin/orders/${code}/cancel`, { method: "POST", headers: h, body: "{}" });
+    assert.equal(noReason.status, 400);
+
+    // 4. Batalkan order done -> 409 (reason wajib ada)
     const codeDone = `ORD-CNLD-${Date.now()}`;
     const idDone = `HP-CNLD-${Date.now()}`;
     createdOrders.push(idDone);
     await pool.query("INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code) VALUES ($1,'instant',1000,'done','pickup','cnld-sess',$2)", [idDone, codeDone]);
-    const rDone = await app.request(`/api/v1/admin/orders/${codeDone}/cancel`, { method: "POST", headers: h, body: "{}" });
+    const rDone = await app.request(`/api/v1/admin/orders/${codeDone}/cancel`, { method: "POST", headers: h, body: JSON.stringify({ reason: "Coba batalkan done" }) });
     assert.equal(rDone.status, 409);
   });
 });

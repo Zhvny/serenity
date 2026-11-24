@@ -162,6 +162,9 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     const code = c.req.param("code");
     const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown };
     const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 200) : null;
+    if (reason === null || reason.length < 3) {
+      return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Alasan pembatalan wajib diisi (min 3 karakter)" }, 400);
+    }
     const cur = await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code = $1", [code]);
     const status = cur.rows[0]?.status;
     if (status === undefined) {
@@ -238,7 +241,8 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Hanya untuk delivery; nominal QRIS tak tersentuh (dibayar tunai).
   const feeSchema = z.object({
     delivery_fee: z.number().int().min(0).max(10_000_000),
-    delivery_receipt_url: z.string().max(500).nullish(),
+    // Validasi scheme sama dengan imageUrlField: tolak javascript:/data:/vbscript: (stored XSS via href).
+    delivery_receipt_url: imageUrlField,
   });
   r.post("/orders/:code/delivery-fee", zValidator("json", feeSchema, (result, c) => {
     if (!result.success) return c.json({ status: "error", code: "VALIDATION_ERROR", message: "Input tidak valid" }, 400);
@@ -256,9 +260,11 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
     }
     const receiptChanged = receiptUrl !== undefined && receiptUrl !== row.delivery_receipt_url;
     if (row.delivery_fee !== fee || receiptChanged) {
+      // Gunakan nilai eksplisit (bukan COALESCE) agar null = clear receipt URL.
+      const newReceipt = receiptUrl !== undefined ? receiptUrl : row.delivery_receipt_url;
       await pool.query(
-        "UPDATE orders SET delivery_fee = $2, delivery_receipt_url = COALESCE($3, delivery_receipt_url), updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1",
-        [code, fee, receiptUrl ?? null]);
+        "UPDATE orders SET delivery_fee = $2, delivery_receipt_url = $3, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1",
+        [code, fee, newReceipt]);
       await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "set_delivery_fee", JSON.stringify({ unique_code: code, delivery_fee: fee, delivery_receipt_url: receiptUrl })]);
     }
     return c.json({ status: "success", data: { delivery_fee: fee, delivery_receipt_url: receiptUrl ?? row.delivery_receipt_url } });

@@ -48,7 +48,7 @@ type ItemRow = { product_id: string; quantity: number; note: string | null };
 
 export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
   const { rows } = await pool.query<OrderRow>(
-    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, delivery_fee, parent_code, donation_consent FROM orders WHERE id = $1",
+    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, delivery_fee, parent_code, donation_consent, cancel_reason, delivery_receipt_url FROM orders WHERE id = $1",
     [id],
   );
   const o = rows[0];
@@ -67,6 +67,8 @@ export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
     delivery_fee: o.delivery_fee,
     parent_code: o.parent_code,
     donation_consent: o.donation_consent,
+    cancel_reason: o.cancel_reason ?? null,
+    delivery_receipt_url: o.delivery_receipt_url ?? null,
   };
 }
 
