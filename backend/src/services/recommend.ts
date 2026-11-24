@@ -14,20 +14,21 @@ const ORDER: Record<Need, string> = {
   allergy_free: "n.calories_kcal ASC",
 };
 
-export async function bestSellers(pool: Pool, limit: number): Promise<RecProduct[]> {
+export async function bestSellers(pool: Pool, limit: number, allergyFree = false): Promise<RecProduct[]> {
+  const allergy = allergyFree ? "AND NOT EXISTS (SELECT 1 FROM product_allergens pa WHERE pa.product_id = p.id)" : "";
   const { rows } = await pool.query(
     `SELECT p.id, p.name, p.name_en, p.category_id, p.price, p.image_url FROM order_items oi
      JOIN orders o ON o.id = oi.order_id
      JOIN products p ON p.id = oi.product_id
-     WHERE o.status = 'done' AND p.is_active = TRUE
+     WHERE o.status = 'done' AND p.is_active = TRUE ${allergy}
      GROUP BY p.id, p.name, p.name_en, p.category_id, p.price, p.image_url ORDER BY SUM(oi.quantity) DESC LIMIT $1`,
     [limit],
   );
   return rows;
 }
 
-export async function byNeed(pool: Pool, need: Need, limit: number): Promise<RecProduct[]> {
-  const allergy = need === "allergy_free" ? "AND NOT EXISTS (SELECT 1 FROM product_allergens pa WHERE pa.product_id = p.id)" : "";
+export async function byNeed(pool: Pool, need: Need, limit: number, allergyFree = false): Promise<RecProduct[]> {
+  const allergy = (need === "allergy_free" || allergyFree) ? "AND NOT EXISTS (SELECT 1 FROM product_allergens pa WHERE pa.product_id = p.id)" : "";
   const { rows } = await pool.query(
     `SELECT p.id, p.name, p.name_en, p.category_id, p.price, p.image_url FROM products p JOIN nutrition_info n ON n.product_id = p.id
      WHERE p.is_active = TRUE ${allergy} ORDER BY ${ORDER[need]} LIMIT $1`,

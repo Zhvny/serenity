@@ -10,6 +10,34 @@ import { productRepo } from "../repos/products.js";
 import { cartIdOf, setCartCookie } from "./cart.js";
 
 // Anti-spam lapis-aplikasi (spec 2026-10-08): tunable tanpa migrasi.
+type CheckoutChoice = {
+  mode: "instant" | "scheduled";
+  scheduled_at: string | null;
+  delivery_method: "pickup" | "delivery";
+  delivery_address: string | null;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
+};
+const DEFAULT_CHOICE: CheckoutChoice = { mode: "instant", scheduled_at: null, delivery_method: "pickup", delivery_address: null, delivery_lat: null, delivery_lng: null };
+
+// Baca pilihan yang disimpan /cart/checkout. Data tak valid/kedaluwarsa -> default (instant + pickup),
+// jadi order selalu bisa dibuat. Validasi ketat sudah dilakukan saat pilihan disimpan.
+async function readCheckoutChoice(pool: Pool, cartId: string): Promise<CheckoutChoice> {
+  const { rows } = await pool.query<{ checkout_choice: Partial<CheckoutChoice> | null }>("SELECT checkout_choice FROM carts WHERE id = $1", [cartId]);
+  const raw = rows[0]?.checkout_choice;
+  if (raw === null || raw === undefined) return DEFAULT_CHOICE;
+  const method = raw.delivery_method === "delivery" ? "delivery" : "pickup";
+  const scheduledOk = raw.mode === "scheduled" && typeof raw.scheduled_at === "string" && Date.parse(raw.scheduled_at) > Date.now();
+  return {
+    mode: scheduledOk ? "scheduled" : "instant",
+    scheduled_at: scheduledOk ? (raw.scheduled_at as string) : null,
+    delivery_method: method,
+    delivery_address: method === "delivery" && typeof raw.delivery_address === "string" ? raw.delivery_address.slice(0, 500) : null,
+    delivery_lat: method === "delivery" && typeof raw.delivery_lat === "number" ? raw.delivery_lat : null,
+    delivery_lng: method === "delivery" && typeof raw.delivery_lng === "number" ? raw.delivery_lng : null,
+  };
+}
+
 const MAX_PENDING_PER_SESSION = 3;
 const MIN_INTERVAL_MS = 30_000;
 let globalThrottleTrips = 0;
@@ -94,6 +122,8 @@ export function qrisRoutes(pool: Pool): Hono {
     if (total <= 0) {
       return fail(400, "INVALID_AMOUNT", "Nominal tidak valid");
     }
+    // Pilihan waktu & pengambilan dari /cart/checkout (bila ada). Jadwal yang sudah lewat -> instant.
+    const choice = await readCheckoutChoice(pool, cartId);
     const qrBase = process.env.QUASI_STATIC_QR_URL ?? "";
     const orderId = await nextOrderId(pool);
     const donationConsent = c.req.valid("json").donation_consent;
@@ -113,8 +143,8 @@ export function qrisRoutes(pool: Pool): Hono {
       try {
         await client.query("BEGIN");
         await client.query(
-          "INSERT INTO orders (id, mode, total_amount, status, delivery_method, session_id, unique_code, qr_url, donation_consent) VALUES ($1, 'instant', $2, 'pending_payment', 'pickup', $3, $4, $5, $6)",
-          [orderId, total, cartId, code, qrUrl, donationConsent],
+          "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address, delivery_lat, delivery_lng, session_id, unique_code, qr_url, donation_consent) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7, $8, $9, $10, $11, $12)",
+          [orderId, choice.mode, choice.scheduled_at, total, choice.delivery_method, choice.delivery_address, choice.delivery_lat, choice.delivery_lng, cartId, code, qrUrl, donationConsent],
         );
         // Salin isi cart ke order_items agar detail pesanan (menu) tersimpan permanen.
         for (const it of priced) {
@@ -125,6 +155,7 @@ export function qrisRoutes(pool: Pool): Hono {
         }
         // Kosongkan cart sesi agar tak dipesan ulang (atomik dalam transaksi yang sama).
         await client.query("DELETE FROM cart_items WHERE cart_id = $1", [cartId]);
+        await client.query("UPDATE carts SET checkout_choice = NULL WHERE id = $1", [cartId]);
         await client.query("COMMIT");
         client.release();
         generated = { order_id: orderId, unique_code: code, qr_url: qrUrl, nominal: total };
@@ -157,8 +188,12 @@ export function qrisRoutes(pool: Pool): Hono {
     if (ref === undefined || ref === "" || cartId === undefined) {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
-    const { rows } = await pool.query<{ unique_code: string; total_amount: number; paid_amount: number | null; donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null }>(
-      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id FROM orders WHERE unique_code = $1",
+    const { rows } = await pool.query<{
+      unique_code: string; total_amount: number; paid_amount: number | null;
+      donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null;
+      mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null;
+    }>(
+      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -167,8 +202,21 @@ export function qrisRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
     setCartCookie(c, cartId);
-    // Hanya kode + nominal + QR + status + info bayar. Tanpa alamat/nama.
-    return c.json({ status: "success", data: { unique_code: order.unique_code, nominal: order.total_amount, paid_amount: order.paid_amount, donation_consent: order.donation_consent, qr_url: order.qr_url, status: order.status } });
+    return c.json({
+      status: "success",
+      data: {
+        unique_code: order.unique_code,
+        nominal: order.total_amount,
+        paid_amount: order.paid_amount,
+        donation_consent: order.donation_consent,
+        qr_url: order.qr_url,
+        status: order.status,
+        mode: order.mode,
+        scheduled_at: order.scheduled_at === null ? null : order.scheduled_at.toISOString(),
+        delivery_method: order.delivery_method,
+        delivery_address: order.delivery_address,
+      },
+    });
   });
 
   return r;

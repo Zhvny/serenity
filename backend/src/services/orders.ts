@@ -83,8 +83,8 @@ export async function markPaid(pool: Pool, code: string, paidAmount: number): Pr
 
 // Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
 export type MineItem = { product_id: string; name: string; name_en: string | null; quantity: number };
-export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "delivery_address" | "items"> & { id: string; unique_code: string; items: MineItem[] }>> {
-  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at";
+export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "items"> & { id: string; unique_code: string; items: MineItem[] }>> {
+  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at, delivery_address";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
@@ -98,12 +98,12 @@ export async function listMine(pool: Pool, cartId: string, status?: string): Pro
     list.push({ product_id: it.product_id, name: it.name, name_en: it.name_en, quantity: it.quantity });
     byOrder.set(it.order_id, list);
   }
-  // delivery_address disengaja HILANG dari objek (konvensi PII tulis-saja, lih. admin list).
   return res.rows.map((o) => ({
     order_id: o.id, id: o.id, unique_code: o.unique_code, items: byOrder.get(o.id) ?? [], mode: o.mode,
     scheduled_at: o.scheduled_at === null ? null : o.scheduled_at.toISOString(),
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
     delivery_method: o.delivery_method, delivery_fee: o.delivery_fee,
+    delivery_address: o.delivery_address,
     parent_code: o.parent_code, donation_consent: o.donation_consent,
   }));
 }

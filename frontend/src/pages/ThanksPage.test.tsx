@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { ThanksPage } from "./ThanksPage.tsx";
@@ -17,12 +17,14 @@ describe("ThanksPage", () => {
     expect(await screen.findByText(/tidak ditemukan/i)).toBeInTheDocument();
   });
 
-  it("ref valid -> tampil nominal + QR", async () => {
+  it("ref valid -> tampil nominal + info transfer rekening BCA", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText(/ORD-ABC/)).toBeInTheDocument();
     expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("img", { name: /qris|qr/i })).toBeInTheDocument();
+    expect(screen.getByText("7615560677")).toBeInTheDocument();
+    expect(screen.getByText("Fransiskus Xaverius Kevin")).toBeInTheDocument();
+    expect(screen.getByText("BCA")).toBeInTheDocument();
   });
 
   it("tautan Lacak pesanan + Riwayat + Salin kode tampil, dan catatan kedaluwarsa", async () => {
@@ -30,19 +32,8 @@ describe("ThanksPage", () => {
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByRole("link", { name: "Lacak pesanan" })).toHaveAttribute("href", "/status/ORD-ABC");
     expect(screen.getByRole("link", { name: "Riwayat pesanan" })).toHaveAttribute("href", "/riwayat");
-    expect(screen.getByRole("button", { name: "Salin kode" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salin kode pesanan" })).toBeInTheDocument();
     expect(screen.getByText(/kedaluwarsa otomatis sekitar 2 jam/i)).toBeInTheDocument();
-  });
-
-  it("gambar QR gagal dimuat -> pesan + tombol muat ulang (bukan celah kosong)", async () => {
-    const user = userEvent.setup();
-    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
-    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
-    const img = await screen.findByRole("img", { name: /qris|qr/i });
-    fireEvent.error(img);
-    expect(await screen.findByText(/QR belum bisa dimuat/i)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Muat ulang QR" }));
-    expect(screen.getByRole("img", { name: /qris|qr/i }).getAttribute("src")).toContain("r=1");
   });
 
   it("gangguan jaringan TIDAK mengganti halaman jadi 'tidak ditemukan' (tampil 'mencoba lagi')", async () => {
@@ -52,14 +43,6 @@ describe("ThanksPage", () => {
     expect(screen.queryByText(/tidak ditemukan/i)).toBeNull();
   });
 
-  it("QR: tautan Simpan/buka + petunjuk simpan dari galeri", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: "https://qr.example?ref=ORD-ABC", status: "pending_payment" } })));
-    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
-    const a = await screen.findByRole("link", { name: "Simpan / buka QR" });
-    expect(a).toHaveAttribute("href", "https://qr.example?ref=ORD-ABC");
-    expect(a).toHaveAttribute("target", "_blank");
-    expect(screen.getByText(/unggah dari galeri/i)).toBeInTheDocument();
-  });
   it("sudah dibayar -> stepper tampil, tahap 'Siap' bisa aktif", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: null, status: "ready" } })));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
@@ -67,6 +50,17 @@ describe("ThanksPage", () => {
     expect(list.querySelector('[aria-current="step"]')).toHaveTextContent("Siap");
     expect(list.querySelectorAll("li.is-done")).toHaveLength(2);
   });
+  it("tombol salin rekening dan salin kode pesanan terpisah (tak saling mengubah label)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { unique_code: "ORD-ABC", nominal: 90000, qr_url: null, status: "pending_payment" } })));
+    Object.defineProperty(navigator, "clipboard", { value: { writeText: vi.fn(async () => {}) }, configurable: true });
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Salin kode pesanan" }));
+    expect(await screen.findByRole("button", { name: "Tersalin!" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salin" })).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /qris|qr/i })).toBeNull();
+  });
+
   it("link tak berlaku -> petunjuk perangkat + tombol Riwayat", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-X"]}><ThanksPage /></MemoryRouter>);

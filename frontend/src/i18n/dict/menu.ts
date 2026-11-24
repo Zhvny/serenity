@@ -2,7 +2,7 @@
 export const id = {
   "menu.hero.eyebrow": "Pre-order dessert & minuman sehat",
   "menu.hero.title": "Manis yang menyayangi tubuhmu.",
-  "menu.hero.lead": "Dessert rendah gula & minuman sehat, dibuat segar. Pesan sekarang atau jadwalkan, bayar dengan QRIS, ambil sendiri atau diantar.",
+  "menu.hero.lead": "Dessert rendah gula & minuman sehat, dibuat segar. Pesan sekarang atau jadwalkan, bayar dengan transfer bank, ambil sendiri atau diantar.",
   "menu.hero.cta": "Lihat Menu",
   "menu.hero.quote1": "Manisnya harimu, dengan cara yang sehat.",
   "menu.hero.quote2": "Dessert pun bisa ramah di tubuh.",
@@ -49,7 +49,7 @@ export const id = {
 export const en = {
   "menu.hero.eyebrow": "Pre-order healthy desserts & drinks",
   "menu.hero.title": "Sweet treats that love you back.",
-  "menu.hero.lead": "Low-sugar dessert & healthy drinks, made fresh. Order now or schedule, pay with QRIS, pick up or delivery.",
+  "menu.hero.lead": "Low-sugar dessert & healthy drinks, made fresh. Order now or schedule, pay by bank transfer, pick up or get it delivered.",
   "menu.hero.cta": "See the menu",
   "menu.hero.quote1": "Sweeten your day, the wholesome way.",
   "menu.hero.quote2": "Dessert can be kind to your body too.",

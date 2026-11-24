@@ -25,6 +25,43 @@
 .pay-card .pay-nominal { display: inline-block; margin: 6px 0 14px; padding: 6px 18px; background: var(--butter); color: #3b2a24; transform: rotate(-1.5deg);
   box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc), 4px 4px 0 var(--drop); }
 .pay-card .pay-nominal strong { color: #3b2a24; }
+.bank-box {
+  margin: 16px auto;
+  padding: 14px 18px;
+  background: var(--canvas-soft);
+  border: var(--bw) solid var(--outline);
+  box-shadow: 4px 4px 0 var(--drop);
+  text-align: left;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bank-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.bank-label {
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+.bank-val-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bank-val {
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.btn-copy {
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
 .pay-steps { margin-top: 16px; padding: 16px 18px 16px 40px; background: var(--canvas-soft); outline: 3px dashed var(--ink-mute-2); outline-offset: -6px; }
 .pay-card .status-badge { background: transparent; color: var(--berry-deep); --bc: var(--berry-deep); transform: rotate(-3deg); letter-spacing: 0.06em; text-transform: uppercase; font-size: 15px; }
 

@@ -69,7 +69,7 @@ describe("E2E alur publik (health -> menu -> cart) semua 200, bukan 500", () => 
     assert.equal(r.status, 200);
     const { data } = (await r.json()) as { data: Array<{ id: string }> };
     assert.ok(Array.isArray(data) && data.length >= 1, "products kosong/500");
-    assert.ok(data.some((p) => p.id === "samp_001"), "seed samp_001 tak ada");
+    assert.ok(data.some((p) => p.id === "prod_pb_bar"), "seed prod_pb_bar tak ada");
   });
 
   it("cart kosong (tanpa cookie) 200 -> []", async () => {
@@ -82,7 +82,7 @@ describe("E2E alur publik (health -> menu -> cart) semua 200, bukan 500", () => 
 describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
   it("cart/add issue cookie; generate-code; thanks owner; admin lunasi; thanks jadi paid", async () => {
     // 1) Tambah ke cart (tanpa cookie -> server set cart_id)
-    const add = await app.request("/api/v1/cart/add", { method: "POST", headers: json(), body: JSON.stringify({ product_id: "samp_001", quantity: 2 }) });
+    const add = await app.request("/api/v1/cart/add", { method: "POST", headers: json(), body: JSON.stringify({ product_id: "prod_pb_bar", quantity: 2 }) });
     assert.equal(add.status, 200);
     const setCookie = add.headers.get("set-cookie") ?? "";
     const cartId = setCookie.match(/cart_id=([^;]+)/)?.[1];
@@ -97,22 +97,24 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     assert.equal(items.length, 1);
     assert.equal(items[0]?.quantity, 2);
 
-    // 3) generate-code QRIS: nominal server = 45000 x 2
+    // 3) generate-code QRIS: nominal server = 18000 x 2 = 36000
     const gen = await app.request("/api/v1/orders/generate-code", { method: "POST", headers: json({ cookie }), body: JSON.stringify({ turnstile_token: "e2e-tok" }) });
     assert.equal(gen.status, 200);
     const g = ((await gen.json()) as { data: { order_id: string; unique_code: string; qr_url: string; nominal: number } }).data;
     createdOrders.push(g.order_id);
     assert.match(g.unique_code, /^ORD-[0-9A-F]+$/);
-    assert.equal(g.nominal, 90000);
+    assert.equal(g.nominal, 36000);
     assert.ok(g.qr_url.includes(g.unique_code), "qr_url harus memuat ref unique_code");
 
-    // 4) thanks pemilik -> 200 pending, tanpa PII
+    // 4) thanks pemilik -> 200 pending, status & metode pengiriman
     const th1 = await app.request(`/api/v1/thanks?ref=${g.unique_code}`, { headers: { cookie, ...base } });
     assert.equal(th1.status, 200);
     const t1 = ((await th1.json()) as { data: { status: string; nominal: number } & Record<string, unknown> }).data;
     assert.equal(t1.status, "pending_payment");
-    assert.equal(t1.nominal, 90000);
-    assert.equal(t1["delivery_address"], undefined, "PII bocor di thanks");
+    assert.equal(t1.nominal, 36000);
+    assert.equal(t1["delivery_address"], null);
+    assert.equal(t1["delivery_method"], "pickup");
+    assert.equal(t1["mode"], "instant");
 
     // 5) thanks sesi lain -> 404 seragam
     const thOther = await app.request(`/api/v1/thanks?ref=${g.unique_code}`, { headers: { cookie: "cart_id=penyusup", ...base } });
@@ -126,7 +128,7 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
 
     // 7) admin mark-paid (nominal penuh dari mutasi) -> changed true
     const markHeaders = { ...csrf, cookie: `admin_session=${sid}; csrf_token=e2e` };
-    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: JSON.stringify({ paid_amount: 90000 }) });
+    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: JSON.stringify({ paid_amount: 36000 }) });
     assert.equal(mp.status, 200);
     assert.equal(((await mp.json()) as { data: { changed: boolean } }).data.changed, true);
 

@@ -24,7 +24,7 @@ describe("LandingPage", () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>);
     const region = await screen.findByRole("region", { name: "Cara pesan" });
     expect(region).toHaveTextContent("Pilih menu");
-    expect(region).toHaveTextContent("Bayar lewat QRIS");
+    expect(region).toHaveTextContent("Bayar lewat transfer bank");
     expect(region).toHaveTextContent("Ambil sendiri atau diantar");
     expect(region).toHaveTextContent(/Riwayat/);
   });

@@ -61,10 +61,10 @@ describe("tiered rate limit (Redis)", () => {
     } catch { /* abaikan */ }
     await closeRedis();
   });
-  it("GET > 60/menit -> 429", async () => {
+  it("GET > 120/menit -> 429", async () => {
     const app = createApp(okPool);
     let limited = false;
-    for (let i = 0; i < 62; i++) {
+    for (let i = 0; i < 125; i++) {
       const res = await app.request("/api/v1/health", { headers: { "x-forwarded-for": ip } });
       if (res.status === 429) {
         const b = (await res.json()) as { code: string };

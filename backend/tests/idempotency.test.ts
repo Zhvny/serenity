@@ -41,7 +41,7 @@ async function seedCart(): Promise<string> {
   const cartId = `idem-cart-${randomUUID()}`;
   createdCarts.push(cartId);
   await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
-  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_001', 1, NULL)", [randomUUID(), cartId]);
+  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_pb_bar', 1, NULL)", [randomUUID(), cartId]);
   return cartId;
 }
 

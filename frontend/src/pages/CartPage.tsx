@@ -260,7 +260,7 @@ export function CartPage() {
         ? await checkoutCart({ mode: "instant", ...base })
         : await checkoutCart({ mode: "scheduled", scheduled_at: new Date(`${date}T${slot}:00+07:00`).toISOString(), ...base });
       void res;
-      // Validasi server lolos -> lanjut ke halaman pembayaran QRIS.
+      // Validasi server lolos -> lanjut ke halaman pembayaran (transfer bank).
       navigate("/checkout");
     } catch (e: unknown) {
       setCheckoutMsg(apiMessage(e));

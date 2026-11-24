@@ -40,11 +40,75 @@ async function seedCart(): Promise<string> {
   const cartId = `qris-cart-${randomUUID()}`;
   createdCarts.push(cartId);
   await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
-  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_001', 2, NULL)", [randomUUID(), cartId]);
+  await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_pb_bar', 2, NULL)", [randomUUID(), cartId]);
   return cartId;
 }
 
 describe("qris generate-code + thanks (ADR-0001)", () => {
+  it("pilihan /cart/checkout (terjadwal + diantar) ikut tersimpan ke order", async () => {
+    const cartId = await seedCart();
+    const ip = `qris-ip-${randomUUID()}`;
+    const when = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
+    const co = await createApp(pool).request("/api/v1/cart/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: JSON.stringify({ mode: "scheduled", scheduled_at: when, delivery_method: "delivery", delivery_address: "Jl. Kebon Jeruk No. 9, dekat masjid", delivery_lat: -6.2, delivery_lng: 106.8 }),
+    });
+    assert.equal(co.status, 200);
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at, delivery_method, delivery_address, delivery_lat::float AS lat, delivery_lng::float AS lng FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "scheduled");
+    assert.equal(new Date(rows[0].scheduled_at).toISOString(), when);
+    assert.equal(rows[0].delivery_method, "delivery");
+    assert.equal(rows[0].delivery_address, "Jl. Kebon Jeruk No. 9, dekat masjid");
+    assert.equal(rows[0].lat, -6.2);
+    assert.equal(rows[0].lng, 106.8);
+    // Pilihan dibersihkan setelah order terbentuk (PII tidak tersisa di keranjang).
+    const left = await pool.query("SELECT checkout_choice FROM carts WHERE id = $1", [cartId]);
+    assert.equal(left.rows[0].checkout_choice, null);
+  });
+
+  it("tanpa /cart/checkout -> order tetap instant + pickup (perilaku lama)", async () => {
+    const cartId = await seedCart();
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": `qris-ip-${randomUUID()}` },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "instant");
+    assert.equal(rows[0].scheduled_at, null);
+    assert.equal(rows[0].delivery_method, "pickup");
+    assert.equal(rows[0].delivery_address, null);
+  });
+
+  it("jadwal yang sudah lewat saat generate-code -> jatuh ke instant (tidak gagal)", async () => {
+    const cartId = await seedCart();
+    const past = new Date(Date.now() - 3600 * 1000).toISOString();
+    await pool.query("UPDATE carts SET checkout_choice = $2 WHERE id = $1", [cartId, JSON.stringify({ mode: "scheduled", scheduled_at: past, delivery_method: "pickup" })]);
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": `qris-ip-${randomUUID()}` },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT mode, scheduled_at FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].mode, "instant");
+    assert.equal(rows[0].scheduled_at, null);
+  });
+
   it("generate-code: hitung total server dari cart, balik unique_code + qr_url + nominal", async () => {
     const cartId = await seedCart();
     const res = await createApp(pool).request("/api/v1/orders/generate-code", {
@@ -57,7 +121,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     createdOrders.push(data.order_id);
     assert.match(data.unique_code, /^ORD-[0-9A-F]{12,}$/);
     assert.equal(data.qr_url.includes("qr.example"), true);
-    assert.equal(data.nominal, 90000); // samp_001 45000 x 2
+    assert.equal(data.nominal, 36000); // prod_pb_bar 18000 x 2
     // Detail pesanan: cart item tersalin ke order_items.
     const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.n;
     assert.equal(Number(n), 1);
@@ -90,6 +154,8 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const body = (await owner.json()) as { data: Record<string, unknown> };
     assert.equal(body.data["paid_amount"], 50000);
     assert.equal(body.data["donation_consent"], true);
+    assert.equal(body.data["mode"], "instant");
+    assert.equal(body.data["delivery_method"], "pickup");
   });
 
   it("generate-code: keranjang dikosongkan setelah order dibuat", async () => {
@@ -112,10 +178,10 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(owner.status, 200);
     const body = (await owner.json()) as { data: { unique_code: string; nominal: number; qr_url: string } };
     assert.equal(body.data.unique_code, data.unique_code);
-    assert.equal(body.data.nominal, 90000);
+    assert.equal(body.data.nominal, 36000);
     assert.equal(typeof body.data.qr_url, "string");
-    // tanpa alamat/nama lengkap
-    assert.equal((body.data as Record<string, unknown>)["delivery_address"], undefined);
+    assert.equal((body.data as Record<string, unknown>)["delivery_address"], null);
+    assert.equal((body.data as Record<string, unknown>)["delivery_method"], "pickup");
 
     const other = await createApp(pool).request(`/api/v1/thanks?ref=${data.unique_code}`, { headers: { cookie: "cart_id=penyusup-lain", "x-forwarded-for": XFF } });
     assert.equal(other.status, 404);
@@ -178,7 +244,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     const first = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
     assert.equal(first.status, 200);
     createdOrders.push((((await first.json()) as { data: { order_id: string } }).data).order_id);
-    await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+    await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_roasted_milktea', 1, NULL)", [randomUUID(), cartId]);
     const second = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });
     assert.equal(second.status, 429);
     assert.equal(((await second.json()) as { code: string }).code, "RATE_LIMITED");
@@ -193,7 +259,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
       assert.equal(gen.status, 200);
       const id = (((await gen.json()) as { data: { order_id: string } }).data).order_id;
       createdOrders.push(id);
-      await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'samp_002', 1, NULL)", [randomUUID(), cartId]);
+      await pool.query("INSERT INTO cart_items (item_id, cart_id, product_id, quantity, note) VALUES ($1, $2, 'prod_roasted_milktea', 1, NULL)", [randomUUID(), cartId]);
       await pool.query("UPDATE orders SET created_at = CURRENT_TIMESTAMP - INTERVAL '61 seconds' WHERE id = $1", [id]);
     }
     const fourth = await app.request("/api/v1/orders/generate-code", { method: "POST", headers, body: genBody() });

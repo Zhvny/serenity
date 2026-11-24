@@ -11,39 +11,6 @@ import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
 
-function QrImage({ src, alt }: { src: string; alt: string }) {
-  const t = useT();
-  usePageTitle(t("orders.thanks.titleQris"));
-  const [failed, setFailed] = useState(false);
-  const [bust, setBust] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-
-  // Gambar yang tak kunjung termuat (jaringan lambat/host mati) -> tampilkan fallback + tombol coba lagi.
-  useEffect(() => {
-    if (loaded || failed) return;
-    const timer = setTimeout(() => setFailed(true), 8000);
-    return () => clearTimeout(timer);
-  }, [loaded, failed, bust]);
-  const url = bust === 0 ? src : `${src}${src.includes("?") ? "&" : "?"}r=${bust}`;
-  if (failed) {
-    return (
-      <div className="qris-fallback" role="alert">
-        <p>{t("orders.thanks.qrFailed")}</p>
-        <button type="button" className="btn-secondary" onClick={() => { setFailed(false); setLoaded(false); setBust((b) => b + 1); }}>{t("orders.thanks.qrRetry")}</button>
-      </div>
-    );
-  }
-  return (
-    <>
-      <img className="qris-img" src={url} alt={alt} onLoad={() => setLoaded(true)} onError={() => setFailed(true)} />
-      <p className="qr-save">
-        <a className="btn-secondary" href={url} target="_blank" rel="noopener noreferrer" download>{t("orders.thanks.saveQr")}</a>
-      </p>
-      <p className="pay-note qr-hint">{t("orders.thanks.saveQrHint")}</p>
-    </>
-  );
-}
-
 const POLL_MS = 5000;
 const MAX_POLLS = 60;
 
@@ -51,14 +18,25 @@ export function ThanksPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const t = useT();
+  usePageTitle(t("orders.thanks.titleQris"));
   const ref = params.get("ref") ?? "";
   const [state, setState] = useState<"loading" | "notfound" | "done">("loading");
   const [data, setData] = useState<ThanksData | null>(null);
   const [topupMsg, setTopupMsg] = useState<DictKey | "">("");
   const [topupBusy, setTopupBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [connIssue, setConnIssue] = useState(false);
   const polls = useRef(0);
+
+  function handleCopyAccount(): void {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText("7615560677").then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
 
   useEffect(() => {
     if (ref === "") {
@@ -128,8 +106,8 @@ export function ThanksPage() {
   async function copyCode(): Promise<void> {
     try {
       await navigator.clipboard.writeText(data?.unique_code ?? ref);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     } catch { /* clipboard tak tersedia: kode tetap terlihat di layar */ }
   }
 
@@ -154,6 +132,21 @@ export function ThanksPage() {
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
           <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>
+          {data.delivery_method ? (
+            <p className="pay-meta">
+              {t("orders.thanks.method")} <strong>{data.delivery_method === "delivery" ? t("shop.cart.method.delivery") : t("shop.cart.method.pickup")}</strong>
+            </p>
+          ) : null}
+          {data.mode === "scheduled" && data.scheduled_at ? (
+            <p className="pay-meta">
+              {t("orders.thanks.schedule")} <strong>{new Date(data.scheduled_at).toLocaleString()}</strong>
+            </p>
+          ) : null}
+          {data.delivery_method === "delivery" && data.delivery_address ? (
+            <p className="pay-meta">
+              {t("orders.thanks.address")} <strong>{data.delivery_address}</strong>
+            </p>
+          ) : null}
           <p className="pay-nominal">{t("orders.thanks.payExactly")} <strong>{rupiah(data.nominal)}</strong></p>
           {paid ? (
             <>
@@ -171,7 +164,25 @@ export function ThanksPage() {
             </>
           ) : (
             <>
-              {data.qr_url !== null ? <QrImage src={data.qr_url} alt={t("orders.thanks.qrAlt")} /> : null}
+              <div className="bank-box" aria-label="Informasi Transfer Rekening BCA">
+                <div className="bank-row">
+                  <span className="bank-label">Bank</span>
+                  <strong className="bank-val">BCA</strong>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">{t("orders.thanks.bankAccountLabel")}</span>
+                  <div className="bank-val-wrap">
+                    <strong className="bank-val">7615560677</strong>
+                    <button type="button" className="btn-secondary btn-sm btn-copy" onClick={handleCopyAccount}>
+                      {copied ? t("orders.thanks.copied") : t("orders.thanks.copy")}
+                    </button>
+                  </div>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">{t("orders.thanks.bankAccountName")}</span>
+                  <strong className="bank-val">Fransiskus Xaverius Kevin</strong>
+                </div>
+              </div>
               <ol className="pay-steps">
                 <li>{t("orders.thanks.step1")}</li>
                 <li>{t("orders.thanks.step2a")} <strong>{t("orders.thanks.step2b", { amount: rupiah(data.nominal) })}</strong>{t("orders.thanks.step2c")}</li>
@@ -185,7 +196,7 @@ export function ThanksPage() {
           <div className="pay-links">
             <Link className="btn-primary" to={`/status/${encodeURIComponent(data.unique_code)}`}>{t("orders.thanks.track")}</Link>
             <Link className="btn-secondary" to="/riwayat">{t("orders.thanks.history")}</Link>
-            <button type="button" className="btn-secondary" onClick={() => void copyCode()}>{copied ? t("orders.thanks.copied") : t("orders.thanks.copy")}</button>
+            <button type="button" className="btn-secondary" onClick={() => void copyCode()}>{codeCopied ? t("orders.thanks.copied") : t("orders.thanks.copyCode")}</button>
           </div>
           <Link className="btn-link" to="/">{t("orders.common.backHome")}</Link>
         </div>

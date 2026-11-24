@@ -43,7 +43,7 @@ export function postRoutes(pool: Pool): Hono {
   });
   // Catat view per session; idempoten (refresh tak dobel-hitung).
   // Param wajib UUID: id malformed → 404 langsung (pg bakal 500 bila lolos).
-  r.post("/posts/:id/view", zValidator("param", z.object({ id: z.string().uuid() }), (result, c) => {
+  r.post("/posts/:id/view", zValidator("param", z.object({ id: z.guid() }), (result, c) => {
     if (!result.success) return c.json({ status: "error", code: "POST_NOT_FOUND", message: "Post tidak ditemukan" }, 404);
   }), async (c) => {
     const id = c.req.valid("param").id;

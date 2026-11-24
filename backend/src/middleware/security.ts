@@ -26,7 +26,7 @@ export function securityHeaders(): MiddlewareHandler {
 }
 
 const WINDOW_SEC = 60;
-const LIMITS: Record<string, number> = { GET: 60, POST: 20, PUT: 10, DELETE: 10 };
+const LIMITS: Record<string, number> = { GET: 120, POST: 20, PUT: 10, DELETE: 10 };
 
 // Fallback in-memory saat Redis unreachable (prod tanpa Redis): per-replika.
 // ponytail: tak konsisten lintas replika; Redis tetap sumber utama bila ada.

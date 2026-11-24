@@ -111,7 +111,7 @@ describe("CheckoutPage", () => {
     render(<MemoryRouter><CheckoutPage /></MemoryRouter>);
     await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
     fireEvent.click(screen.getByRole("checkbox"));
-    const pay = screen.getByRole("button", { name: /bayar via qris/i });
+    const pay = screen.getByRole("button", { name: /bayar dengan transfer/i });
     fireEvent.click(pay);
     fireEvent.click(pay);
     fireEvent.click(pay);
