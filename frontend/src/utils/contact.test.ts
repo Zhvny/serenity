@@ -12,8 +12,10 @@ describe("kontak pemesan", () => {
     expect(normalizePhone("021-555-1234")).toBeNull();
     expect(normalizePhone("08abc")).toBeNull();
   });
-  it("nama dirapikan; satu huruf ditolak", () => {
+  it("nama dirapikan; satu huruf/angka/simbol ditolak", () => {
     expect(normalizeName("  Budi   Santoso ")).toBe("Budi Santoso");
     expect(normalizeName("A")).toBeNull();
+    expect(normalizeName("Budi123")).toBeNull();
+    expect(normalizeName("Budi_Santoso")).toBeNull();
   });
 });

@@ -16,9 +16,11 @@ describe("contact normalisation", () => {
     assert.equal(normalizePhone("08abc"), null);
     assert.equal(normalizePhone("0812345678901234567"), null);
   });
-  it("nama dirapikan; terlalu pendek/panjang ditolak", () => {
+  it("nama dirapikan; terlalu pendek/panjang/angka/simbol ditolak", () => {
     assert.equal(normalizeName("  Budi   Santoso "), "Budi Santoso");
     assert.equal(normalizeName("A"), null);
+    assert.equal(normalizeName("Budi123"), null);
+    assert.equal(normalizeName("Budi@Santoso"), null);
     assert.equal(normalizeName("x".repeat(81)), null);
   });
 });

@@ -1,9 +1,11 @@
 // Normalisasi data kontak pemesan (nama + nomor WhatsApp Indonesia).
 
-// Nama: rapikan spasi; 2..80 karakter. null bila tidak valid.
+// Nama: rapikan spasi; 2..80 karakter; hanya huruf dan spasi (tanpa simbol dan angka). null bila tidak valid.
 export function normalizeName(raw: string): string | null {
   const s = raw.replace(/\s+/g, " ").trim();
-  return s.length >= 2 && s.length <= 80 ? s : null;
+  if (s.length < 2 || s.length > 80) return null;
+  if (!/^[a-zA-Z\s]+$/.test(s)) return null;
+  return s;
 }
 
 // Nomor WA: terima "0812-3456-7890", "+62 812...", "62812...", "812..." -> "62812..." (hanya angka).

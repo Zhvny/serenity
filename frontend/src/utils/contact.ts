@@ -2,7 +2,9 @@
 
 export function normalizeName(raw: string): string | null {
   const s = raw.replace(/\s+/g, " ").trim();
-  return s.length >= 2 && s.length <= 80 ? s : null;
+  if (s.length < 2 || s.length > 80) return null;
+  if (!/^[a-zA-Z\s]+$/.test(s)) return null;
+  return s;
 }
 
 // "0812-3456-7890", "+62 812...", "62812...", "812..." -> "62812..."; null bila bukan nomor seluler Indonesia.

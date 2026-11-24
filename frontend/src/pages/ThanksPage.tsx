@@ -196,9 +196,17 @@ export function ThanksPage() {
           )}
           <p className="pay-note">{t("orders.thanks.deviceNote")}</p>
           <div className="pay-links">
-            <Link className="btn-primary" to={`/status/${encodeURIComponent(data.unique_code)}`}>{t("orders.thanks.track")}</Link>
-            <Link className="btn-secondary" to="/riwayat">{t("orders.thanks.history")}</Link>
-            <button type="button" className="btn-secondary" onClick={() => void copyCode()}>{codeCopied ? t("orders.thanks.copied") : t("orders.thanks.copyCode")}</button>
+            <Link className="btn-primary pay-btn-track" to={`/status/${encodeURIComponent(data.unique_code)}`}>
+              {t("orders.thanks.track")}
+            </Link>
+            <div className="pay-btn-row">
+              <button type="button" className="btn-secondary pay-btn-sub" onClick={() => void copyCode()}>
+                {codeCopied ? t("orders.thanks.copied") : t("orders.thanks.copyCode")}
+              </button>
+              <Link className="btn-secondary pay-btn-sub" to="/riwayat">
+                {t("orders.thanks.history")}
+              </Link>
+            </div>
           </div>
           <Link className="btn-link" to="/">{t("orders.common.backHome")}</Link>
         </div>
