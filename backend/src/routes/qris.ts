@@ -196,8 +196,9 @@ export function qrisRoutes(pool: Pool): Hono {
       id: string; unique_code: string; total_amount: number; paid_amount: number | null;
       donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null;
       mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null;
+      delivery_fee: number | null; delivery_receipt_url: string | null; cancel_reason: string | null;
     }>(
-      "SELECT id, unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE unique_code = $1",
+      "SELECT id, unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_receipt_url, cancel_reason FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -220,6 +221,9 @@ export function qrisRoutes(pool: Pool): Hono {
         scheduled_at: order.scheduled_at === null ? null : order.scheduled_at.toISOString(),
         delivery_method: order.delivery_method,
         delivery_address: order.delivery_address,
+        delivery_fee: order.delivery_fee,
+        delivery_receipt_url: order.delivery_receipt_url,
+        cancel_reason: order.cancel_reason,
       },
     });
   });

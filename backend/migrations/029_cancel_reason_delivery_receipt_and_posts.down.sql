@@ -1,0 +1,8 @@
+-- 029_cancel_reason_delivery_receipt_and_posts.down.sql -- DOWN
+DELETE FROM posts WHERE id IN (
+  '33333333-3333-3333-3333-333333333331',
+  '33333333-3333-3333-3333-333333333332',
+  '33333333-3333-3333-3333-333333333333'
+);
+ALTER TABLE orders DROP COLUMN IF EXISTS delivery_receipt_url;
+ALTER TABLE orders DROP COLUMN IF EXISTS cancel_reason;

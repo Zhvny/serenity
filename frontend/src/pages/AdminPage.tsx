@@ -85,6 +85,7 @@ export function AdminPage() {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [paidInput, setPaidInput] = useState("");
   const [feeInput, setFeeInput] = useState("");
+  const [receiptInput, setReceiptInput] = useState("");
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
   const [postExcerpt, setPostExcerpt] = useState("");
@@ -213,6 +214,7 @@ export function AdminPage() {
       setDetail(d);
       setPaidInput(String(d.total_amount));
       setFeeInput(d.delivery_fee === null || d.delivery_fee === undefined ? "" : String(d.delivery_fee));
+      setReceiptInput(d.delivery_receipt_url ?? "");
     } catch (e: unknown) { onError(e, "Gagal memuat detail"); }
   }
 
@@ -223,7 +225,7 @@ export function AdminPage() {
     return status;
   }
   async function handleSetFee(code: string): Promise<void> {
-    await act(() => adminSetDeliveryFee(code, Number(feeInput) || 0), "Gagal menyimpan ongkir");
+    await act(() => adminSetDeliveryFee(code, Number(feeInput) || 0, receiptInput.trim() || null), "Gagal menyimpan ongkir");
     if (detail?.unique_code === code) await openDetail(code);
   };
   async function handleSettle(code: string): Promise<void> {
@@ -308,9 +310,28 @@ export function AdminPage() {
     if (detail?.unique_code === code) await openDetail(code);
   }
   async function handleCancel(code: string): Promise<void> {
-    if (typeof window !== "undefined" && typeof window.confirm === "function" && !window.confirm(`Yakin batalkan pesanan ${code}?`)) return;
+    let reason: string | null = null;
+    if (typeof window !== "undefined" && typeof window.prompt === "function") {
+      try {
+        reason = window.prompt(`Alasan pembatalan untuk ${code} (wajib diisi):`);
+      } catch {
+        reason = null;
+      }
+    }
+    if (reason === null || reason === undefined) {
+      if (typeof window !== "undefined" && typeof window.confirm === "function" && window.confirm(`Yakin batalkan pesanan ${code}?`)) {
+        reason = "Dibatalkan oleh admin";
+      } else {
+        return;
+      }
+    }
+    const trimmed = typeof reason === "string" ? reason.trim() : "";
+    if (trimmed.length < 3) {
+      if (typeof window !== "undefined" && typeof window.alert === "function") alert("Alasan pembatalan minimal 3 karakter");
+      return;
+    }
     await act(async () => {
-      await adminCancelOrder(code);
+      await adminCancelOrder(code, trimmed);
       await refreshOrders(orderFilter);
       setDetail(null);
     }, "Gagal membatalkan pesanan");
@@ -415,6 +436,9 @@ export function AdminPage() {
               <p className="admin-detail-row"><span>Pemesan</span><strong>{detail.customer_name ?? "—"}</strong></p>
               <p className="admin-detail-row"><span>WhatsApp</span><strong>{detail.customer_phone ? <a href={`https://wa.me/${detail.customer_phone}?text=${encodeURIComponent(`Halo, terkait pesanan Serenity ${detail.unique_code}`)}`} target="_blank" rel="noopener noreferrer">+{detail.customer_phone}</a> : "—"}</strong></p>
               <p className="admin-detail-row"><span>Status</span><strong>{STATUS_LABEL[detail.status] ?? detail.status}</strong></p>
+              {detail.status === "cancelled" && detail.cancel_reason ? (
+                <p className="admin-detail-row"><span>Alasan Batal</span><strong style={{ color: "var(--berry-deep)" }}>{detail.cancel_reason}</strong></p>
+              ) : null}
               <p className="admin-detail-row"><span>Total</span><strong>{rupiah(detail.total_amount)}</strong></p>
               {detail.paid_amount !== null && detail.paid_amount !== undefined ? (
                 <p className="admin-detail-row"><span>Dibayar</span><strong>{rupiah(detail.paid_amount)} dari {rupiah(detail.total_amount)}</strong></p>
@@ -427,7 +451,15 @@ export function AdminPage() {
                 <>
                   <p className="admin-detail-row"><span>Ongkir (tunai)</span><strong>{detail.delivery_fee === null || detail.delivery_fee === undefined ? "—" : rupiah(detail.delivery_fee)}</strong></p>
                   <label htmlFor="fee-amount">Ongkir (Rp, cek aplikasi kurir)</label>
-                  <input id="fee-amount" type="number" min={0} value={feeInput} onChange={(e) => setFeeInput(e.target.value)} />
+                  <input id="fee-amount" type="number" min={0} value={feeInput} onChange={(e) => setFeeInput(e.target.value)} placeholder="Mis. 15000" />
+                  <label htmlFor="receipt-url">Bukti foto pengiriman (URL)</label>
+                  <input id="receipt-url" type="url" value={receiptInput} onChange={(e) => setReceiptInput(e.target.value)} placeholder="https://... atau /images/..." />
+                  {detail.delivery_receipt_url ? (
+                    <p className="admin-detail-row">
+                      <span>Bukti:</span>
+                      <a href={detail.delivery_receipt_url} target="_blank" rel="noopener noreferrer">Buka Foto Bukti Ongkir</a>
+                    </p>
+                  ) : null}
                   <button type="button" className="admin-btn" onClick={() => void handleSetFee(detail.unique_code)}>Simpan Ongkir</button>
                 </>
               ) : null}

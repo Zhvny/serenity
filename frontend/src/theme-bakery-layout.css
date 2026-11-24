@@ -439,6 +439,30 @@ html, body { overflow-x: clip; } /* jaring pengaman: tak pernah ada gulir sampin
 /* ---------- Nomor antrian ---------- */
 .queue-no { display: inline-flex; gap: 8px; align-items: baseline; margin: 4px 0 6px; padding: 6px 14px; border: var(--bw) solid currentColor; background: var(--butter, #f6d27a); color: #3b2a24; }
 .queue-no strong { font-size: 26px; letter-spacing: 0.04em; }
-.queue-no--small { padding: 2px 10px; margin: 2px 0; }
-.queue-no--small strong { font-size: 18px; }
+.queue-no--small { padding: 3px 10px; margin: 0 10px 0 0; border-radius: 3px; }
+.queue-no--small strong { font-size: 17px; }
 .admin-queue { font-weight: 700; }
+
+.history-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 8px;
+}
+.cancel-reason-box {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--berry-deep) 10%, transparent);
+  border-left: 3px solid var(--berry-deep);
+  color: var(--berry-deep);
+  font-size: 15px;
+}
+.history-receipt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  text-decoration: underline wavy 1px;
+  color: var(--primary, inherit);
+}

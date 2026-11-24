@@ -15,6 +15,8 @@ export const id = {
   "orders.common.shortBy": "Kurang {amount}",
   "orders.common.topupFailed": "Gagal membuat kode untuk kekurangan.",
   "orders.common.topupUnavailable": "Kode untuk kekurangan tidak dapat dibuat. Muat ulang halaman.",
+  "orders.common.cancelReason": "Alasan pembatalan",
+  "orders.history.viewReceipt": "Lihat bukti ongkir",
 
   // ThanksPage
   "orders.common.reconnecting": "Koneksi terputus, mencoba lagi…",
@@ -118,6 +120,8 @@ export const en = {
   "orders.common.shortBy": "{amount} short",
   "orders.common.topupFailed": "Couldn't create the code for the remaining amount.",
   "orders.common.topupUnavailable": "A code for the remaining amount can't be created. Please reload the page.",
+  "orders.common.cancelReason": "Cancellation reason",
+  "orders.history.viewReceipt": "View shipping receipt",
 
   "orders.common.reconnecting": "Connection lost, retrying…",
   "orders.queue.label": "Queue no.",

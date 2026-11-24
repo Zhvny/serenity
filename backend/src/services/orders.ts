@@ -37,7 +37,13 @@ export function deliveryError(method: DeliveryMethod, address: string | null | u
 // createOrder (legacy, tanpa Turnstile/throttle) DIHAPUS bersama POST /orders.
 // Satu-satunya jalur create: generate-code (checkout + Turnstile).
 
-type OrderRow = { id: string; unique_code: string; mode: OrderMode; scheduled_at: Date | null; total_amount: number; paid_amount: number | null; status: OrderStatus; delivery_method: DeliveryMethod; delivery_address: string | null; delivery_fee: number | null; parent_code: string | null; donation_consent: boolean };
+type OrderRow = {
+  id: string; unique_code: string; mode: OrderMode; scheduled_at: Date | null;
+  total_amount: number; paid_amount: number | null; status: OrderStatus;
+  delivery_method: DeliveryMethod; delivery_address: string | null; delivery_fee: number | null;
+  parent_code: string | null; donation_consent: boolean;
+  cancel_reason?: string | null; delivery_receipt_url?: string | null;
+};
 type ItemRow = { product_id: string; quantity: number; note: string | null };
 
 export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
@@ -84,7 +90,7 @@ export async function markPaid(pool: Pool, code: string, paidAmount: number): Pr
 // Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
 export type MineItem = { product_id: string; name: string; name_en: string | null; quantity: number };
 export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "items"> & { id: string; unique_code: string; items: MineItem[] }>> {
-  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at, delivery_address";
+  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at, delivery_address, cancel_reason, delivery_receipt_url";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
@@ -104,6 +110,8 @@ export async function listMine(pool: Pool, cartId: string, status?: string): Pro
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
     delivery_method: o.delivery_method, delivery_fee: o.delivery_fee,
     delivery_address: o.delivery_address,
+    cancel_reason: o.cancel_reason ?? null,
+    delivery_receipt_url: o.delivery_receipt_url ?? null,
     parent_code: o.parent_code, donation_consent: o.donation_consent,
   }));
 }

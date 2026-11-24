@@ -136,6 +136,19 @@ export function StatusPage() {
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
           <OrderStepper status={status} />
+          {data?.delivery_fee !== null && data?.delivery_fee !== undefined ? (
+            <p className="pay-meta">
+              {t("orders.history.shipFee", { amount: rupiah(data.delivery_fee) })}
+              {data.delivery_receipt_url ? (
+                <> · <a href={data.delivery_receipt_url} target="_blank" rel="noopener noreferrer" className="history-receipt-link"><Icon name="receipt" /> {t("orders.history.viewReceipt")}</a></>
+              ) : null}
+            </p>
+          ) : null}
+          {status === "cancelled" && data?.cancel_reason ? (
+            <div className="cancel-reason-box" role="alert">
+              <strong>{t("orders.common.cancelReason")}:</strong> {data.cancel_reason}
+            </div>
+          ) : null}
           <p className="pay-note">{t(explain)}</p>
           {status === "pending_payment" ? <Link className="btn-primary" to={`/thanks?ref=${encodeURIComponent(ref)}`}>{t("orders.status.payNow")}</Link> : null}
           {underpaid && sisa !== null && sisa > 0 ? (

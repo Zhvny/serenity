@@ -224,6 +224,7 @@ export type OrderDetail = {
   delivery_fee: number | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
   customer_name?: string | null; customer_phone?: string | null;
+  cancel_reason?: string | null; delivery_receipt_url?: string | null;
   settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
 
@@ -247,8 +248,8 @@ export function adminSettleParent(code: string): Promise<{ status: string }> {
   return adminMutate<{ status: string }>(`/admin/orders/${encodeURIComponent(code)}/settle-parent`, "POST");
 }
 
-export function adminSetDeliveryFee(code: string, fee: number): Promise<{ delivery_fee: number }> {
-  return adminMutate<{ delivery_fee: number }>(`/admin/orders/${encodeURIComponent(code)}/delivery-fee`, "POST", { delivery_fee: fee });
+export function adminSetDeliveryFee(code: string, fee: number, receiptUrl?: string | null): Promise<{ delivery_fee: number; delivery_receipt_url?: string | null }> {
+  return adminMutate<{ delivery_fee: number; delivery_receipt_url?: string | null }>(`/admin/orders/${encodeURIComponent(code)}/delivery-fee`, "POST", { delivery_fee: fee, delivery_receipt_url: receiptUrl });
 }
 
 export type Post = { id: string; title: string; body: string; excerpt: string | null; title_en: string | null; body_en: string | null; excerpt_en: string | null; tag: string; product_id: string | null; image_url: string | null; product_ids: string[]; created_at: string };
@@ -323,6 +324,9 @@ export type ThanksData = {
   scheduled_at?: string | null;
   delivery_method?: string;
   delivery_address?: string | null;
+  delivery_fee?: number | null;
+  delivery_receipt_url?: string | null;
+  cancel_reason?: string | null;
 };
 
 export function generateCode(donationConsent = false, turnstileToken = "", honeypot = ""): Promise<{ order_id: string; unique_code: string; qr_url: string; nominal: number }> {
@@ -338,6 +342,7 @@ export type HistoryOrder = {
   status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
   delivery_method: string; delivery_fee: number | null;
   delivery_address?: string | null; mode?: string; scheduled_at?: string | null;
+  cancel_reason?: string | null; delivery_receipt_url?: string | null;
   items: Array<{ product_id: string; name: string; name_en: string | null; quantity: number }>;
 };
 

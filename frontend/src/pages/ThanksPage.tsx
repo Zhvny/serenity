@@ -149,6 +149,19 @@ export function ThanksPage() {
               {t("orders.thanks.address")} <strong>{data.delivery_address}</strong>
             </p>
           ) : null}
+          {data.delivery_fee !== null && data.delivery_fee !== undefined ? (
+            <p className="pay-meta">
+              {t("orders.history.shipFee", { amount: rupiah(data.delivery_fee) })}
+              {data.delivery_receipt_url ? (
+                <> · <a href={data.delivery_receipt_url} target="_blank" rel="noopener noreferrer" className="history-receipt-link"><Icon name="receipt" /> {t("orders.history.viewReceipt")}</a></>
+              ) : null}
+            </p>
+          ) : null}
+          {data.status === "cancelled" && data.cancel_reason ? (
+            <div className="cancel-reason-box" role="alert">
+              <strong>{t("orders.common.cancelReason")}:</strong> {data.cancel_reason}
+            </div>
+          ) : null}
           <p className="pay-nominal">{t("orders.thanks.payExactly")} <strong>{rupiah(data.nominal)}</strong></p>
           {paid ? (
             <>

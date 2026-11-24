@@ -525,8 +525,9 @@ describe("admin login + guard (DB-backed, serenity)", () => {
     assert.equal(r.status, 200);
     assert.equal(((await r.json()) as { data: { status: string } }).data.status, "cancelled");
 
-    const dbStatus = (await pool.query<{ status: string }>("SELECT status FROM orders WHERE unique_code=$1", [code])).rows[0]?.status;
-    assert.equal(dbStatus, "cancelled");
+    const dbRow = (await pool.query<{ status: string; cancel_reason: string }>("SELECT status, cancel_reason FROM orders WHERE unique_code=$1", [code])).rows[0];
+    assert.equal(dbRow?.status, "cancelled");
+    assert.equal(dbRow?.cancel_reason, "Pelanggan minta batalkan");
 
     // 2. Audit log tercatat
     const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM audit_logs WHERE action='cancel_order' AND detail::text LIKE $1", [`%${code}%`])).rows[0]?.n;

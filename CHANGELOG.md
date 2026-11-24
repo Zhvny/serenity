@@ -156,6 +156,22 @@ Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/):
 - Fallback lokasi IP (`ipwho.is`) saat geolocation browser timeout atau tidak tersedia (bukan saat izin ditolak): pin peta otomatis pindah ke perkiraan kota, `accuracy=3000`, pesan `shop.map.ipFallback` mengingatkan pengguna untuk geser pin ke titik tepat. Jika IP lookup juga gagal, pesan error asli tetap ditampilkan.
 - Cookie `cart_id` persisten 90 hari sliding expiration (`Max-Age=7776000`): setiap interaksi (add/get/update/delete cart, checkout, orders/mine, thanks, post view, preferences, generate-code) me-refresh umur cookie. Helper `setCartCookie()` dan `cartIdOf()` diekspor dari `cart.ts`, menggantikan duplikasi di `orders.ts`, `qris.ts`, `posts.ts`, `recommend.ts`.
 
+## [1.2.1] - 25-11-2026:00.15.00.000
+
+### Added
+- Fitur input alasan pembatalan pesanan di dashboard Admin (`orders.cancel_reason`, audit log `cancel_order`) dan tampil di halaman Riwayat serta Status pelanggan.
+- Fitur bukti foto/struk ongkir kurir (`orders.delivery_receipt_url` di `POST /admin/orders/:code/delivery-fee`) dengan tautan bukti di halaman Riwayat & Status order delivery.
+- Tiga artikel edukasi & produk baru (migrasi 029):
+  1. *Heboh Isu Stevia Palsu: Komitmen Serenity Gunakan Ekstrak Alami Murni* (embed `prod_roasted_milktea`).
+  2. *Energi Bersih Bebas Gluten: Rahasia di Balik Peanut Butter Chocolate Bar* (embed `prod_pb_bar`).
+  3. *Roasted Milk Tea: Kenikmatan Creamy Teh Sangrai Tanpa Beban Gula* (embed `prod_roasted_milktea`).
+
+### Changed
+- Jam slot pengambilan pesanan terjadwal dibatasi dari jam 9 pagi hingga 5 sore (`09:00`, `11:00`, `13:00`, `15:00`, `17:00`).
+- Tampilan nomor antrian harian di Riwayat diberi jarak dan pill badge terpisah (`.history-meta-row`, `.queue-no--small`) agar tidak bertumpuk dengan tanggal/kode order.
+
+---
+
 ## [1.2.0] - 24-11-2026:20.45.00.000
 
 ### Added

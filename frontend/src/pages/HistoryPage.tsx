@@ -5,6 +5,7 @@ import type { HistoryOrder } from "../services/api.ts";
 import { apiMessage } from "../utils/apiMessage.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
+import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
 import { queueNo } from "../utils/queue.ts";
 import { useT } from "../i18n/t.ts";
@@ -159,10 +160,24 @@ export function HistoryPage() {
                         ))}
                       </ul>
                     ) : null}
-                    {queueNo(o.id) !== null ? <p className="queue-no queue-no--small"><span>{t("orders.queue.label")}</span> <strong>{queueNo(o.id)}</strong></p> : null}
-                    <span className="history-code">{o.unique_code}</span>
-                    {o.delivery_method === "delivery" ? <span className="tag">{t("orders.method.delivery")}</span> : o.delivery_method === "pickup" ? <span className="tag">{t("orders.method.pickup")}</span> : null}
-                    {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}
+                    <div className="history-meta-row">
+                      {queueNo(o.id) !== null ? <span className="queue-no queue-no--small"><span>{t("orders.queue.label")}</span> <strong>{queueNo(o.id)}</strong></span> : null}
+                      <span className="history-code">{o.unique_code}</span>
+                      {o.delivery_method === "delivery" ? <span className="tag">{t("orders.method.delivery")}</span> : o.delivery_method === "pickup" ? <span className="tag">{t("orders.method.pickup")}</span> : null}
+                      {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}
+                    </div>
+                    {o.status === "cancelled" && o.cancel_reason ? (
+                      <p className="history-sub history-sub--warn">
+                        <strong>{t("orders.common.cancelReason")}:</strong> {o.cancel_reason}
+                      </p>
+                    ) : null}
+                    {o.delivery_receipt_url ? (
+                      <p className="history-sub">
+                        <a href={o.delivery_receipt_url} target="_blank" rel="noopener noreferrer" className="history-receipt-link">
+                          <Icon name="receipt" /> {t("orders.history.viewReceipt")}
+                        </a>
+                      </p>
+                    ) : null}
                     {o.mode === "scheduled" && o.scheduled_at ? <p className="history-sub">{t("orders.thanks.schedule")} {new Date(o.scheduled_at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}</p> : null}
                     {o.delivery_method === "delivery" && o.delivery_address ? <p className="history-sub">{o.delivery_address}</p> : null}
                   </div>

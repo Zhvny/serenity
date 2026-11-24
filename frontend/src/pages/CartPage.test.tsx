@@ -386,8 +386,8 @@ describe("CartPage (English)", () => {
     render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Scheduled" }));
-    expect(screen.getByRole("button", { name: "12:00 PM" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "6:00 PM" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "9:00 AM" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "5:00 PM" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Instant" }));
     await user.click(screen.getByRole("button", { name: "Delivery" }));
     await user.type(screen.getByLabelText("Delivery address"), "jl a");

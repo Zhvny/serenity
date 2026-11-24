@@ -23,7 +23,7 @@ import { pickContent } from "../i18n/content.ts";
 import { localeOf } from "../i18n/store.ts";
 import type { Lang } from "../i18n/store.ts";
 
-const SLOTS = ["12:00", "15:00", "18:00", "21:00"];
+const SLOTS = ["09:00", "11:00", "13:00", "15:00", "17:00"];
 
 // Label slot: Indonesia memakai "12:00" apa adanya; Inggris memakai format 12 jam ("12:00 PM").
 function slotLabel(slot: string, lang: Lang): string {
@@ -143,7 +143,7 @@ export function CartPage() {
   const [saved] = useState<SavedForm>(loadForm);
   const [mode, setMode] = useState<"instant" | "scheduled">(saved.mode === "scheduled" ? "scheduled" : "instant");
   const [date, setDate] = useState(typeof saved.date === "string" && saved.date >= dayISO(1) && saved.date <= dayISO(MAX_SCHEDULE_DAYS) ? saved.date : "");
-  const [slot, setSlot] = useState(typeof saved.slot === "string" && SLOTS.includes(saved.slot) ? saved.slot : "12:00");
+  const [slot, setSlot] = useState(typeof saved.slot === "string" && SLOTS.includes(saved.slot) ? saved.slot : "09:00");
   const [delivery, setDelivery] = useState<"pickup" | "delivery">(saved.delivery === "delivery" ? "delivery" : "pickup");
   const [address, setAddress] = useState(typeof saved.address === "string" ? saved.address.slice(0, 500) : "");
   const [custName, setCustName] = useState(typeof saved.name === "string" ? saved.name.slice(0, 80) : "");
