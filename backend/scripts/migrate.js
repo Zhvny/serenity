@@ -74,6 +74,17 @@ export async function up() {
           console.log(`skip ${f}`);
           continue;
         }
+        if (f.startsWith("026_")) {
+          await db.query(`
+            INSERT INTO categories (id, name, display_order) VALUES
+              ('cat_food', 'Makanan Sehat', 1),
+              ('cat_dessert', 'Dessert Sehat', 2),
+              ('cat_drink', 'Minuman Sehat', 3)
+            ON CONFLICT (id) DO NOTHING;
+            INSERT INTO allergens (name) VALUES ('kacang'), ('susu')
+            ON CONFLICT (name) DO NOTHING;
+          `);
+        }
         await db.query("BEGIN");
         try {
           await db.query(content);
