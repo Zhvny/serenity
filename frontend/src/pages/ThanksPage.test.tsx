@@ -61,6 +61,13 @@ describe("ThanksPage", () => {
     expect(screen.queryByRole("img", { name: /qris|qr/i })).toBeNull();
   });
 
+  it("nomor antrian harian tampil dari id order", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { order_id: "HP-261124-0007", unique_code: "ORD-ABC", nominal: 90000, qr_url: null, status: "pending_payment" } })));
+    render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
+    expect(await screen.findByText("#007")).toBeInTheDocument();
+    expect(screen.getByText("No. antrian")).toBeInTheDocument();
+  });
+
   it("link tak berlaku -> petunjuk perangkat + tombol Riwayat", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404)));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-X"]}><ThanksPage /></MemoryRouter>);

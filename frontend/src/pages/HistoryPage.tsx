@@ -6,6 +6,7 @@ import { apiMessage } from "../utils/apiMessage.ts";
 import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { rupiah } from "../utils/format.ts";
+import { queueNo } from "../utils/queue.ts";
 import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
@@ -158,6 +159,7 @@ export function HistoryPage() {
                         ))}
                       </ul>
                     ) : null}
+                    {queueNo(o.id) !== null ? <p className="queue-no queue-no--small"><span>{t("orders.queue.label")}</span> <strong>{queueNo(o.id)}</strong></p> : null}
                     <span className="history-code">{o.unique_code}</span>
                     {o.delivery_method === "delivery" ? <span className="tag">{t("orders.method.delivery")}</span> : o.delivery_method === "pickup" ? <span className="tag">{t("orders.method.pickup")}</span> : null}
                     {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}

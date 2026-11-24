@@ -10,6 +10,7 @@ import { LocationPicker, type LatLng } from "../components/LocationPicker.tsx";
 import { rupiah } from "../utils/format.ts";
 import { apiMessage } from "../utils/apiMessage.ts";
 import { shouldFillAddress } from "../utils/address.ts";
+import { normalizeName, normalizePhone } from "../utils/contact.ts";
 import { burstAt } from "../fx/fx.ts";
 import { Sprite } from "../pixel/Sprite.tsx";
 import { PAPER_BAG_OPEN } from "../pixel/data/bakeryB.ts";
@@ -32,7 +33,7 @@ function slotLabel(slot: string, lang: Lang): string {
 }
 
 const FORM_KEY = "serenity-cart-form";
-type SavedForm = { mode?: "instant" | "scheduled"; date?: string; slot?: string; delivery?: "pickup" | "delivery"; address?: string; coords?: LatLng | null };
+type SavedForm = { mode?: "instant" | "scheduled"; date?: string; slot?: string; delivery?: "pickup" | "delivery"; address?: string; coords?: LatLng | null; name?: string; phone?: string };
 
 // Pilihan waktu & pengambilan diingat selama sesi tab, agar tombol Kembali dari pembayaran tak menghapusnya.
 function loadForm(): SavedForm {
@@ -145,13 +146,15 @@ export function CartPage() {
   const [slot, setSlot] = useState(typeof saved.slot === "string" && SLOTS.includes(saved.slot) ? saved.slot : "12:00");
   const [delivery, setDelivery] = useState<"pickup" | "delivery">(saved.delivery === "delivery" ? "delivery" : "pickup");
   const [address, setAddress] = useState(typeof saved.address === "string" ? saved.address.slice(0, 500) : "");
+  const [custName, setCustName] = useState(typeof saved.name === "string" ? saved.name.slice(0, 80) : "");
+  const [custPhone, setCustPhone] = useState(typeof saved.phone === "string" ? saved.phone.slice(0, 30) : "");
   const [coords, setCoords] = useState<LatLng | null>(saved.coords !== undefined && saved.coords !== null && Number.isFinite(saved.coords.lat) && Number.isFinite(saved.coords.lng) ? saved.coords : null);
 
   useEffect(() => {
     try {
-      window.sessionStorage.setItem(FORM_KEY, JSON.stringify({ mode, date, slot, delivery, address, coords } satisfies SavedForm));
+      window.sessionStorage.setItem(FORM_KEY, JSON.stringify({ mode, date, slot, delivery, address, coords, name: custName, phone: custPhone } satisfies SavedForm));
     } catch { /* penyimpanan tak tersedia: abaikan */ }
-  }, [mode, date, slot, delivery, address, coords]);
+  }, [mode, date, slot, delivery, address, coords, custName, custPhone]);
   const [checkout, setCheckout] = useState<"idle" | "sending" | "fail">("idle");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [formError, setFormError] = useState<DictKey | "">("");
@@ -240,6 +243,18 @@ export function CartPage() {
   }
 
   async function handleCheckout(): Promise<void> {
+    const okName = normalizeName(custName);
+    if (okName === null) {
+      setFormError("shop.cart.err.name");
+      focusField("contact-name");
+      return;
+    }
+    const okPhone = normalizePhone(custPhone);
+    if (okPhone === null) {
+      setFormError("shop.cart.err.phone");
+      focusField("contact-phone");
+      return;
+    }
     if (mode === "scheduled") {
       if (date === "" || date < minDate || date > maxDate) {
         setFormError(date === "" ? "shop.cart.err.date" : date < minDate ? "shop.cart.err.datePast" : "shop.cart.err.dateFar");
@@ -255,7 +270,7 @@ export function CartPage() {
     setFormError("");
     setCheckout("sending");
     try {
-      const base = { delivery_method: delivery, delivery_address: delivery === "delivery" ? address : null, delivery_lat: delivery === "delivery" ? coords?.lat ?? null : null, delivery_lng: delivery === "delivery" ? coords?.lng ?? null : null } as const;
+      const base = { customer_name: okName, customer_phone: okPhone, delivery_method: delivery, delivery_address: delivery === "delivery" ? address : null, delivery_lat: delivery === "delivery" ? coords?.lat ?? null : null, delivery_lng: delivery === "delivery" ? coords?.lng ?? null : null } as const;
       const res = mode === "instant"
         ? await checkoutCart({ mode: "instant", ...base })
         : await checkoutCart({ mode: "scheduled", scheduled_at: new Date(`${date}T${slot}:00+07:00`).toISOString(), ...base });
@@ -313,6 +328,16 @@ export function CartPage() {
                   <h2>{t("shop.cart.summary.total")} <span>{rupiah(total)}</span></h2>
                   <p>{delivery === "delivery" ? t("shop.cart.summary.shipnoteDelivery") : t("shop.cart.summary.shipnotePickup")}</p>
                 </div>
+              </div>
+              <div className="cart-panel">
+                <h2 className="cart-panel-title">{t("shop.cart.contact.title")}</h2>
+                <p className="cart-opt-note">{t("shop.cart.contact.hint")}</p>
+                <label className="cart-field-label" htmlFor="contact-name">{t("shop.cart.contact.name")}</label>
+                <input id="contact-name" className="cart-input" type="text" autoComplete="name" maxLength={80} value={custName} aria-invalid={formError === "shop.cart.err.name"} aria-describedby={formError === "shop.cart.err.name" ? "form-err" : undefined} onChange={(e) => { setCustName(e.target.value); setFormError(""); }} />
+                {formError === "shop.cart.err.name" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
+                <label className="cart-field-label" htmlFor="contact-phone">{t("shop.cart.contact.phone")}</label>
+                <input id="contact-phone" className="cart-input" type="tel" inputMode="tel" autoComplete="tel" maxLength={30} placeholder="0812 3456 7890" value={custPhone} aria-invalid={formError === "shop.cart.err.phone"} aria-describedby={formError === "shop.cart.err.phone" ? "form-err" : undefined} onChange={(e) => { setCustPhone(e.target.value); setFormError(""); }} />
+                {formError === "shop.cart.err.phone" ? <p id="form-err" className="field-error" role="alert"><Icon name="warning" /> {t(formError)}</p> : null}
               </div>
               <div className="cart-panel">
                 <h2 className="cart-panel-title">{t("shop.cart.when.title")}</h2>

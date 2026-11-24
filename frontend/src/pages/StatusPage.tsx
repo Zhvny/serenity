@@ -5,6 +5,7 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
+import { queueNo } from "../utils/queue.ts";
 import { useT } from "../i18n/t.ts";
 import { usePageTitle } from "../hooks/usePageTitle.ts";
 import type { DictKey } from "../i18n/t.ts";
@@ -131,6 +132,7 @@ export function StatusPage() {
           {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <Sprite sprite={stageSprite} className="status-sprite" />
           <h1>{t("orders.status.title")}</h1>
+          {queueNo(data?.order_id) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data?.order_id)}</strong></p> : null}
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
           <OrderStepper status={status} />

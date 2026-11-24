@@ -26,6 +26,7 @@ import {
   type OrderDetail,
 } from "../services/api.ts";
 import { rupiah } from "../utils/format.ts";
+import { queueNo } from "../utils/queue.ts";
 import "./admin.css";
 
 type Form = { id: string; name: string; category_id: string; price: number; tagsInput: string; nameEn: string; descEn: string };
@@ -359,7 +360,7 @@ export function AdminPage() {
                 <tbody>
                   {orders.map((o) => (
                     <tr key={o.id} className={detail?.unique_code === o.unique_code ? "is-selected" : ""}>
-                      <td><button type="button" className="admin-link" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>{o.id}</button><br /><small className="admin-id">{o.unique_code}</small></td>
+                      <td><button type="button" className="admin-link" aria-label={`Detail ${o.unique_code}`} onClick={() => void openDetail(o.unique_code)}>{o.id}</button>{queueNo(o.id) !== null ? <> <small className="admin-queue">{queueNo(o.id)}</small></> : null}{o.customer_name ? <><br /><strong className="admin-customer">{o.customer_name}</strong></> : null}<br /><small className="admin-id">{o.unique_code}</small></td>
                       <td className="admin-price">{rupiah(o.total_amount)}{o.paid_amount !== null && o.paid_amount !== undefined ? <><br /><small className="admin-id">Dibayar {rupiah(o.paid_amount)}</small></> : null}</td>
                       <td>{o.delivery_method === "delivery" ? <>Diantar{o.delivery_fee === null || o.delivery_fee === undefined ? <><br /><small className="admin-id">Ongkir belum diisi</small></> : null}</> : "Ambil sendiri"}</td>
                       <td>
@@ -387,6 +388,7 @@ export function AdminPage() {
                       {o.paid_amount !== null && o.paid_amount !== undefined ? (
                         <span className="history-sub">Dibayar {rupiah(o.paid_amount)}</span>
                       ) : null}
+                      {o.customer_name ? <strong className="admin-customer">{o.customer_name}</strong> : null}
                       <span className="history-code">{o.unique_code}</span>
                       <span className="history-date">{fmtDate(o.created_at)} · {o.delivery_method === "delivery" ? "Diantar" : "Ambil sendiri"}{o.delivery_method === "delivery" && (o.delivery_fee === null || o.delivery_fee === undefined) ? " · Ongkir belum diisi" : ""}</span>
                     </div>
@@ -410,6 +412,8 @@ export function AdminPage() {
             <aside className="admin-section admin-detail" aria-label="Detail pesanan">
               <h2 className="admin-subhead">Detail {detail.id}</h2>
               <p className="admin-detail-row"><span>Kode</span><strong>{detail.unique_code}</strong></p>
+              <p className="admin-detail-row"><span>Pemesan</span><strong>{detail.customer_name ?? "—"}</strong></p>
+              <p className="admin-detail-row"><span>WhatsApp</span><strong>{detail.customer_phone ? <a href={`https://wa.me/${detail.customer_phone}?text=${encodeURIComponent(`Halo, terkait pesanan Serenity ${detail.unique_code}`)}`} target="_blank" rel="noopener noreferrer">+{detail.customer_phone}</a> : "—"}</strong></p>
               <p className="admin-detail-row"><span>Status</span><strong>{STATUS_LABEL[detail.status] ?? detail.status}</strong></p>
               <p className="admin-detail-row"><span>Total</span><strong>{rupiah(detail.total_amount)}</strong></p>
               {detail.paid_amount !== null && detail.paid_amount !== undefined ? (

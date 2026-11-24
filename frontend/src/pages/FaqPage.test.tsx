@@ -9,13 +9,13 @@ import { ID, EN } from "../i18n/dict/index.ts";
 afterEach(() => { cleanup(); setLang("id"); document.title = ""; });
 
 describe("FaqPage", () => {
-  it("9 pertanyaan, jawaban terbuka saat diklik, judul tab, tautan ke menu", async () => {
+  it("10 pertanyaan, jawaban terbuka saat diklik, judul tab, tautan ke menu", async () => {
     const user = userEvent.setup();
     render(<MemoryRouter><FaqPage /></MemoryRouter>);
     expect(screen.getByRole("heading", { level: 1, name: "Tanya jawab" })).toBeInTheDocument();
     expect(document.title).toBe("Tanya jawab · Serenity");
     const items = document.querySelectorAll("details.faq-item");
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(10);
     const first = items[0] as HTMLDetailsElement;
     expect(first.open).toBe(false);
     await user.click(within(first as HTMLElement).getByText("Bagaimana cara memesan?"));

@@ -17,8 +17,10 @@ type CheckoutChoice = {
   delivery_address: string | null;
   delivery_lat: number | null;
   delivery_lng: number | null;
+  customer_name: string | null;
+  customer_phone: string | null;
 };
-const DEFAULT_CHOICE: CheckoutChoice = { mode: "instant", scheduled_at: null, delivery_method: "pickup", delivery_address: null, delivery_lat: null, delivery_lng: null };
+const DEFAULT_CHOICE: CheckoutChoice = { mode: "instant", scheduled_at: null, delivery_method: "pickup", delivery_address: null, delivery_lat: null, delivery_lng: null, customer_name: null, customer_phone: null };
 
 // Baca pilihan yang disimpan /cart/checkout. Data tak valid/kedaluwarsa -> default (instant + pickup),
 // jadi order selalu bisa dibuat. Validasi ketat sudah dilakukan saat pilihan disimpan.
@@ -35,6 +37,8 @@ async function readCheckoutChoice(pool: Pool, cartId: string): Promise<CheckoutC
     delivery_address: method === "delivery" && typeof raw.delivery_address === "string" ? raw.delivery_address.slice(0, 500) : null,
     delivery_lat: method === "delivery" && typeof raw.delivery_lat === "number" ? raw.delivery_lat : null,
     delivery_lng: method === "delivery" && typeof raw.delivery_lng === "number" ? raw.delivery_lng : null,
+    customer_name: typeof raw.customer_name === "string" ? raw.customer_name.slice(0, 80) : null,
+    customer_phone: typeof raw.customer_phone === "string" ? raw.customer_phone.slice(0, 20) : null,
   };
 }
 
@@ -143,8 +147,8 @@ export function qrisRoutes(pool: Pool): Hono {
       try {
         await client.query("BEGIN");
         await client.query(
-          "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address, delivery_lat, delivery_lng, session_id, unique_code, qr_url, donation_consent) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7, $8, $9, $10, $11, $12)",
-          [orderId, choice.mode, choice.scheduled_at, total, choice.delivery_method, choice.delivery_address, choice.delivery_lat, choice.delivery_lng, cartId, code, qrUrl, donationConsent],
+          "INSERT INTO orders (id, mode, scheduled_at, total_amount, status, delivery_method, delivery_address, delivery_lat, delivery_lng, session_id, unique_code, qr_url, donation_consent, customer_name, customer_phone) VALUES ($1, $2, $3, $4, 'pending_payment', $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+          [orderId, choice.mode, choice.scheduled_at, total, choice.delivery_method, choice.delivery_address, choice.delivery_lat, choice.delivery_lng, cartId, code, qrUrl, donationConsent, choice.customer_name, choice.customer_phone],
         );
         // Salin isi cart ke order_items agar detail pesanan (menu) tersimpan permanen.
         for (const it of priced) {
@@ -189,11 +193,11 @@ export function qrisRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
     const { rows } = await pool.query<{
-      unique_code: string; total_amount: number; paid_amount: number | null;
+      id: string; unique_code: string; total_amount: number; paid_amount: number | null;
       donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null;
       mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null;
     }>(
-      "SELECT unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE unique_code = $1",
+      "SELECT id, unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -205,6 +209,7 @@ export function qrisRoutes(pool: Pool): Hono {
     return c.json({
       status: "success",
       data: {
+        order_id: order.id,
         unique_code: order.unique_code,
         nominal: order.total_amount,
         paid_amount: order.paid_amount,

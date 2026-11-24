@@ -18,6 +18,7 @@ export const id = {
 
   // ThanksPage
   "orders.common.reconnecting": "Koneksi terputus, mencoba lagi…",
+  "orders.queue.label": "No. antrian",
   "orders.method.pickup": "Ambil sendiri",
   "orders.method.delivery": "Diantar",
   "orders.stepper.label": "Tahap pesanan",
@@ -119,6 +120,7 @@ export const en = {
   "orders.common.topupUnavailable": "A code for the remaining amount can't be created. Please reload the page.",
 
   "orders.common.reconnecting": "Connection lost, retrying…",
+  "orders.queue.label": "Queue no.",
   "orders.method.pickup": "Pickup",
   "orders.method.delivery": "Delivery",
   "orders.stepper.label": "Order progress",

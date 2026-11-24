@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
@@ -7,6 +7,8 @@ import { setLang } from "../i18n/store.ts";
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); setLang("id"); });
 afterEach(() => { window.sessionStorage.clear(); });
+// Data pemesan wajib: isi lewat form tersimpan (cara yang sama dipakai halaman saat dibuka ulang).
+beforeEach(() => { window.sessionStorage.setItem("serenity-cart-form", JSON.stringify({ name: "Budi Santoso", phone: "0812 3456 7890" })); });
 
 const p1 = { id: "p1", name: "Salad", category_id: "cat_food", price: 10000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
 const p2 = { id: "p2", name: "Jus", category_id: "cat_drink", price: 20000, tags: [], image_url: null, description: null, is_active: true, nutrition: { calories_kcal: 1, protein_g: 1, carbs_g: 1, fat_g: 1, fiber_g: 1, sugar_g: 1 }, allergens: [] as string[] };
@@ -115,10 +117,12 @@ describe("CartPage", () => {
     render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
     const input = screen.getByLabelText("Jumlah Salad");
-    await user.clear(input);
-    await user.type(input, "4{Enter}");
+    // Nilai diset langsung (user.clear pada input number kadang kalah cepat -> "24" -> clamp 10 = tes rapuh).
+    fireEvent.change(input, { target: { value: "4" } });
+    await user.type(input, "{Enter}");
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT" && c.url.includes("/cart/items/i1"))).toBe(true));
     const put = calls.find((c) => c.method === "PUT" && c.url.includes("/cart/items/i1"));
-    expect(put?.body).toContain("4");
+    expect(put?.body).toContain('"quantity":4');
   });
   it('note "" tak tampil', async () => {
     const noNote = [{ ...items[0], note: "" }];
@@ -207,6 +211,43 @@ describe("CartPage", () => {
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("minimal 10 karakter");
     expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+});
+
+describe("CartPage data pemesan", () => {
+  it("nama kosong -> galat di kolom nama, POST tak terkirim", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Tulis nama lengkapmu");
+    expect(screen.getByLabelText("Nama lengkap")).toHaveFocus();
+    expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
+  });
+  it("nomor WA tidak valid -> galat di kolom nomor", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.type(screen.getByLabelText("Nama lengkap"), "Budi");
+    await user.type(screen.getByLabelText("Nomor HP / WhatsApp"), "12345");
+    await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nomor HP/WhatsApp belum valid");
+    expect(screen.getByLabelText("Nomor HP / WhatsApp")).toHaveAttribute("aria-invalid", "true");
+  });
+  it("nama & nomor dikirim rapi ke /cart/checkout (nomor dinormalisasi)", async () => {
+    const user = userEvent.setup();
+    const calls = stubCart();
+    render(<MemoryRouter><CartPage /></MemoryRouter>);
+    await screen.findByText("Salad");
+    await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
+    await waitFor(() => expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeDefined());
+    const body = String(calls.find((c) => c.url.includes("/cart/checkout"))?.body);
+    expect(body).toContain('"customer_name":"Budi Santoso"');
+    expect(body).toContain('"customer_phone":"6281234567890"');
   });
 });
 
