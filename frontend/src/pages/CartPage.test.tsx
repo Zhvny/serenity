@@ -222,8 +222,8 @@ describe("CartPage data pemesan", () => {
     render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Tulis namamu");
-    expect(screen.getByLabelText("Nama")).toHaveFocus();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Tulis nama lengkapmu");
+    expect(screen.getByLabelText("Nama lengkap")).toHaveFocus();
     expect(calls.find((c) => c.url.includes("/cart/checkout"))).toBeUndefined();
   });
   it("nomor WA tidak valid -> galat di kolom nomor", async () => {
@@ -232,11 +232,11 @@ describe("CartPage data pemesan", () => {
     stubCart();
     render(<MemoryRouter><CartPage /></MemoryRouter>);
     await screen.findByText("Salad");
-    await user.type(screen.getByLabelText("Nama"), "Budi");
-    await user.type(screen.getByLabelText("Nomor WhatsApp"), "12345");
+    await user.type(screen.getByLabelText("Nama lengkap"), "Budi");
+    await user.type(screen.getByLabelText("Nomor HP / WhatsApp"), "12345");
     await user.click(screen.getByRole("button", { name: "Lanjut ke Pembayaran" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Nomor WhatsApp belum valid");
-    expect(screen.getByLabelText("Nomor WhatsApp")).toHaveAttribute("aria-invalid", "true");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nomor HP/WhatsApp belum valid");
+    expect(screen.getByLabelText("Nomor HP / WhatsApp")).toHaveAttribute("aria-invalid", "true");
   });
   it("nama & nomor dikirim rapi ke /cart/checkout (nomor dinormalisasi)", async () => {
     const user = userEvent.setup();

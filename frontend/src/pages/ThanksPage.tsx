@@ -5,6 +5,7 @@ import { Header } from "../components/Header.tsx";
 import { Footer } from "../components/Footer.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { rupiah } from "../utils/format.ts";
+import { queueNo } from "../utils/queue.ts";
 import { OrderStepper } from "../components/OrderStepper.tsx";
 import { STATUS_LABEL, fulfilIndex } from "../utils/orderFlow.ts";
 import { useT } from "../i18n/t.ts";
@@ -131,6 +132,7 @@ export function ThanksPage() {
           {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
+          {queueNo(data.order_id) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data.order_id)}</strong></p> : null}
           <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>
           {data.delivery_method ? (
             <p className="pay-meta">

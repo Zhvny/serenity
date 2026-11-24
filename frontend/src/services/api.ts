@@ -312,6 +312,7 @@ export function adminRestorePost(id: string): Promise<{ id: string }> {
 // --- QRIS (public cart flow) ---
 
 export type ThanksData = {
+  order_id?: string;
   unique_code: string;
   nominal: number;
   paid_amount: number | null;

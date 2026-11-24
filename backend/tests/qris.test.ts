@@ -97,6 +97,24 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(rows[0].customer_phone, "6281234567890");
   });
 
+  it("thanks mengembalikan order_id (sumber nomor antrian harian)", async () => {
+    const cartId = await seedCart();
+    const ip = `qris-ip-${randomUUID()}`;
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string; unique_code: string } };
+    createdOrders.push(data.order_id);
+    const th = await createApp(pool).request(`/api/v1/thanks?ref=${data.unique_code}`, { headers: { cookie: `cart_id=${cartId}`, "x-forwarded-for": ip } });
+    assert.equal(th.status, 200);
+    const body = (await th.json()) as { data: { order_id: string } };
+    assert.equal(body.data.order_id, data.order_id);
+    assert.match(body.data.order_id, /^HP-\d{6}-\d{4}$/);
+  });
+
   it("nomor WA tidak valid -> 400 INVALID_CONTACT", async () => {
     const cartId = await seedCart();
     const co = await createApp(pool).request("/api/v1/cart/checkout", {
