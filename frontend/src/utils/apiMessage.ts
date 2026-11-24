@@ -9,6 +9,7 @@ const BY_CODE: Record<string, DictKey> = {
   VALIDATION_ERROR: "shop.common.invalid",
   INVALID_ADDRESS: "shop.cart.err.address",
   INVALID_SCHEDULE: "shop.cart.err.date",
+  INVALID_CONTACT: "shop.cart.err.phone",
   CART_EMPTY: "shop.common.cartEmpty",
   NOT_FOUND: "shop.common.notFound",
   PRODUCT_NOT_FOUND: "shop.common.notFound",

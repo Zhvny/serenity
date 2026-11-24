@@ -147,7 +147,7 @@ export function removeCartItem(item_id: string): Promise<{ removed: boolean }> {
 
 export type DeliveryMethod = "pickup" | "delivery";
 
-export function checkoutCart(input: { mode: "instant" | "scheduled"; scheduled_at?: string; delivery_method: DeliveryMethod; delivery_address?: string | null; delivery_lat?: number | null; delivery_lng?: number | null }): Promise<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }> {
+export function checkoutCart(input: { mode: "instant" | "scheduled"; scheduled_at?: string; delivery_method: DeliveryMethod; delivery_address?: string | null; delivery_lat?: number | null; delivery_lng?: number | null; customer_name?: string; customer_phone?: string }): Promise<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }> {
   return apiPost<{ mode: string; delivery_method: DeliveryMethod; delivery_address: string | null; items: CartItem[] }>("/cart/checkout", input);
 }
 
@@ -211,7 +211,7 @@ export function adminUpdateProduct(id: string, product: { name: string; category
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
-export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; delivery_fee: number | null; created_at: string };
+export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; delivery_fee: number | null; created_at: string; customer_name?: string | null };
 
 export function adminListOrders(status = "pending_payment"): Promise<PendingOrder[]> {
   return apiGet<PendingOrder[]>(`/admin/orders?status=${encodeURIComponent(status)}`);
@@ -223,6 +223,7 @@ export type OrderDetail = {
   scheduled_at: string | null; delivery_method: string; delivery_address: string | null;
   delivery_fee: number | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
+  customer_name?: string | null; customer_phone?: string | null;
   settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
 

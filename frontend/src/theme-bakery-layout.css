@@ -387,3 +387,9 @@ html, body { overflow-x: clip; } /* jaring pengaman: tak pernah ada gulir sampin
 
 .detail-none { display: flex; gap: 6px; align-items: center; margin: 6px 0 14px; font-size: 15px; color: var(--ink-mute); }
 .card-allergens--none { opacity: 0.85; }
+
+/* ---------- Data pemesan di keranjang ---------- */
+.cart-input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: var(--ink); background: var(--surface); border: var(--bw) solid var(--outline, currentColor); }
+.cart-input:focus-visible { outline: 2px dashed var(--focus, currentColor); outline-offset: 2px; }
+.cart-panel .cart-input[aria-invalid="true"] { outline: 3px solid var(--error, #b0343f); outline-offset: 1px; }
+.admin-customer { display: inline-block; margin-top: 2px; }

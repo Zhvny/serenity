@@ -4,12 +4,13 @@ import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { addItem, getCart, removeItem, updateItem } from "../services/cart.js";
+import { normalizeName, normalizePhone } from "../services/contact.js";
 import { deliveryError } from "../services/orders.js";
 import { productRepo } from "../repos/products.js";
 
 const addSchema = z.object({ product_id: z.string().min(1), quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
 const updateSchema = z.object({ quantity: z.number().int().min(1).max(10), note: z.string().max(200).nullish() });
-const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish(), delivery_lat: z.number().min(-90).max(90).nullish(), delivery_lng: z.number().min(-180).max(180).nullish() });
+const checkoutSchema = z.object({ mode: z.enum(["instant", "scheduled"]), scheduled_at: z.string().datetime({ offset: true }).nullish(), delivery_method: z.enum(["pickup", "delivery"]).default("pickup"), delivery_address: z.string().nullish(), delivery_lat: z.number().min(-90).max(90).nullish(), delivery_lng: z.number().min(-180).max(180).nullish(), customer_name: z.string().max(200).nullish(), customer_phone: z.string().max(40).nullish() });
 
 export const CART_COOKIE_MAX_AGE = 90 * 24 * 3600;
 
@@ -77,6 +78,13 @@ export function cartRoutes(pool: Pool): Hono {
     if (dErr !== null) {
       return c.json({ status: "error", code: "INVALID_ADDRESS", message: dErr }, 400);
     }
+    // Kontak pemesan (opsional di API agar klien lama tetap jalan; wajib di form web). Bila diisi, harus valid.
+    const customer_name = body.customer_name == null || body.customer_name.trim() === "" ? null : normalizeName(body.customer_name);
+    const customer_phone = body.customer_phone == null || body.customer_phone.trim() === "" ? null : normalizePhone(body.customer_phone);
+    if ((body.customer_name != null && body.customer_name.trim() !== "" && customer_name === null)
+      || (body.customer_phone != null && body.customer_phone.trim() !== "" && customer_phone === null)) {
+      return c.json({ status: "error", code: "INVALID_CONTACT", message: "Nama atau nomor WhatsApp tidak valid" }, 400);
+    }
     // Simpan pilihan pada keranjang; generate-code memakainya saat order dibuat.
     if (cartId !== undefined) {
       const choice = {
@@ -86,6 +94,8 @@ export function cartRoutes(pool: Pool): Hono {
         delivery_address: body.delivery_method === "delivery" ? delivery_address : null,
         delivery_lat: body.delivery_method === "delivery" ? body.delivery_lat ?? null : null,
         delivery_lng: body.delivery_method === "delivery" ? body.delivery_lng ?? null : null,
+        customer_name,
+        customer_phone,
       };
       await pool.query("INSERT INTO carts (id) VALUES ($1) ON CONFLICT (id) DO NOTHING", [cartId]);
       await pool.query("UPDATE carts SET checkout_choice = $2 WHERE id = $1", [cartId, JSON.stringify(choice)]);

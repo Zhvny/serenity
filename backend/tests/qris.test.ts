@@ -75,6 +75,40 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(left.rows[0].checkout_choice, null);
   });
 
+  it("nama & nomor WA dari /cart/checkout tersimpan ke order (nomor dinormalisasi)", async () => {
+    const cartId = await seedCart();
+    const ip = `qris-ip-${randomUUID()}`;
+    const co = await createApp(pool).request("/api/v1/cart/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: JSON.stringify({ mode: "instant", delivery_method: "pickup", customer_name: "  Budi  Santoso ", customer_phone: "0812-3456-7890" }),
+    });
+    assert.equal(co.status, 200);
+    const res = await createApp(pool).request("/api/v1/orders/generate-code", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": ip },
+      body: genBody(),
+    });
+    assert.equal(res.status, 200);
+    const { data } = (await res.json()) as { data: { order_id: string } };
+    createdOrders.push(data.order_id);
+    const { rows } = await pool.query("SELECT customer_name, customer_phone FROM orders WHERE id = $1", [data.order_id]);
+    assert.equal(rows[0].customer_name, "Budi Santoso");
+    assert.equal(rows[0].customer_phone, "6281234567890");
+  });
+
+  it("nomor WA tidak valid -> 400 INVALID_CONTACT", async () => {
+    const cartId = await seedCart();
+    const co = await createApp(pool).request("/api/v1/cart/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: `cart_id=${cartId}`, "x-forwarded-for": `qris-ip-${randomUUID()}` },
+      body: JSON.stringify({ mode: "instant", delivery_method: "pickup", customer_name: "Budi", customer_phone: "12345" }),
+    });
+    assert.equal(co.status, 400);
+    const body = (await co.json()) as { code: string };
+    assert.equal(body.code, "INVALID_CONTACT");
+  });
+
   it("tanpa /cart/checkout -> order tetap instant + pickup (perilaku lama)", async () => {
     const cartId = await seedCart();
     const res = await createApp(pool).request("/api/v1/orders/generate-code", {

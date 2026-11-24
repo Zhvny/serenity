@@ -21,6 +21,8 @@ export const id = {
   "faq.a8": "Ongkir mengikuti tarif GoSend atau layanan kurir lain, dibayar tunai dan terpisah dari nominal transfer. Untuk ambil sendiri tidak ada ongkir.",
   "faq.q9": "Bagaimana dengan alergi dan kebutuhan diet?",
   "faq.a9": "Setiap menu menampilkan alergen dan informasi nutrisinya bila datanya tersedia; kalau belum ada, kami menandainya. Di halaman Menu kamu bisa menyaring menu (misalnya Vegan, Bebas gluten, Tinggi protein), dan di beranda kamu bisa memilih kebutuhanmu untuk mendapat rekomendasi.",
+  "faq.q10": "Kenapa diminta nama dan nomor WhatsApp?",
+  "faq.a10": "Supaya kami bisa mencocokkan transfermu dengan pesanan dan menghubungimu bila ada kendala, misalnya soal jadwal atau pengantaran. Nomormu hanya dilihat admin dan tidak ditampilkan di halaman mana pun.",
   "faq.cta": "Lihat menu",
 } as const;
 
@@ -45,5 +47,7 @@ export const en = {
   "faq.a8": "The delivery fee follows GoSend or other courier rates, is paid in cash, and is separate from the transfer amount. Pickup has no delivery fee.",
   "faq.q9": "What about allergies and diets?",
   "faq.a9": "Every item shows its allergens and nutrition facts when we have the data; if we don't yet, it says so. On the Menu page you can filter items (for example Vegan, Gluten-free, High protein), and on the home page you can choose your needs to get recommendations.",
+  "faq.q10": "Why do you ask for my name and WhatsApp number?",
+  "faq.a10": "So we can match your transfer to your order and reach you if something comes up, for example about the schedule or delivery. Only the admin sees your number; it isn't shown on any page.",
   "faq.cta": "View menu",
 } satisfies Record<keyof typeof id, string>;
