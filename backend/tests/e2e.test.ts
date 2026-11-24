@@ -97,13 +97,13 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     assert.equal(items.length, 1);
     assert.equal(items[0]?.quantity, 2);
 
-    // 3) generate-code QRIS: nominal server = 18000 x 2 = 36000
+    // 3) generate-code QRIS: nominal server = 45000 x 2 = 90000
     const gen = await app.request("/api/v1/orders/generate-code", { method: "POST", headers: json({ cookie }), body: JSON.stringify({ turnstile_token: "e2e-tok" }) });
     assert.equal(gen.status, 200);
     const g = ((await gen.json()) as { data: { order_id: string; unique_code: string; qr_url: string; nominal: number } }).data;
     createdOrders.push(g.order_id);
     assert.match(g.unique_code, /^ORD-[0-9A-F]+$/);
-    assert.equal(g.nominal, 36000);
+    assert.equal(g.nominal, 90000);
     assert.ok(g.qr_url.includes(g.unique_code), "qr_url harus memuat ref unique_code");
 
     // 4) thanks pemilik -> 200 pending, status & metode pengiriman
@@ -111,7 +111,7 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
     assert.equal(th1.status, 200);
     const t1 = ((await th1.json()) as { data: { status: string; nominal: number } & Record<string, unknown> }).data;
     assert.equal(t1.status, "pending_payment");
-    assert.equal(t1.nominal, 36000);
+    assert.equal(t1.nominal, 90000);
     assert.equal(t1["delivery_address"], null);
     assert.equal(t1["delivery_method"], "pickup");
     assert.equal(t1["mode"], "instant");
@@ -128,7 +128,7 @@ describe("E2E alur pesan -> bayar QRIS -> admin mark-paid", () => {
 
     // 7) admin mark-paid (nominal penuh dari mutasi) -> changed true
     const markHeaders = { ...csrf, cookie: `admin_session=${sid}; csrf_token=e2e` };
-    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: JSON.stringify({ paid_amount: 36000 }) });
+    const mp = await app.request(`/api/v1/admin/orders/${g.unique_code}/mark-paid`, { method: "POST", headers: markHeaders, body: JSON.stringify({ paid_amount: 90000 }) });
     assert.equal(mp.status, 200);
     assert.equal(((await mp.json()) as { data: { changed: boolean } }).data.changed, true);
 

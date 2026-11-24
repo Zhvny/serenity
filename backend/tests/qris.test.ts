@@ -173,7 +173,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     createdOrders.push(data.order_id);
     assert.match(data.unique_code, /^ORD-[0-9A-F]{12,}$/);
     assert.equal(data.qr_url.includes("qr.example"), true);
-    assert.equal(data.nominal, 36000); // prod_pb_bar 18000 x 2
+    assert.equal(data.nominal, 90000); // prod_pb_bar 45000 x 2
     // Detail pesanan: cart item tersalin ke order_items.
     const n = (await pool.query<{ n: string }>("SELECT count(*)::int AS n FROM order_items WHERE order_id = $1", [data.order_id])).rows[0]?.n;
     assert.equal(Number(n), 1);
@@ -230,7 +230,7 @@ describe("qris generate-code + thanks (ADR-0001)", () => {
     assert.equal(owner.status, 200);
     const body = (await owner.json()) as { data: { unique_code: string; nominal: number; qr_url: string } };
     assert.equal(body.data.unique_code, data.unique_code);
-    assert.equal(body.data.nominal, 36000);
+    assert.equal(body.data.nominal, 90000);
     assert.equal(typeof body.data.qr_url, "string");
     assert.equal((body.data as Record<string, unknown>)["delivery_address"], null);
     assert.equal((body.data as Record<string, unknown>)["delivery_method"], "pickup");

@@ -129,7 +129,7 @@ export function DetailPage() {
               )}
 
               <h2 className="detail-subhead">{t("shop.detail.nutrition")}</h2>
-              {Object.values(prod.nutrition ?? {}).some((v) => v !== null && v !== undefined && v !== "") ? (
+              {Object.values(prod.nutrition ?? {}).some((v) => v !== null && v !== undefined && (v as unknown) !== "") ? (
                 <dl className="stat-grid" aria-label={t("shop.detail.nutrition")}>
                   <div className="stat"><dd className="stat-num">{fmtNutrient(prod.nutrition.calories_kcal)}<span className="unit">{t("shop.detail.unit.kcal")}</span></dd><dt className="stat-label">{t("shop.detail.calories")}</dt></div>
                   <div className="stat"><dd className="stat-num">{fmtNutrient(prod.nutrition.protein_g)}<span className="unit">g</span></dd><dt className="stat-label">{t("shop.detail.protein")}</dt></div>
