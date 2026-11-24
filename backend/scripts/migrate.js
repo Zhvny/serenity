@@ -76,10 +76,10 @@ export async function up() {
         }
         if (f.startsWith("026_")) {
           await db.query(`
-            INSERT INTO categories (id, name, display_order) VALUES
-              ('cat_food', 'Makanan Sehat', 1),
-              ('cat_dessert', 'Dessert Sehat', 2),
-              ('cat_drink', 'Minuman Sehat', 3)
+            INSERT INTO categories (id, name) VALUES
+              ('cat_food', 'Makanan Sehat'),
+              ('cat_dessert', 'Dessert Sehat'),
+              ('cat_drink', 'Minuman Sehat')
             ON CONFLICT (id) DO NOTHING;
             INSERT INTO allergens (name) VALUES ('kacang'), ('susu')
             ON CONFLICT (name) DO NOTHING;
