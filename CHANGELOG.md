@@ -13,6 +13,11 @@ Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/):
 
 ---
 
+## [Unreleased]
+
+### Security
+- Memperbarui `@hono/node-server` ke `2.1.11`; `npm audit` backend dan frontend bersih.
+
 ## [1.0.0] - 30-09-2026:10.58.36.428
 
 ### Added
