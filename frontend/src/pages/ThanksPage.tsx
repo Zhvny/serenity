@@ -32,7 +32,7 @@ export function ThanksPage() {
 
   function handleCopyAccount(): void {
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText("7615560677").then(() => {
+      void navigator.clipboard.writeText("7615572110").then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
@@ -132,7 +132,7 @@ export function ThanksPage() {
           {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <span className={paid ? "pay-icon pay-icon--ok" : "pay-icon"}><Icon name={paid ? "check" : "clock"} /></span>
           <h1>{paid ? t("orders.thanks.titlePaid") : t("orders.thanks.titleQris")}</h1>
-          {queueNo(data.order_id) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data.order_id)}</strong></p> : null}
+          {queueNo(data.queue_no) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data.queue_no)}</strong></p> : null}
           <p className="pay-meta">{t("orders.thanks.codeLabel")} <strong>{data.unique_code}</strong></p>
           {data.delivery_method ? (
             <p className="pay-meta">
@@ -187,7 +187,7 @@ export function ThanksPage() {
                 <div className="bank-row">
                   <span className="bank-label">{t("orders.thanks.bankAccountLabel")}</span>
                   <div className="bank-val-wrap">
-                    <strong className="bank-val">7615560677</strong>
+                    <strong className="bank-val">7615572110</strong>
                     <button type="button" className="btn-secondary btn-sm btn-copy" onClick={handleCopyAccount}>
                       {copied ? t("orders.thanks.copied") : t("orders.thanks.copy")}
                     </button>

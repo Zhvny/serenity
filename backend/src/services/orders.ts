@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import type { DeliveryMethod, Order, OrderMode, OrderStatus } from "../types.js";
 
 export function newCode(): string {
@@ -42,13 +42,14 @@ type OrderRow = {
   total_amount: number; paid_amount: number | null; status: OrderStatus;
   delivery_method: DeliveryMethod; delivery_address: string | null; delivery_fee: number | null;
   parent_code: string | null; donation_consent: boolean;
+  paid_at: Date | null; queue_date: string | null; queue_no: number | null;
   cancel_reason?: string | null; delivery_receipt_url?: string | null;
 };
 type ItemRow = { product_id: string; quantity: number; note: string | null };
 
 export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
   const { rows } = await pool.query<OrderRow>(
-    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, delivery_fee, parent_code, donation_consent, cancel_reason, delivery_receipt_url FROM orders WHERE id = $1",
+    "SELECT id, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_address, delivery_fee, parent_code, donation_consent, paid_at, queue_date, queue_no, cancel_reason, delivery_receipt_url FROM orders WHERE id = $1",
     [id],
   );
   const o = rows[0];
@@ -67,32 +68,75 @@ export async function getOrder(pool: Pool, id: string): Promise<Order | null> {
     delivery_fee: o.delivery_fee,
     parent_code: o.parent_code,
     donation_consent: o.donation_consent,
+    paid_at: o.paid_at === null ? null : o.paid_at.toISOString(),
+    queue_date: o.queue_date,
+    queue_no: o.queue_no,
     cancel_reason: o.cancel_reason ?? null,
     delivery_receipt_url: o.delivery_receipt_url ?? null,
   };
 }
 
-// Mark-paid QRIS: catat nominal aktual; kurang -> underpaid, cukup/lebih -> paid.
-// Hanya dari pending_payment (idempotent-safe); refresh updated_at agar jam expire reset.
+function wibDate(now: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+async function assignPaymentQueue(client: PoolClient, orderId: string, paidAt: Date): Promise<void> {
+  const existing = (await client.query<{ queue_no: number | null }>("SELECT queue_no FROM orders WHERE id = $1 FOR UPDATE", [orderId])).rows[0];
+  if (existing?.queue_no !== null && existing?.queue_no !== undefined) return;
+  const queueDate = wibDate(paidAt);
+  const seq = await client.query<{ n: number }>(
+    "INSERT INTO payment_queue_seq (queue_date, n) VALUES ($1, 1) ON CONFLICT (queue_date) DO UPDATE SET n = payment_queue_seq.n + 1 RETURNING n",
+    [queueDate],
+  );
+  const queueNo = seq.rows[0]?.n;
+  if (queueNo === undefined) throw new Error("payment queue sequence gagal");
+  await client.query("UPDATE orders SET paid_at = $2, queue_date = $3, queue_no = $4 WHERE id = $1", [orderId, paidAt, queueDate, queueNo]);
+}
+
 export async function markPaid(pool: Pool, code: string, paidAmount: number): Promise<Order | null> {
-  const cur = await pool.query<{ id: string; total_amount: number }>(
-    "SELECT id, total_amount FROM orders WHERE unique_code = $1", [code]);
-  const row = cur.rows[0];
-  if (row === undefined) return null;
-  const next = paidAmount >= row.total_amount ? "paid" : "underpaid";
-  // Guard atomik: dua mark-paid konkuren -> tepat satu menang (pola sama dgn advance).
-  const upd = await pool.query<{ id: string }>(
-    "UPDATE orders SET status = $2, paid_amount = $3, updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'pending_payment' RETURNING id",
-    [code, next, paidAmount]);
-  const won = upd.rows[0];
-  if (won === undefined) return null;
-  return getOrder(pool, won.id);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const row = (await client.query<{ id: string; total_amount: number; status: string }>("SELECT id, total_amount, status FROM orders WHERE unique_code = $1 FOR UPDATE", [code])).rows[0];
+    if (row === undefined || row.status !== "pending_payment") { await client.query("ROLLBACK"); return null; }
+    const next = paidAmount >= row.total_amount ? "paid" : "underpaid";
+    await client.query("UPDATE orders SET status = $2, paid_amount = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1", [row.id, next, paidAmount]);
+    if (next === "paid") await assignPaymentQueue(client, row.id, new Date());
+    await client.query("COMMIT");
+    return getOrder(pool, row.id);
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch { /* koneksi mungkin rusak */ }
+    throw e;
+  } finally { client.release(); }
+}
+
+export type SettleResult = "paid" | "not_found" | "invalid" | "insufficient";
+export async function settleParent(pool: Pool, code: string): Promise<SettleResult> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const parent = (await client.query<{ id: string; total_amount: number; paid_amount: number | null; status: string }>("SELECT id, total_amount, paid_amount, status FROM orders WHERE unique_code = $1 FOR UPDATE", [code])).rows[0];
+    if (parent === undefined) { await client.query("ROLLBACK"); return "not_found"; }
+    if (parent.status !== "underpaid" || parent.paid_amount === null) { await client.query("ROLLBACK"); return "invalid"; }
+    const remaining = parent.total_amount - parent.paid_amount;
+    const children = await client.query<{ s: string }>("SELECT COALESCE(SUM(paid_amount), 0) AS s FROM orders WHERE parent_code = $1 AND status = 'paid'", [code]);
+    if (Number(children.rows[0]?.s ?? 0) < remaining) { await client.query("ROLLBACK"); return "insufficient"; }
+    await client.query("UPDATE orders SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = $1", [parent.id]);
+    await assignPaymentQueue(client, parent.id, new Date());
+    await client.query("COMMIT");
+    return "paid";
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch { /* koneksi mungkin rusak */ }
+    throw e;
+  } finally { client.release(); }
 }
 
 // Histori milik sesi (tanpa PII alamat; item ringkas nama+qty untuk kartu histori).
 export type MineItem = { product_id: string; name: string; name_en: string | null; quantity: number };
 export async function listMine(pool: Pool, cartId: string, status?: string): Promise<Array<Omit<Order, "items"> & { id: string; unique_code: string; items: MineItem[] }>> {
-  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at, delivery_address, cancel_reason, delivery_receipt_url";
+  const cols = "id, unique_code, mode, scheduled_at, total_amount, paid_amount, status, delivery_method, delivery_fee, parent_code, donation_consent, created_at, delivery_address, paid_at, queue_date, queue_no, cancel_reason, delivery_receipt_url";
   const res = status === undefined
     ? await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 ORDER BY created_at DESC LIMIT 100`, [cartId])
     : await pool.query<OrderRow & { created_at: Date }>(`SELECT ${cols} FROM orders WHERE session_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 100`, [cartId, status]);
@@ -112,6 +156,9 @@ export async function listMine(pool: Pool, cartId: string, status?: string): Pro
     total_amount: o.total_amount, paid_amount: o.paid_amount, status: o.status,
     delivery_method: o.delivery_method, delivery_fee: o.delivery_fee,
     delivery_address: o.delivery_address,
+    paid_at: o.paid_at === null ? null : o.paid_at.toISOString(),
+    queue_date: o.queue_date,
+    queue_no: o.queue_no,
     cancel_reason: o.cancel_reason ?? null,
     delivery_receipt_url: o.delivery_receipt_url ?? null,
     parent_code: o.parent_code, donation_consent: o.donation_consent,
@@ -127,7 +174,17 @@ export async function expireStale(pool: Pool, olderThanHours: number): Promise<n
 }
 
 export async function setStatus(pool: Pool, id: string, status: OrderStatus): Promise<Order | null> {
-  // Hanya transisi dari pending_payment yang diterima (idempotent-safe).
-  await pool.query("UPDATE orders SET status = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND status = 'pending_payment'", [id, status]);
-  return getOrder(pool, id);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const current = (await client.query<{ status: string }>("SELECT status FROM orders WHERE id = $1 FOR UPDATE", [id])).rows[0];
+    if (current === undefined || current.status !== "pending_payment") { await client.query("ROLLBACK"); return getOrder(pool, id); }
+    await client.query("UPDATE orders SET status = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1", [id, status]);
+    if (status === "paid") await assignPaymentQueue(client, id, new Date());
+    await client.query("COMMIT");
+    return getOrder(pool, id);
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch { /* koneksi mungkin rusak */ }
+    throw e;
+  } finally { client.release(); }
 }

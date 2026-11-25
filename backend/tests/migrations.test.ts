@@ -122,4 +122,13 @@ describe("migrations", () => {
     const ddl = sql.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
     assert.doesNotMatch(ddl, /DROP TABLE/i);
   });
+  it("030 antrean pembayaran additif tanpa penghapusan data", () => {
+    const sql = readFileSync(new URL("../migrations/030_payment_queue.sql", import.meta.url), "utf8");
+    assert.match(sql, /payment_queue_seq/);
+    assert.match(sql, /paid_at/);
+    assert.match(sql, /queue_date/);
+    assert.match(sql, /queue_no/);
+    assert.doesNotMatch(sql, /DELETE\s+FROM/i);
+    assert.doesNotMatch(sql, /DROP\s+(TABLE|COLUMN)/i);
+  });
 });

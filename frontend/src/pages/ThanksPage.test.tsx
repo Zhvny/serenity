@@ -22,7 +22,7 @@ describe("ThanksPage", () => {
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText(/ORD-ABC/)).toBeInTheDocument();
     expect(screen.getAllByText(/90.?000/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("7615560677")).toBeInTheDocument();
+    expect(screen.getByText("7615572110")).toBeInTheDocument();
     expect(screen.getByText("Fransiskus Xaverius Kevin")).toBeInTheDocument();
     expect(screen.getByText("BCA")).toBeInTheDocument();
   });
@@ -61,8 +61,8 @@ describe("ThanksPage", () => {
     expect(screen.queryByRole("img", { name: /qris|qr/i })).toBeNull();
   });
 
-  it("nomor antrian harian tampil dari id order", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { order_id: "HP-261124-0007", unique_code: "ORD-ABC", nominal: 90000, qr_url: null, status: "pending_payment" } })));
+  it("nomor antrian tampil setelah pembayaran", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => resp({ status: "success", data: { order_id: "HP-261124-0007", queue_no: 7, unique_code: "ORD-ABC", nominal: 90000, qr_url: null, status: "paid" } })));
     render(<MemoryRouter initialEntries={["/thanks?ref=ORD-ABC"]}><ThanksPage /></MemoryRouter>);
     expect(await screen.findByText("#007")).toBeInTheDocument();
     expect(screen.getByText("No. antrian")).toBeInTheDocument();

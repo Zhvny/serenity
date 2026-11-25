@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Pool } from "pg";
 import { productRepo } from "../repos/products.js";
 import { createSession, destroySession, isLocked, recordLogin, sessionUser, verifyPassword } from "../services/adminAuth.js";
-import { markPaid } from "../services/orders.js";
+import { markPaid, settleParent } from "../services/orders.js";
 
 const loginSchema = z.object({ username: z.string().min(1).max(64), password: z.string().min(1).max(256) });
 // URL gambar: absolut http(s) ATAU path relatif-root (/images/...). Menolak
@@ -124,7 +124,7 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
       return c.json({ status: "error", code: "INVALID_STATUS", message: "Status tidak valid" }, 400);
     }
     const { rows } = await pool.query(
-      `SELECT id, unique_code, total_amount, paid_amount, status, delivery_method, delivery_fee, created_at, customer_name
+      `SELECT id, unique_code, total_amount, paid_amount, status, delivery_method, delivery_fee, created_at, customer_name, paid_at, queue_date, queue_no
        FROM orders WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
       [status],
     );
@@ -191,9 +191,9 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   r.get("/orders/:code", async (c) => {
     const code = c.req.param("code");
     const o = await pool.query<{
-      id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_fee: number | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date; customer_name: string | null; customer_phone: string | null; cancel_reason: string | null; delivery_receipt_url: string | null;
+      id: string; unique_code: string; total_amount: number; paid_amount: number | null; parent_code: string | null; status: string; mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null; delivery_fee: number | null; delivery_lat: string | null; delivery_lng: string | null; created_at: Date; customer_name: string | null; customer_phone: string | null; cancel_reason: string | null; delivery_receipt_url: string | null; paid_at: Date | null; queue_date: string | null; queue_no: number | null;
     }>(
-      `SELECT id, unique_code, total_amount, paid_amount, parent_code, status, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_lat, delivery_lng, created_at, customer_name, customer_phone, cancel_reason, delivery_receipt_url FROM orders WHERE unique_code = $1`,
+      `SELECT id, unique_code, total_amount, paid_amount, parent_code, status, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_lat, delivery_lng, created_at, customer_name, customer_phone, cancel_reason, delivery_receipt_url, paid_at, queue_date, queue_no FROM orders WHERE unique_code = $1`,
       [code],
     );
     const order = o.rows[0];
@@ -376,25 +376,12 @@ export function adminRoutes(pool: Pool): Hono<{ Variables: AdminVars }> {
   // Lunaskan parent underpaid secara manual: syarat anak lunas menutup sisa.
   r.post("/orders/:code/settle-parent", async (c) => {
     const code = c.req.param("code");
-    const cur = await pool.query<{ total_amount: number; paid_amount: number | null; status: string }>(
-      "SELECT total_amount, paid_amount, status FROM orders WHERE unique_code = $1", [code]);
-    const p = cur.rows[0];
-    if (p === undefined) {
+    const result = await settleParent(pool, code);
+    if (result === "not_found") {
       return c.json({ status: "error", code: "ORDER_NOT_FOUND", message: "Order tidak ditemukan" }, 404);
     }
-    if (p.status !== "underpaid" || p.paid_amount === null) {
-      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Hanya order underpaid yang bisa dilunaskan" }, 409);
-    }
-    const sisa = p.total_amount - p.paid_amount;
-    const sum = await pool.query<{ s: string }>(
-      "SELECT COALESCE(SUM(paid_amount), 0) AS s FROM orders WHERE parent_code = $1 AND status = 'paid'", [code]);
-    if (Number(sum.rows[0]?.s ?? 0) < sisa) {
-      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Anak lunas belum menutup sisa" }, 409);
-    }
-    const upd = await pool.query(
-      "UPDATE orders SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE unique_code = $1 AND status = 'underpaid'", [code]);
-    if ((upd.rowCount ?? 0) === 0) {
-      return c.json({ status: "error", code: "INVALID_SETTLE", message: "Status berubah, muat ulang" }, 409);
+    if (result === "invalid" || result === "insufficient") {
+      return c.json({ status: "error", code: "INVALID_SETTLE", message: result === "insufficient" ? "Anak lunas belum menutup sisa" : "Hanya order underpaid yang bisa dilunaskan" }, 409);
     }
     await pool.query(`INSERT INTO audit_logs (actor, action, detail) VALUES ($1, $2, $3)`, [c.get("adminUser"), "settle_parent", JSON.stringify({ unique_code: code })]);
     return c.json({ status: "success", data: { status: "paid" } });

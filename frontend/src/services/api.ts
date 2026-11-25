@@ -211,7 +211,7 @@ export function adminUpdateProduct(id: string, product: { name: string; category
   return adminMutate<{ id: string }>(`/admin/products/${encodeURIComponent(id)}`, "PUT", product);
 }
 
-export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; delivery_fee: number | null; created_at: string; customer_name?: string | null };
+export type PendingOrder = { id: string; unique_code: string; total_amount: number; paid_amount: number | null; status: string; delivery_method: string; delivery_fee: number | null; created_at: string; customer_name?: string | null; paid_at?: string | null; queue_date?: string | null; queue_no?: number | null };
 
 export function adminListOrders(status = "pending_payment"): Promise<PendingOrder[]> {
   return apiGet<PendingOrder[]>(`/admin/orders?status=${encodeURIComponent(status)}`);
@@ -224,7 +224,7 @@ export type OrderDetail = {
   delivery_fee: number | null;
   delivery_lat: string | null; delivery_lng: string | null; created_at: string; items: OrderItemDetail[];
   customer_name?: string | null; customer_phone?: string | null;
-  cancel_reason?: string | null; delivery_receipt_url?: string | null;
+  cancel_reason?: string | null; delivery_receipt_url?: string | null; paid_at?: string | null; queue_date?: string | null; queue_no?: number | null;
   settle_info: { sisa: number; anak_lunas: number; bisa: boolean } | null;
 };
 
@@ -317,6 +317,9 @@ export type ThanksData = {
   unique_code: string;
   nominal: number;
   paid_amount: number | null;
+  paid_at?: string | null;
+  queue_date?: string | null;
+  queue_no?: number | null;
   donation_consent: boolean;
   qr_url: string | null;
   status: string;
@@ -342,6 +345,7 @@ export type HistoryOrder = {
   status: string; parent_code: string | null; donation_consent: boolean; created_at: string;
   delivery_method: string; delivery_fee: number | null;
   delivery_address?: string | null; mode?: string; scheduled_at?: string | null;
+  paid_at?: string | null; queue_date?: string | null; queue_no?: number | null;
   cancel_reason?: string | null; delivery_receipt_url?: string | null;
   items: Array<{ product_id: string; name: string; name_en: string | null; quantity: number }>;
 };

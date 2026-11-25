@@ -193,12 +193,12 @@ export function qrisRoutes(pool: Pool): Hono {
       return c.json({ status: "error", code: "NOT_FOUND", message: "Tidak ditemukan" }, 404);
     }
     const { rows } = await pool.query<{
-      id: string; unique_code: string; total_amount: number; paid_amount: number | null;
+      id: string; unique_code: string; total_amount: number; paid_amount: number | null; paid_at: Date | null; queue_date: string | null; queue_no: number | null;
       donation_consent: boolean; qr_url: string | null; status: string; session_id: string | null;
       mode: string; scheduled_at: Date | null; delivery_method: string; delivery_address: string | null;
       delivery_fee: number | null; delivery_receipt_url: string | null; cancel_reason: string | null;
     }>(
-      "SELECT id, unique_code, total_amount, paid_amount, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_receipt_url, cancel_reason FROM orders WHERE unique_code = $1",
+      "SELECT id, unique_code, total_amount, paid_amount, paid_at, queue_date, queue_no, donation_consent, qr_url, status, session_id, mode, scheduled_at, delivery_method, delivery_address, delivery_fee, delivery_receipt_url, cancel_reason FROM orders WHERE unique_code = $1",
       [ref],
     );
     const order = rows[0];
@@ -214,6 +214,9 @@ export function qrisRoutes(pool: Pool): Hono {
         unique_code: order.unique_code,
         nominal: order.total_amount,
         paid_amount: order.paid_amount,
+        paid_at: order.paid_at === null ? null : order.paid_at.toISOString(),
+        queue_date: order.queue_date,
+        queue_no: order.queue_no,
         donation_consent: order.donation_consent,
         qr_url: order.qr_url,
         status: order.status,

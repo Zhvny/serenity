@@ -132,7 +132,7 @@ export function StatusPage() {
           {connIssue ? <p className="detail-msg detail-msg--err" role="status">{t("orders.common.reconnecting")}</p> : null}
           <Sprite sprite={stageSprite} className="status-sprite" />
           <h1>{t("orders.status.title")}</h1>
-          {queueNo(data?.order_id) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data?.order_id)}</strong></p> : null}
+          {queueNo(data?.queue_no) !== null ? <p className="queue-no"><span>{t("orders.queue.label")}</span> <strong>{queueNo(data?.queue_no)}</strong></p> : null}
           <p className="pay-meta">{t("orders.status.codeLabel")} <strong>{ref}</strong></p>
           <p className="status-badge">{label}</p>
           <OrderStepper status={status} />

@@ -161,7 +161,7 @@ export function HistoryPage() {
                       </ul>
                     ) : null}
                     <div className="history-meta-row">
-                      {queueNo(o.id) !== null ? <span className="queue-no queue-no--small"><span>{t("orders.queue.label")}</span> <strong>{queueNo(o.id)}</strong></span> : null}
+                      {queueNo(o.queue_no) !== null ? <span className="queue-no queue-no--small"><span>{t("orders.queue.label")}</span> <strong>{queueNo(o.queue_no)}</strong></span> : null}
                       <span className="history-code">{o.unique_code}</span>
                       {o.delivery_method === "delivery" ? <span className="tag">{t("orders.method.delivery")}</span> : o.delivery_method === "pickup" ? <span className="tag">{t("orders.method.pickup")}</span> : null}
                       {o.donation_consent && o.paid_amount !== null ? <span className="tag">{t("orders.history.donation")}</span> : null}

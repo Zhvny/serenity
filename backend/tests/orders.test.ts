@@ -185,12 +185,15 @@ describe("orders underpaid service", () => {
     const o = await markPaid(pool, code, 30000);
     assert.equal(o?.status, "underpaid");
     assert.equal(o?.paid_amount, 30000);
+    assert.equal(o?.queue_no, null);
   });
   it("markPaid pas -> paid", async () => {
     const { code } = await seedOrder(50000);
     const o = await markPaid(pool, code, 50000);
     assert.equal(o?.status, "paid");
     assert.equal(o?.paid_amount, 50000);
+    assert.ok(Number.isInteger(o?.queue_no) && (o.queue_no ?? 0) > 0);
+    assert.ok(o?.paid_at !== null && o?.paid_at !== undefined);
   });
   it("markPaid lebih -> paid", async () => {
     const { code } = await seedOrder(50000);
