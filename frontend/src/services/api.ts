@@ -6,6 +6,16 @@ export class ApiError extends Error {
   }
 }
 
+type ApiBody<T> = { status: string; data?: T; code?: string; message?: string };
+
+async function readBody<T>(res: Response): Promise<ApiBody<T>> {
+  try {
+    return await res.json() as ApiBody<T>;
+  } catch {
+    throw new ApiError("BAD_RESPONSE", "Respons server tidak valid");
+  }
+}
+
 export type Nutrition = { calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number; fiber_g: number; sugar_g: number };
 export type Product = { id: string; name: string; category_id: string; price: number; tags: string[]; image_url: string | null; description: string | null; name_en: string | null; description_en: string | null; source: string; is_active: boolean; nutrition: Nutrition; allergens: string[] };
 export type Category = { id: string; name: string; description: string | null };
@@ -61,7 +71,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
-  const body = (await res.json()) as { status: string; data?: T; code?: string; message?: string };
+  const body = await readBody<T>(res);
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
@@ -76,7 +86,7 @@ export async function apiPost<T>(path: string, input: unknown): Promise<T> {
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
-  const body = (await res.json()) as { status: string; data?: T; code?: string; message?: string };
+  const body = await readBody<T>(res);
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
@@ -91,7 +101,7 @@ export async function apiPut<T>(path: string, input: unknown): Promise<T> {
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
-  const body = (await res.json()) as { status: string; data?: T; code?: string; message?: string };
+  const body = await readBody<T>(res);
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }
@@ -106,7 +116,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   } catch {
     throw new ApiError("NETWORK", "Tidak dapat menghubungi server");
   }
-  const body = (await res.json()) as { status: string; data?: T; code?: string; message?: string };
+  const body = await readBody<T>(res);
   if (!res.ok || body.status !== "success") {
     throw new ApiError(body.code ?? "UNKNOWN", body.message ?? "Terjadi kesalahan");
   }

@@ -46,9 +46,14 @@ export function ThanksPage() {
       return;
     }
     let alive = true;
-    let timer: ReturnType<typeof setInterval> | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
 
-    async function tick(): Promise<void> {
+  function schedule(): void {
+    if (alive && polls.current < MAX_POLLS) timer = setTimeout(() => { void tick(); }, POLL_MS);
+  }
+
+  async function tick(): Promise<void> {
+    polls.current += 1;
       try {
         const d = await getThanks(ref);
         if (!alive) return;
@@ -56,25 +61,23 @@ export function ThanksPage() {
         setConnIssue(false);
         setState("done");
         // Hentikan polling pada status final / batas maksimum (hindari spam BE).
-        if (d.status === "done" || d.status === "cancelled" || d.status === "expired" || polls.current >= MAX_POLLS) {
-          if (timer !== null) clearInterval(timer);
-        }
+    if (d.status === "done" || d.status === "cancelled" || d.status === "expired" || polls.current >= MAX_POLLS) return;
+    schedule();
       } catch (e: unknown) {
         if (!alive) return;
         // Hanya "tidak ditemukan" sungguhan yang mengganti halaman. Gangguan jaringan/429/5xx sesaat:
         // pertahankan data yang ada dan lanjut polling (pulih sendiri saat koneksi kembali).
         if (e instanceof ApiError && (e.code === "NOT_FOUND" || e.code === "ORDER_NOT_FOUND")) {
           setState("notfound");
-          if (timer !== null) clearInterval(timer);
-        } else {
-          setConnIssue(true);
+          return;
         }
+        setConnIssue(true);
+        schedule();
       }
     }
 
     void tick();
-    timer = setInterval(() => { polls.current += 1; void tick(); }, POLL_MS);
-    return () => { alive = false; if (timer !== null) clearInterval(timer); };
+  return () => { alive = false; if (timer !== null) clearTimeout(timer); };
   }, [ref]);
 
   if (state === "loading") {

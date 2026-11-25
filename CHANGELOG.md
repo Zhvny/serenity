@@ -21,6 +21,7 @@ Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/):
 ### Changed
 - Nomor rekening transfer aktif menjadi `7615572110`, a.n. Fransiskus Xaverius Kevin.
 - Nomor antrean diterbitkan hanya setelah pembayaran penuh berhasil diverifikasi; data order lama dipertahankan.
+- Halaman Thanks mempertahankan data terakhir saat koneksi terganggu dan polling status tidak lagi tumpang tindih.
 
 ## [1.0.0] - 30-09-2026:10.58.36.428
 

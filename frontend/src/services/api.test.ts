@@ -12,6 +12,10 @@ describe("apiGet", () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("down"); }));
     await expect(getProducts({})).rejects.toBeInstanceOf(ApiError);
   });
+  it("response bukan JSON → throw ApiError", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("upstream unavailable", { status: 502 })));
+    await expect(apiGet("/products")).rejects.toMatchObject({ code: "BAD_RESPONSE" });
+  });
   it("kirim credentials include agar cookie sesi tersimpan", async () => {
     const f = vi.fn(async () => new Response(JSON.stringify({ status: "success", data: [] })));
     vi.stubGlobal("fetch", f);
